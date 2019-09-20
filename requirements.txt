@@ -1,0 +1,7 @@
+requests-unixsocket
+miniupnpc==2.0.2
+
+cryptography
+pika==0.12
+
+pymongo
