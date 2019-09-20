@@ -7,6 +7,22 @@ import json
 import requests_unixsocket
 
 
+class ConstantesEnvironnementMilleGrilles:
+
+    # Globaux pour toutes les millegrilles
+    REPERTOIRE_MILLEGRILLES = '/opt/millegrilles'
+    REPERTOIRE_MILLEGRILLES_ETC = '%s/etc' % REPERTOIRE_MILLEGRILLES
+    REPERTOIRE_MILLEGRILLES_BIN = '%s/bin' % REPERTOIRE_MILLEGRILLES
+    REPERTOIRE_MILLEGRILLES_CACERTS = '%s/cacerts' % REPERTOIRE_MILLEGRILLES
+
+    # Par millegrille
+    REPERTOIRE_MILLEGRILLE_MOUNTS = 'mounts'
+    REPERTOIRE_MILLEGRILLE_PKI = 'pki'
+    REPERTOIRE_MILLEGRILLE_CERTS = '%s/certs' % REPERTOIRE_MILLEGRILLE_PKI
+    REPERTOIRE_MILLEGRILLE_DBS = '%s/dbs' % REPERTOIRE_MILLEGRILLE_PKI
+    REPERTOIRE_MILLEGRILLE_KEYS = '%s/keys' % REPERTOIRE_MILLEGRILLE_PKI
+
+
 class DeployeurMilleGrilles(Daemon, ModeleConfiguration):
     """
     Noeud gestionnaire d'une MilleGrille. Responsable de l'installation initiale, deploiement, entretient et healthcheck
@@ -31,6 +47,29 @@ class DeployeurMilleGrilles(Daemon, ModeleConfiguration):
         r = session.get('http+unix://%s/info' % self.__docker_socket_path)
         registry_config = r.json()['RegistryConfig']
         print(json.dumps(registry_config, indent=4))
+
+    def sanity_check_environnement(self):
+        """
+        Verifie que l'environnement de la machine locale est viable pour demarrer MilleGrilles
+        :return:
+        """
+        # Verifier que /opt/millegrilles est bien cree avec les droits appropries
+
+        # Verifier que les certificats CA sont accessibles
+
+        # Verifier que docker est accessible
+
+        # Verifier que les secrets sont deployes sur docker
+
+        pass
+
+    def sanity_check_millegrille(self, nom_millegrille):
+        """
+        Verifie que tous les parametres d'une millegrille sont viables et prets
+        :param nom_millegrille:
+        :return:
+        """
+        pass
 
     @staticmethod
     def __format_url_docker(url):
