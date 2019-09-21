@@ -212,12 +212,19 @@ class DeployeurDockerMilleGrille:
         self.__docker = docker
         self.constantes = ConstantesEnvironnementMilleGrilles(nom_millegrille)
 
+        # Version des secrets a utiliser
+        self._date_certs_ssl = None
+        self._date_certs_web = None
+        self._date_passwords_json = None
+
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def configurer(self):
         self.charger_configuration_services()
         self.preparer_reseau()
-        self.deployer_certs_ssl()
+        self._date_certs_ssl = self.deployer_certs_ssl()
+
+        self.__logger.info("Date fichiers cert: ssl=%s" % self._date_certs_ssl)
         self.preparer_mq()
 
     def charger_configuration_services(self):
@@ -227,31 +234,43 @@ class DeployeurDockerMilleGrille:
         nom_reseau = 'mg_%s_net' % self.__nom_millegrille
         self.__docker.configurer_reseau(nom_reseau)
 
-    def preparer_mq(self):
+    def preparer_mq(self, force=True):
         # Verifier que le service MQ est en fonction - sinon le deployer
         nom_service = '%s_mq' % self.__nom_millegrille
         etat_service_resp = self.__docker.info_service(nom_service)
-        if etat_service_resp.status_code == 200:
-            if len(etat_service_resp.json()) == 0:
-                self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)
-
-                with open('/opt/millegrilles/etc/docker.mq.json', 'r') as fichier:
-                    config_str = fichier.read()
-                mq_config = json.loads(config_str)
-                mq_config['Name'] = nom_service
-
-                del mq_config['TaskTemplate']['ContainerSpec']['Secrets']
-
-                etat_service_resp = self.__docker.post('services/create', mq_config)
-                if 200 < etat_service_resp.status_code < 299:
-                    self.__logger.info("Deploiement de MQ avec ID %s" % str(etat_service_resp.json()))
-                else:
-                    self.__logger.error("MQ Service deploy erreur: %d\n%s" % (
-                        etat_service_resp.status_code, str(etat_service_resp.json())))
+        mode = None
+        if etat_service_resp.status_code == 200 and force:
+            service_etat_json = etat_service_resp.json()[0]
+            service_id = service_etat_json['ID']
+            version_service = service_etat_json['Version']['Index']
+            mode = '%s/update?version=%s' % (service_id, version_service)
+            self.__logger.warn("MQ sera re-deploye sur %s (force update), mode=%s" % (self.__nom_millegrille, mode))
         else:
-            raise Exception("Erreur access Docker")
+            mode = 'create'
+            self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)
 
-    def deployer_certs_ssl(self, date=None):
+        if mode is not None:
+            with open('/opt/millegrilles/etc/docker.mq.json', 'r') as fichier:
+                config_str = fichier.read()
+            mq_config = json.loads(config_str)
+            mq_config['Name'] = nom_service
+
+            del mq_config['TaskTemplate']['ContainerSpec']['Secrets']
+
+            etat_service_resp = self.__docker.post('services/%s' % mode, mq_config)
+            status_code = etat_service_resp.status_code
+            if 200 <= status_code <= 201:
+                self.__logger.info("Deploiement de MQ avec ID %s" % str(etat_service_resp.json()))
+            elif status_code == 409:
+                # Service existe, on le met a jour
+                etat_service_resp = self.__docker.post('services/update', mq_config)
+                status_code = etat_service_resp.status_code
+                self.__logger.info("Update service MQ, code %s\n%s" % (status_code, etat_service_resp.json()))
+            else:
+                self.__logger.error("MQ Service deploy erreur: %d\n%s" % (
+                    etat_service_resp.status_code, str(etat_service_resp.json())))
+
+    def deployer_certs_ssl(self):
         # Faire une liste de tous les certificats et cles
         nom_middleware = '%s_middleware_' % self.__nom_millegrille
         rep_certs = self.constantes.rep_certs
@@ -266,6 +285,7 @@ class DeployeurDockerMilleGrille:
             cert_ca_fullchain = base64.encodebytes(fichier.read())
 
         # Grouper certs et cles, aussi generer key_cert dans meme fichier
+        groupe_recent = '0'
         groupes_certs = dict()
         for cert_nom in certs_middleware:
             cle_nom = cert_nom.replace('cert', 'key')
@@ -295,11 +315,14 @@ class DeployeurDockerMilleGrille:
                 }
 
                 groupes_certs[date] = groupe
+                if date is not None and int(date) > int(groupe_recent):
+                    groupe_recent = date
 
         # self.__logger.debug("Liste certs: %s" % str(groupes_certs))
         # Transmettre les secrets
         self._deployer_certs(groupes_certs)
 
+        return groupe_recent
 
     def deployer_certs_web(self):
         pass
