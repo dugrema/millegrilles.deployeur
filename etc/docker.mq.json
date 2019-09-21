@@ -1,0 +1,97 @@
+{
+  "Name": "mq",
+  "TaskTempalte": {
+    "ContainerSpec": {
+      "Image": "mg_rabbitmq:3.7-management_10",
+      "Hostname": "mq.local",
+      "Mounts": [
+        {
+          "Type": "volume",
+          "Source": "mg-middleware-rabbitmq-data",
+          "Target": "/var/lib/rabbitmq"
+        },
+        {
+          "Type": "bind",
+          "Source": "/opt/millegrilles/dev2/mounts/mq-accounts",
+          "Target": "/opt/rabbitmq/conf"
+        }
+      ],
+      "Secrets": [
+        {
+          "SecretName": "pki.millegrilles.ssl.cert",
+          "File": {
+            "Name": "pki.millegrilles.ssl.cert"
+          }
+        },
+        {
+          "SecretName": "pki.millegrilles.ssl.key",
+          "File": {
+            "Name": "pki.millegrilles.ssl.key"
+          }
+        },
+        {
+          "SecretName": "pki.millegrilles.ssl.CAchain",
+          "File": {
+            "Name": "pki.millegrilles.ssl.CAchain"
+          }
+        },
+        {
+          "SecretName": "pki.millegrilles.wadmin.cert",
+          "File": {
+            "Name": "pki.millegrilles.wadmin.cert"
+          }
+        },
+        {
+          "SecretName": "pki.millegrilles.wadmin.key",
+          "File": {
+            "Name": "pki.millegrilles.wadmin.key"
+          }
+        }
+      ],
+    },
+    "Placement": {
+      "Constraints": [
+        "node.labels.netzone.private == true",
+        "node.labels.millegrilles.mq == true"
+      ],
+    },
+    "Resources": {
+      "Limits": {
+        "NanoCPUs": 1500000000,
+        "MemoryBytes": 629145600
+      }
+    },
+    "RestartPolicy": {
+      "Condition": "any",
+      "Delay": 30000000000,
+      "MaxAttempts": 10
+    },
+    "Mode": {
+      "Replicated": {
+        "Replicas": 1
+      }
+    },
+    "EndpointSpec": {
+      "Ports": [
+        {
+          "Protocol": "tcp",
+          "PublishedPort": 8443,
+          "TargetPort": 443,
+          "PublishMode": "host"
+        },
+        {
+          "Protocol": "tcp",
+          "PublishedPort": 5671,
+          "TargetPort": 5671,
+          "PublishMode": "host"
+        },
+        {
+          "Protocol": "tcp",
+          "PublishedPort": 5673,
+          "TargetPort": 5673,
+          "PublishMode": "host"
+        }
+      ]
+    }
+  }
+}
