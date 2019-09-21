@@ -26,6 +26,21 @@ class ConstantesEnvironnementMilleGrilles:
 
     def __init__(self, nom_millegrille):
         self.nom_millegrille = nom_millegrille
+        self.mapping = dict()
+
+    def __mapping(self):
+        self.mapping = {
+            "NOM_MILLEGRILLE": self.nom_millegrille,
+            "MOUNTS": self.rep_mounts,
+        }
+
+    @property
+    def rep_mounts(self):
+        return '%s/%s/%s' % (
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            self.nom_millegrille,
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MOUNTS
+        )
 
     @property
     def rep_certs(self):
@@ -61,14 +76,29 @@ class VersionMilleGrille:
 
 class ServiceDockerConfiguration:
 
-    def __init__(self, configuration_json):
-        self.__configuration_json = configuration_json
+    def __init__(self, nom_millegrille, nom_service):
+        self.__nom_millegrille = nom_millegrille
+        self.__nom_service = nom_service
+
+        config_json_filename = '/opt/millegrilles/etc/docker.%s.json' % nom_service
+        with open(config_json_filename, 'r') as fichier:
+            config_str = fichier.read()
+        self.__configuration_json = json.loads(config_str)
+
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def formatter_service(self):
-        service = {
+        mq_config = self.__configuration_json
+        mq_config['Name'] = self.formatter_nom_service()
 
-        }
-        return service
+        del mq_config['TaskTemplate']['ContainerSpec']['Secrets']
+
+        self.__logger.debug("Template configuration docker MQ:\n%s" % str(mq_config))
+
+        return mq_config
+
+    def formatter_nom_service(self):
+        return '%s_%s' % (self.__nom_millegrille, self.__nom_service)
 
 class DeployeurMilleGrilles(Daemon, ModeleConfiguration):
     """
@@ -85,7 +115,7 @@ class DeployeurMilleGrilles(Daemon, ModeleConfiguration):
         Daemon.__init__(self, self.__pidfile, self.__stdout, self.__stderr)
         ModeleConfiguration.__init__(self)
 
-        self.__logger = logging.getLogger('%s' % self.__class__.__name__)
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def initialiser(self, init_document=False, init_message=False, connecter=False):
         # Initialiser mais ne pas connecter a MQ
@@ -225,7 +255,7 @@ class DeployeurDockerMilleGrille:
         self._date_certs_ssl = self.deployer_certs_ssl()
 
         self.__logger.info("Date fichiers cert: ssl=%s" % self._date_certs_ssl)
-        self.preparer_mq()
+        self.preparer_service('mq')
 
     def charger_configuration_services(self):
         config_version = VersionMilleGrille()
@@ -234,10 +264,10 @@ class DeployeurDockerMilleGrille:
         nom_reseau = 'mg_%s_net' % self.__nom_millegrille
         self.__docker.configurer_reseau(nom_reseau)
 
-    def preparer_mq(self, force=True):
+    def preparer_service(self, nom_service, force=True):
         # Verifier que le service MQ est en fonction - sinon le deployer
-        nom_service = '%s_mq' % self.__nom_millegrille
-        etat_service_resp = self.__docker.info_service(nom_service)
+        nom_service_complet = '%s_%s' % (self.__nom_millegrille, nom_service)
+        etat_service_resp = self.__docker.info_service(nom_service_complet)
         mode = None
         if etat_service_resp.status_code == 200 and force:
             service_etat_json = etat_service_resp.json()[0]
@@ -250,25 +280,21 @@ class DeployeurDockerMilleGrille:
             self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)
 
         if mode is not None:
-            with open('/opt/millegrilles/etc/docker.mq.json', 'r') as fichier:
-                config_str = fichier.read()
-            mq_config = json.loads(config_str)
-            mq_config['Name'] = nom_service
-
-            del mq_config['TaskTemplate']['ContainerSpec']['Secrets']
-
-            etat_service_resp = self.__docker.post('services/%s' % mode, mq_config)
+            configurateur = ServiceDockerConfiguration(self.__nom_millegrille, nom_service)
+            service_json = configurateur.formatter_service()
+            etat_service_resp = self.__docker.post('services/%s' % mode, service_json)
             status_code = etat_service_resp.status_code
             if 200 <= status_code <= 201:
                 self.__logger.info("Deploiement de MQ avec ID %s" % str(etat_service_resp.json()))
             elif status_code == 409:
                 # Service existe, on le met a jour
-                etat_service_resp = self.__docker.post('services/update', mq_config)
+                etat_service_resp = self.__docker.post('services/update', service_json)
                 status_code = etat_service_resp.status_code
                 self.__logger.info("Update service MQ, code %s\n%s" % (status_code, etat_service_resp.json()))
             else:
                 self.__logger.error("MQ Service deploy erreur: %d\n%s" % (
                     etat_service_resp.status_code, str(etat_service_resp.json())))
+
 
     def deployer_certs_ssl(self):
         # Faire une liste de tous les certificats et cles
