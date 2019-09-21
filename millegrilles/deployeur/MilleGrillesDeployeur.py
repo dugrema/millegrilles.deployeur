@@ -287,29 +287,32 @@ class DeployeurDockerMilleGrille:
 
                 dict_key_prefix = '%s.pki.middleware.ssl' % self.__nom_millegrille
                 groupe = {
-                    '%s.CAchain.%s' % (dict_key_prefix, date): cert_ca_chain,
-                    '%s.fullchain.%s' % (dict_key_prefix, date): cert_ca_fullchain,
-                    '%s.cert.%s' % (dict_key_prefix, date): cert,
-                    '%s.key.%s' % (dict_key_prefix, date): cle,
-                    '%s.key_cert.%s' % (dict_key_prefix, date): cle_cert
+                    '%s.CAchain.%s' % (dict_key_prefix, date): cert_ca_chain.decode('utf-8'),
+                    '%s.fullchain.%s' % (dict_key_prefix, date): cert_ca_fullchain.decode('utf-8'),
+                    '%s.cert.%s' % (dict_key_prefix, date): cert.decode('utf-8'),
+                    '%s.key.%s' % (dict_key_prefix, date): cle.decode('utf-8'),
+                    '%s.key_cert.%s' % (dict_key_prefix, date): cle_cert.decode('utf-8')
                 }
 
                 groupes_certs[date] = groupe
 
-        self.__logger.debug("Liste certs: %s" % str(groupes_certs))
+        # self.__logger.debug("Liste certs: %s" % str(groupes_certs))
         # Transmettre les secrets
-        for groupe in groupes_certs.values():
-            for id_secret, contenu in groupe.items():
-                message = {
-                    "Name": id_secret,
-                    "Data": contenu.decode('utf-8')
-                }
-                resultat = self.__docker.post('secrets/create', message)
-                self.__logger.debug("Secret %s, resultat %s" % (id_secret, resultat.status_code))
+        self._deployer_certs(groupes_certs)
 
 
     def deployer_certs_web(self):
         pass
+
+    def _deployer_certs(self, groupes):
+        for groupe in groupes.values():
+            for id_secret, contenu in groupe.items():
+                message = {
+                    "Name": id_secret,
+                    "Data": contenu
+                }
+                resultat = self.__docker.post('secrets/create', message)
+                self.__logger.debug("Secret %s, resultat %s" % (id_secret, resultat.status_code))
 
     def deployer_motsdepasse_python(self):
         pass
