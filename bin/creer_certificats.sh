@@ -62,6 +62,7 @@ creer_ssrootcert() {
   # Generer un mot de passe (s'il n'existe pas deja - pas overwrite)
   generer_pass_random $PWDFILE
 
+  NOM_NOEUD= \
   openssl req -x509 -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
             -sha512 -days $DAYS  -out $CERT -outform PEM \
             -keyout $KEY -keyform PEM -subj $SUBJECT \
@@ -80,6 +81,8 @@ creer_millegrille_cert() {
   #  CURDATE
   set -e
 
+  echo "[INFO] Creation certificat millegrille $NOM_MILLEGRILLE"
+
   NOMCLE=${NOM_MILLEGRILLE}_millegrille
   SUBJECT="/O=${NOM_MILLEGRILLE}/OU=MilleGrille/CN=${NOM_MILLEGRILLE}"
 
@@ -91,12 +94,14 @@ creer_millegrille_cert() {
   # Generer un mot de passe (s'il n'existe pas deja - pas overwrite)
   generer_pass_random $PWDFILE
 
+  NOM_NOEUD= \
   openssl req -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
                 -newkey rsa:2048 -sha512 -subj $SUBJECT \
                 -keyout $KEY -out $REQ -outform PEM -passout file:$PWDFILE.txt
 
   SIGNING_PASSWD_FILE=$REP_PWDS/${NOM_MILLEGRILLE}_ssroot
 
+  NOM_NOEUD= \
   openssl ca -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
              -name CA_root -batch -notext \
              -policy ca_signing_policy -extensions ca_signing_req \
@@ -105,15 +110,68 @@ creer_millegrille_cert() {
 
   ln -sf $CERT $REP_CERTS/${NOM_MILLEGRILLE}_millegrille.cert.pem
   ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_millegrille.key.pem
+  rm $REQ
 
   DBPATH=$REP_DBS/${NOM_MILLEGRILLE}_millegrille
   creer_rep_db $DBPATH
+
+  echo "[OK] Creation certificat millegrille $NOM_MILLEGRILLE complete"
+}
+
+creer_cert_noeud() {
+  # Params
+  # - TYPE_NOEUD: maitredescles, middleware, deployeur, noeud
+  # - EXTENSION: noeud_req_extensions, middleware_req_extensions
+  set -e
+
+  if [ -z $TYPE_NOEUD ]; then
+    TYPE_NOEUD=noeud
+  fi
+
+  if [ -z EXTENSION ]; then
+    EXTENSION=noeud_req_extensions
+  fi
+
+  echo "[INFO] Creation certificat $TYPE_NOEUD"
+
+  HOSTNAME=`cat /etc/hostname`
+
+  KEY=$REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.key.pem
+  CERT=$REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.cert.pem
+  REQ=$REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.req.pem
+  SUBJECT="/O=$NOM_MILLEGRILLE/OU=$TYPE_NOEUD/CN=$HOSTNAME"
+
+  PWDFILE=$REP_PWDS/${NOM_MILLEGRILLE}_millegrille
+
+  NOM_NOEUD= \
+  openssl req -newkey rsa:2048 -sha512 -nodes \
+              -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
+              -out $REQ -outform PEM -keyout $KEY -keyform PEM \
+              -subj $SUBJECT
+
+  NOM_NOEUD= \
+  openssl ca -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
+             -name CA_millegrille -batch -notext \
+             -policy ca_signing_policy -extensions $EXTENSION \
+             -passin file:$PWDFILE.txt \
+             -out $CERT -infiles $REQ
+
+  rm $REQ
+  ln -sf $CERT $REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}.cert.pem
+  ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}.key.pem
+
+  echo "[OK] Creation certificat $TYPE_NOEUD complet"
 }
 
 executer() {
   creer_repertoires
   creer_ssrootcert $CURDATE
   creer_millegrille_cert $CURDATE
+
+  # Noeuds middleware, deployeur, maitredescles
+  TYPE_NOEUD=middleware EXTENSION=middleware_req_extensions creer_cert_noeud
+  TYPE_NOEUD=deployeur EXTENSION=noeud_req_extensions creer_cert_noeud
+  TYPE_NOEUD=maitredescles EXTENSION=noeud_req_extensions creer_cert_noeud
 }
 
 executer
