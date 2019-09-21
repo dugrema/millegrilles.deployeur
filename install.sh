@@ -33,6 +33,11 @@ installer_deployeur() {
   cd $MG_CONSIGNATION
   sudo pip3 install -r requirements.txt
   sudo python3 setup.py install
+
+  # Fix bug 'cannot find abc'
+  sudo pip3 uninstall -y bson
+  sudo pip3 uninstall -y pymongo
+  sudo pip3 install pymongo
   cd ../..
 
   sudo pip3 install -r requirements.txt

@@ -5,6 +5,7 @@ from millegrilles.util.Daemon import Daemon
 
 import json
 import requests_unixsocket
+import logging
 
 
 class ConstantesEnvironnementMilleGrilles:
@@ -32,9 +33,12 @@ class DeployeurMilleGrilles(Daemon, ModeleConfiguration):
         self.__pidfile = '/var/run/mg-manager.pid'
         self.__stdout = '/var/logs/mg-manager.log'
         self.__stderr = '/var/logs/mg-manager.err'
+        self.__docker = DockerFacade()
 
         Daemon.__init__(self, self.__pidfile, self.__stdout, self.__stderr)
         ModeleConfiguration.__init__(self)
+
+        self.__logger = logging.getLogger('%s' % self.__class__.__name__)
 
     def initialiser(self, init_document=False, init_message=False, connecter=False):
         # Initialiser mais ne pas connecter a MQ
@@ -63,6 +67,12 @@ class DeployeurMilleGrilles(Daemon, ModeleConfiguration):
         """
         pass
 
+    def verifier_swarm_configure(self):
+        swarm_info = self.__docker.get_docker_swarm_info()
+        if swarm_info.get('message') is not None:
+            self.__logger.info("Swarm pas configure")
+            resultat = self.__docker.swarm_init()
+            self.__logger.info("Docker swarm initialise")
 
 class DockerFacade:
     """
@@ -77,21 +87,33 @@ class DockerFacade:
     def __format_unixsocket_docker(url):
         return url.replace('/', '%2F')
 
-    def get_session(self, url):
+    def get(self, url):
         r = self.__session.get('http+unix://%s/%s' % (self.__docker_socket_path, url))
         return r
 
+    def post(self, url, contenu):
+        r = self.__session.post('http+unix://%s/%s' % (self.__docker_socket_path, url), json=contenu)
+        return r
+
     def get_docker_version(self):
-        r = self.get_session('info')
+        r = self.get('info')
         registry_config = r.json()['RegistryConfig']
         docker_version = json.dumps(registry_config, indent=4)
         return docker_version
 
     def get_docker_swarm_info(self):
-        r = self.get_session('swarm')
-        swarm_info_str = r.json()
-        swarm_info = json.dumps(swarm_info_str, indent=4)
+        r = self.get('swarm')
+        swarm_info = r.json()
         return swarm_info
+
+    def swarm_init(self):
+        commande = {
+            "ListenAddr": "127.0.0.1"
+        }
+        resultat = self.post('swarm/init', commande)
+        if resultat.status_code != 200:
+            raise Exception("Erreur initialisation docker swarm")
+
 
 class DeployeurDockerMilleGrille:
     """
@@ -103,4 +125,6 @@ class DeployeurDockerMilleGrille:
         self.__contexte = None  # Le contexte est initialise une fois que MQ actif
 
 
-print(DockerFacade().get_docker_swarm_info())
+logging.basicConfig()
+logging.getLogger('__main__').setLevel(logging.DEBUG)
+print(DeployeurMilleGrilles().verifier_swarm_configure())
