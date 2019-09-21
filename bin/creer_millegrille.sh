@@ -12,9 +12,9 @@ if [ -z $NOM_MILLEGRILLE ]; then
 fi
 source /opt/millegrilles/etc/paths.env
 
-creer_repertoires() {
+creer_certificats_initiaux() {
   set -e
-  mkdir -p
+  echo "[INFO] Creation des certificats self-signed initiaux pour la MilleGrille $NOM_MILLEGRILLE"
 }
 
 echo "Creer la millegrille $NOM_MILLEGRILLE"
