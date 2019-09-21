@@ -6,7 +6,8 @@ from millegrilles.util.Daemon import Daemon
 import json
 import requests_unixsocket
 import logging
-
+import os
+import base64
 
 class ConstantesEnvironnementMilleGrilles:
 
@@ -23,6 +24,32 @@ class ConstantesEnvironnementMilleGrilles:
     REPERTOIRE_MILLEGRILLE_DBS = '%s/dbs' % REPERTOIRE_MILLEGRILLE_PKI
     REPERTOIRE_MILLEGRILLE_KEYS = '%s/keys' % REPERTOIRE_MILLEGRILLE_PKI
 
+    def __init__(self, nom_millegrille):
+        self.nom_millegrille = nom_millegrille
+
+    @property
+    def rep_certs(self):
+        return '%s/%s/%s' % (
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            self.nom_millegrille,
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_CERTS
+        )
+
+    @property
+    def rep_cles(self):
+        return '%s/%s/%s' % (
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            self.nom_millegrille,
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_KEYS
+        )
+
+    @property
+    def cert_ca_chain(self):
+        return '%s/%s_CA_chain.cert.pem' % (self.rep_certs, self.nom_millegrille)
+
+    @property
+    def cert_ca_fullchain(self):
+        return '%s/%s_fullchain.cert.pem' % (self.rep_certs, self.nom_millegrille)
 
 class VersionMilleGrille:
 
@@ -183,11 +210,14 @@ class DeployeurDockerMilleGrille:
         self.__nom_millegrille = nom_millegrille
         self.__contexte = None  # Le contexte est initialise une fois que MQ actif
         self.__docker = docker
+        self.constantes = ConstantesEnvironnementMilleGrilles(nom_millegrille)
+
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def configurer(self):
         self.charger_configuration_services()
         self.preparer_reseau()
+        self.deployer_certs_ssl()
         self.preparer_mq()
 
     def charger_configuration_services(self):
@@ -201,7 +231,6 @@ class DeployeurDockerMilleGrille:
         # Verifier que le service MQ est en fonction - sinon le deployer
         nom_service = '%s_mq' % self.__nom_millegrille
         etat_service_resp = self.__docker.info_service(nom_service)
-        self.__logger.info("Verif service, code: %d.\n%s" % (etat_service_resp.status_code, str(etat_service_resp.json())))
         if etat_service_resp.status_code == 200:
             if len(etat_service_resp.json()) == 0:
                 self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)
@@ -222,8 +251,62 @@ class DeployeurDockerMilleGrille:
         else:
             raise Exception("Erreur access Docker")
 
-    def deployer_certs_ssl(self):
-        pass
+    def deployer_certs_ssl(self, date=None):
+        # Faire une liste de tous les certificats et cles
+        nom_middleware = '%s_middleware_' % self.__nom_millegrille
+        rep_certs = self.constantes.rep_certs
+        rep_cles = self.constantes.rep_cles
+        certs_middleware = [f for f in os.listdir(rep_certs) if f.startswith(nom_middleware)]
+        self.__logger.debug("Certs middleware: %s" % str(certs_middleware))
+
+        with open('%s' % self.constantes.cert_ca_chain, 'rb') as fichier:
+            cert_ca_chain = base64.encodebytes(fichier.read())
+
+        with open('%s' % self.constantes.cert_ca_fullchain, 'rb') as fichier:
+            cert_ca_fullchain = base64.encodebytes(fichier.read())
+
+        # Grouper certs et cles, aussi generer key_cert dans meme fichier
+        groupes_certs = dict()
+        for cert_nom in certs_middleware:
+            cle_nom = cert_nom.replace('cert', 'key')
+            cert_noms = cert_nom.split('.')[0].split('_')
+            if len(cert_noms) == 4:
+                date = cert_noms[3]
+                self.__logger.debug("Cert %s et cle %s pour date %s" % (cert_nom, cle_nom, date))
+
+                # Charger contenu certificat et cle, combiner key_cert
+                with open('%s/%s' % (rep_certs, cert_nom), 'r') as fichier:
+                    cert = fichier.read()
+                with open('%s/%s' % (rep_cles, cle_nom), 'r') as fichier:
+                    cle = fichier.read()
+
+                cle_cert = '%s\n%s' % (cle, cert)
+                cert = base64.encodebytes(cert.encode('utf-8'))
+                cle = base64.encodebytes(cle.encode('utf-8'))
+                cle_cert = base64.encodebytes(cle_cert.encode('utf-8'))
+
+                dict_key_prefix = '%s.pki.middleware.ssl' % self.__nom_millegrille
+                groupe = {
+                    '%s.CAchain.%s' % (dict_key_prefix, date): cert_ca_chain,
+                    '%s.fullchain.%s' % (dict_key_prefix, date): cert_ca_fullchain,
+                    '%s.cert.%s' % (dict_key_prefix, date): cert,
+                    '%s.key.%s' % (dict_key_prefix, date): cle,
+                    '%s.key_cert.%s' % (dict_key_prefix, date): cle_cert
+                }
+
+                groupes_certs[date] = groupe
+
+        self.__logger.debug("Liste certs: %s" % str(groupes_certs))
+        # Transmettre les secrets
+        for groupe in groupes_certs.values():
+            for id_secret, contenu in groupe.items():
+                message = {
+                    "Name": id_secret,
+                    "Data": contenu.decode('utf-8')
+                }
+                resultat = self.__docker.post('secrets/create', message)
+                self.__logger.debug("Secret %s, resultat %s" % (id_secret, resultat.status_code))
+
 
     def deployer_certs_web(self):
         pass
