@@ -222,6 +222,20 @@ class DeployeurDockerMilleGrille:
         else:
             raise Exception("Erreur access Docker")
 
+    def deployer_certs_ssl(self):
+        pass
+
+    def deployer_certs_web(self):
+        pass
+
+    def deployer_motsdepasse_python(self):
+        pass
+
+    def deployer_service(self, configuration):
+        configuration['Name'] = '%s_%s' % (self.__nom_millegrille, configuration['Name'])
+
+
+
 logging.basicConfig()
 logging.getLogger('__main__').setLevel(logging.DEBUG)
 deployeur = DeployeurMilleGrilles()
