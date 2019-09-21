@@ -16,8 +16,30 @@ installer_docker() {
 
 }
 
+installer_deployeur() {
+  MG_CONSIGNATION=MilleGrilles.consignation.python
+
+  set -e
+  mkdir -p tmp/
+  cd tmp/
+
+  # Installer MilleGrilles.consignation.python
+  if [ ! -d $MG_CONSIGNATION ]; then
+    git clone ssh://mathieu@repository.maple.mdugre.info/var/lib/git/$MG_CONSIGNATION
+  else
+    git -C $MG_CONSIGNATION pull
+  fi
+  cd $MG_CONSIGNATION
+  sudo pip3 install -r requirements.txt
+  sudo python3 setup.py install
+  cd ../..
+
+  sudo pip3 install -r requirements.txt
+  sudo python3 setup.py install
+}
+
 preparer_comptes() {
-  # set -e  # Arreter execution sur erreur
+  set -e  # Arreter execution sur erreur
   echo "[INFO] Preparer comptes millegrilles"
   sudo groupadd $MILLEGRILLES_GROUP
   sudo useradd -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_DEPLOYEUR
@@ -46,7 +68,8 @@ preparer_opt() {
 # Execution de l'installation
 installer() {
   installer_docker
-  preparer_comptes
+  installer_deployeur
+  # preparer_comptes
   preparer_opt
 }
 
