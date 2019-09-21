@@ -52,8 +52,11 @@ installer() {
 
 creer_millegrille() {
   # Faire un hook vers la creation d'une millegrille si le parametre est inclus
+  if [ ! -z $1 ]; then
+    NOM_MILLEGRILLE=$1
+  fi
   if [ ! -z $NOM_MILLEGRILLE ]; then
-    sudo -u $MILLEGRILLES_USER_DEPLOYEUR $MILLEGRILLES_BIN/creer_millegrille.sh $NOM_MILLEGRILLE
+    $MILLEGRILLES_BIN/creer_millegrille.sh $NOM_MILLEGRILLE
   else
     echo
     echo "[INFO] Installation de la base millegrilles completee, il faut maintenant creer votre millegrilles"
@@ -63,4 +66,4 @@ creer_millegrille() {
 }
 
 installer
-creer_millegrille
+creer_millegrille $1

@@ -7,7 +7,7 @@ if [ -z $NOM_MILLEGRILLE ]; then
     echo
     exit 1
   else
-    NOM_MILLEGRILLE=$1
+    export NOM_MILLEGRILLE=$1
   fi
 fi
 
@@ -15,18 +15,19 @@ source /opt/millegrilles/etc/paths.env
 REP_MILLEGRILLE=$MILLEGRILLES_PATH/$NOM_MILLEGRILLE
 
 creer_repertoires() {
+  set -e
   REP_NGINX_LOCAL=$REP_MILLEGRILLE/$MILLEGRILLES_NGINX_LOCAL
   REP_CONSIGNATION_LOCAL=$REP_MILLEGRILLE/$MILLEGRILLES_CONSIGNATION_LOCAL
   REP_PKI=$REP_MILLEGRILLE/$MILLEGRILLES_PKI
 
-  mkdir -p $REP_NGINX_LOCAL $REP_CONSIGNATION_LOCAL
-  chmod 2775 $REP_MILLEGRILLE
+  sudo -u $MILLEGRILLES_USER_DEPLOYEUR mkdir -p $REP_NGINX_LOCAL $REP_CONSIGNATION_LOCAL $REP_PKI
+  sudo -u $MILLEGRILLES_USER_DEPLOYEUR chmod 2755 $REP_MILLEGRILLE
+
+  sudo chown $MILLEGRILLES_USER_MAITREDESCLES:$MILLEGRILLES_GROUP $REP_PKI
+  sudo chmod 2755 $REP_PKI
 }
 
-creer_certificats_initiaux() {
-  set -e
-  echo "[INFO] Creation des certificats self-signed initiaux pour la MilleGrille $NOM_MILLEGRILLE"
-}
-
-echo "Creer la millegrille $NOM_MILLEGRILLE"
+echo "[INFO] Creer la millegrille $NOM_MILLEGRILLE"
 creer_repertoires
+sudo -u $MILLEGRILLES_USER_MAITREDESCLES NOM_MILLEGRILLE=$NOM_MILLEGRILLE $MILLEGRILLES_BIN/creer_certificats.sh
+echo "[OK] La millegrille $NOM_MILLEGRILLE est prete pour le deploiement"

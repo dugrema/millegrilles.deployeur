@@ -63,12 +63,9 @@ creer_ssrootcert() {
   generer_pass_random $PWDFILE
 
   openssl req -x509 -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-          -name CA_ssroot \
-          -sha512 -days $DAYS \
-          -out $CERT -outform PEM \
-          -keyout $KEY -keyform PEM \
-          -subj $SUBJECT \
-          -passout file:$PWDFILE.txt
+            -sha512 -days $DAYS  -out $CERT -outform PEM \
+            -keyout $KEY -keyform PEM -subj $SUBJECT \
+            -passout file:$PWDFILE.txt
 
   ln -sf $CERT $REP_CERTS/${NOM_MILLEGRILLE}_ssroot.cert.pem
   ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_ssroot.key.pem
@@ -85,7 +82,6 @@ creer_millegrille_cert() {
 
   NOMCLE=${NOM_MILLEGRILLE}_millegrille
   SUBJECT="/O=${NOM_MILLEGRILLE}/OU=MilleGrille/CN=${NOM_MILLEGRILLE}"
-  let "DAYS=365 * 2"  # 2 ans
 
   KEY=$REP_KEYS/${NOM_MILLEGRILLE}_millegrille_${CURDATE}.key.pem
   CERT=$REP_CERTS/${NOM_MILLEGRILLE}_millegrille_${CURDATE}.cert.pem
@@ -95,39 +91,29 @@ creer_millegrille_cert() {
   # Generer un mot de passe (s'il n'existe pas deja - pas overwrite)
   generer_pass_random $PWDFILE
 
-  HOSTNAME=$HOSTNAME_SHORT DOMAIN_SUFFIX=$DOMAIN_SUFFIX \
   openssl req -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-              -newkey rsa:2048 -sha512 -subj $SUBJECT \
-              -out $REQ -outform PEM -keyout $KEY -keyform PEM \
-              -passout file:$PWDFILE.txt
+                -newkey rsa:2048 -sha512 -subj $SUBJECT \
+                -keyout $KEY -out $REQ -outform PEM -passout file:$PWDFILE.txt
 
-  SIGNING_CERT=
-  SIGNING_KEYFILE=
-  SIGNING_PASSWD_FILE=
+  SIGNING_PASSWD_FILE=$REP_PWDS/${NOM_MILLEGRILLE}_ssroot
 
   openssl ca -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-             -policy signing_policy -extensions signing_req \
-             -keyfile $SIGNING_KEYFILE -keyform PEM \
-             -passin file:$SIGNING_PASSWD_FILE \
-             -out $CERT -batch -notext -days $DAYS -infiles $REQ
+             -name CA_root -batch -notext \
+             -policy ca_signing_policy -extensions ca_signing_req \
+             -passin file:$SIGNING_PASSWD_FILE.txt \
+             -out $CERT -infiles $REQ
 
-  openssl ca -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-             -name CA_root \
-             -policy signing_policy -extensions signing_req \
-             -cert $SIGNING_CERT -keyfile $SIGNING_KEYFILE -keyform PEM \
-             -passin file:$SIGNING_PASSWD_FILE \
-             -out $CERT -batch -notext -days $DAYS -infiles $REQ
+  ln -sf $CERT $REP_CERTS/${NOM_MILLEGRILLE}_millegrille.cert.pem
+  ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_millegrille.key.pem
 
-  ln -sf $CERT $REP_CERTS/${NOM_MILLEGRILLE}_ssroot.cert.pem
-  ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_ssroot.key.pem
-
-  SSROOT_DBPATH=$REP_DBS/${NOM_MILLEGRILLE}_root
-  creer_rep_db $SSROOT_DBPATH
+  DBPATH=$REP_DBS/${NOM_MILLEGRILLE}_millegrille
+  creer_rep_db $DBPATH
 }
 
 executer() {
   creer_repertoires
   creer_ssrootcert $CURDATE
+  creer_millegrille_cert $CURDATE
 }
 
 executer
