@@ -9,7 +9,7 @@ REP_PKI=$REP_MILLEGRILLE/$MILLEGRILLES_PKI
 REP_CERTS=$REP_MILLEGRILLE/$MILLEGRILLES_CERTS
 REP_DBS=$REP_MILLEGRILLE/$MILLEGRILLES_DBS
 REP_KEYS=$REP_MILLEGRILLE/$MILLEGRILLES_KEYS
-REP_DEPLOYEURKEYS=$REP_MILLEGRILLE/$MILLEGRILLES_DEPLOYEURKEYS
+REP_DEPLOYEURKEYS=$REP_MILLEGRILLE/$MILLEGRILLES_DEPLOYEUR_SECRETS
 REP_PWDS=$REP_MILLEGRILLE/$MILLEGRILLES_PWDS
 HOSTNAME=`cat /etc/hostname`
 
@@ -22,7 +22,7 @@ creer_repertoires() {
 
   chmod 2755 $REP_PKI $REP_CERTS
   chmod 2750 $REP_DBS
-  chmod 700 $REP_KEYS $REP_PWDS
+  chmod 750 $REP_KEYS $REP_PWDS
   chmod 700 $REP_DEPLOYEURKEYS
 
   echo "[OK] Repertoires PKI prets"
@@ -169,6 +169,12 @@ deplacer_cle_deployeur() {
   mv $KEY* $REP_DEPLOYEURKEYS
 }
 
+preperation_acces_deployeur() {
+  # On rend la cle middleware accessibles pour inclusion dans docker secrets
+  # Idealement le deployeur les remets a 400 des que c'est fait.
+  chmod -R 440 $REP_KEYS/${NOM_MILLEGRILLE}_middleware*
+}
+
 creer_CA_files() {
   CERT_ROOT=$REP_CERTS/${NOM_MILLEGRILLE}_ssroot_${CURDATE}.cert.pem
   CERT_MG=$REP_CERTS/${NOM_MILLEGRILLE}_millegrille_${CURDATE}.cert.pem
@@ -190,6 +196,7 @@ executer() {
 
   creer_CA_files
   deplacer_cle_deployeur
+  preperation_acces_deployeur
 }
 
 executer

@@ -156,6 +156,23 @@ class DockerFacade:
             }
             self.post('networks/create', config_reseau)
 
+    def liste_services(self):
+        liste = self.get('services')
+        return liste
+
+    def info_service(self, nom_service):
+        liste = self.post('services', {'name': nom_service})
+        return liste
+
+    def preparer_service(self, service):
+        pass
+
+    def retirer_service(self, nom_service):
+        pass
+
+    def deployer_secrets(self, liste):
+        pass
+
 
 class DeployeurDockerMilleGrille:
     """
@@ -166,10 +183,26 @@ class DeployeurDockerMilleGrille:
         self.__nom_millegrille = nom_millegrille
         self.__contexte = None  # Le contexte est initialise une fois que MQ actif
         self.__docker = docker
+        self.__logger = logging.getLogger('%s' % self.__class__.__name__)
 
     def configurer(self):
+        self.charger_configuration_services()
+        self.preparer_reseau()
+        self.preparer_mq()
+
+    def charger_configuration_services(self):
+        config_version = VersionMilleGrille()
+
+    def preparer_reseau(self):
         nom_reseau = 'mg_%s_net' % self.__nom_millegrille
         self.__docker.configurer_reseau(nom_reseau)
+
+    def preparer_mq(self):
+        # Verifier que le service MQ est en fonction - sinon le deployer
+        nom_service = '%s.mq' % self.__nom_millegrille
+        etat_service_resp = self.__docker.info_service(nom_service)
+        if etat_service_resp.status_code == 404:
+            self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)
 
 
 logging.basicConfig()
