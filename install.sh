@@ -17,6 +17,7 @@ installer_docker() {
 }
 
 installer_deployeur() {
+  echo "[INFO] Installer deployeur Python et dependances"
   MG_CONSIGNATION=MilleGrilles.consignation.python
 
   set -e
@@ -36,6 +37,7 @@ installer_deployeur() {
 
   sudo pip3 install -r requirements.txt
   sudo python3 setup.py install
+  echo "[OK] Deployeur Python et dependances installes"
 }
 
 preparer_comptes() {

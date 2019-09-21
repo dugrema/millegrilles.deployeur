@@ -9,18 +9,20 @@ REP_PKI=$REP_MILLEGRILLE/$MILLEGRILLES_PKI
 REP_CERTS=$REP_MILLEGRILLE/$MILLEGRILLES_CERTS
 REP_DBS=$REP_MILLEGRILLE/$MILLEGRILLES_DBS
 REP_KEYS=$REP_MILLEGRILLE/$MILLEGRILLES_KEYS
+REP_DEPLOYEURKEYS=$REP_MILLEGRILLE/$MILLEGRILLES_DEPLOYEURKEYS
 REP_PWDS=$REP_MILLEGRILLE/$MILLEGRILLES_PWDS
 
 creer_repertoires() {
   set -e
   echo "[INFO] Creation repertoires PKI"
-  mkdir -p $REP_CERTS $REP_DBS $REP_KEYS $REP_PWDS
+  mkdir -p $REP_CERTS $REP_DBS $REP_KEYS $REP_DEPLOYEURKEYS $REP_PWDS
 
   chown -R $MILLEGRILLES_USER_MAITREDESCLES:$MILLEGRILLES_GROUP $REP_PKI
 
   chmod 2755 $REP_PKI $REP_CERTS
   chmod 2750 $REP_DBS
   chmod 700 $REP_KEYS $REP_PWDS
+  chmod 700 $REP_DEPLOYEURKEYS
 
   echo "[OK] Repertoires PKI prets"
 }
@@ -163,6 +165,11 @@ creer_cert_noeud() {
   echo "[OK] Creation certificat $TYPE_NOEUD complet"
 }
 
+deplacer_cle_deployeur() {
+  KEY=$REP_KEYS/${NOM_MILLEGRILLE}_deployeur
+  mv $KEY* $REP_DEPLOYEURKEYS
+}
+
 executer() {
   creer_repertoires
   creer_ssrootcert $CURDATE
@@ -170,8 +177,10 @@ executer() {
 
   # Noeuds middleware, deployeur, maitredescles
   TYPE_NOEUD=middleware EXTENSION=middleware_req_extensions creer_cert_noeud
-  TYPE_NOEUD=deployeur EXTENSION=noeud_req_extensions creer_cert_noeud
   TYPE_NOEUD=maitredescles EXTENSION=noeud_req_extensions creer_cert_noeud
+  TYPE_NOEUD=deployeur EXTENSION=noeud_req_extensions creer_cert_noeud
+
+  deplacer_cle_deployeur
 }
 
 executer
