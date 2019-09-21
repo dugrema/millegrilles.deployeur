@@ -11,6 +11,7 @@ REP_DBS=$REP_MILLEGRILLE/$MILLEGRILLES_DBS
 REP_KEYS=$REP_MILLEGRILLE/$MILLEGRILLES_KEYS
 REP_DEPLOYEURKEYS=$REP_MILLEGRILLE/$MILLEGRILLES_DEPLOYEURKEYS
 REP_PWDS=$REP_MILLEGRILLE/$MILLEGRILLES_PWDS
+HOSTNAME=`cat /etc/hostname`
 
 creer_repertoires() {
   set -e
@@ -136,8 +137,6 @@ creer_cert_noeud() {
 
   echo "[INFO] Creation certificat $TYPE_NOEUD"
 
-  HOSTNAME=`cat /etc/hostname`
-
   KEY=$REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.key.pem
   CERT=$REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.cert.pem
   REQ=$REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.req.pem
@@ -170,6 +169,15 @@ deplacer_cle_deployeur() {
   mv $KEY* $REP_DEPLOYEURKEYS
 }
 
+creer_CA_files() {
+  CERT_ROOT=$REP_CERTS/${NOM_MILLEGRILLE}_ssroot_${CURDATE}.cert.pem
+  CERT_MG=$REP_CERTS/${NOM_MILLEGRILLE}_millegrille_${CURDATE}.cert.pem
+  CERT_MIDDLEWARE=$REP_CERTS/${NOM_MILLEGRILLE}_middleware_${HOSTNAME}_${CURDATE}.cert.pem
+
+  cat $CERT_MG $CERT_ROOT > $REP_MILLEGRILLE/$MILLEGRILLES_CA_CHAIN
+  cat $CERT_MIDDLEWARE $CERT_MG $CERT_ROOT > $REP_MILLEGRILLE/$MILLEGRILLES_CA_FULLCHAIN
+}
+
 executer() {
   creer_repertoires
   creer_ssrootcert $CURDATE
@@ -180,6 +188,7 @@ executer() {
   TYPE_NOEUD=maitredescles EXTENSION=noeud_req_extensions creer_cert_noeud
   TYPE_NOEUD=deployeur EXTENSION=noeud_req_extensions creer_cert_noeud
 
+  creer_CA_files
   deplacer_cle_deployeur
 }
 
