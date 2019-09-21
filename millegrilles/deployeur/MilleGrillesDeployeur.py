@@ -112,8 +112,8 @@ class DockerFacade:
     def __format_unixsocket_docker(url):
         return url.replace('/', '%2F')
 
-    def get(self, url):
-        r = self.__session.get('http+unix://%s/%s' % (self.__docker_socket_path, url))
+    def get(self, url, json=None):
+        r = self.__session.get('http+unix://%s/%s' % (self.__docker_socket_path, url), json=json)
         return r
 
     def post(self, url, contenu):
@@ -161,7 +161,7 @@ class DockerFacade:
         return liste
 
     def info_service(self, nom_service):
-        liste = self.post('services', {'name': nom_service})
+        liste = self.get('services', {'Name': nom_service})
         return liste
 
     def preparer_service(self, service):
@@ -183,7 +183,7 @@ class DeployeurDockerMilleGrille:
         self.__nom_millegrille = nom_millegrille
         self.__contexte = None  # Le contexte est initialise une fois que MQ actif
         self.__docker = docker
-        self.__logger = logging.getLogger('%s' % self.__class__.__name__)
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def configurer(self):
         self.charger_configuration_services()
@@ -199,11 +199,28 @@ class DeployeurDockerMilleGrille:
 
     def preparer_mq(self):
         # Verifier que le service MQ est en fonction - sinon le deployer
-        nom_service = '%s.mq' % self.__nom_millegrille
+        nom_service = '%s_mq' % self.__nom_millegrille
         etat_service_resp = self.__docker.info_service(nom_service)
-        if etat_service_resp.status_code == 404:
-            self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)
+        self.__logger.info("Verif service, code: %d.\n%s" % (etat_service_resp.status_code, str(etat_service_resp.json())))
+        if etat_service_resp.status_code == 200:
+            if len(etat_service_resp.json()) == 0:
+                self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)
 
+                with open('/opt/millegrilles/etc/docker.mq.json', 'r') as fichier:
+                    config_str = fichier.read()
+                mq_config = json.loads(config_str)
+                mq_config['Name'] = nom_service
+
+                del mq_config['TaskTemplate']['ContainerSpec']['Secrets']
+
+                etat_service_resp = self.__docker.post('services/create', mq_config)
+                if 200 < etat_service_resp.status_code < 299:
+                    self.__logger.info("Deploiement de MQ avec ID %s" % str(etat_service_resp.json()))
+                else:
+                    self.__logger.error("MQ Service deploy erreur: %d\n%s" % (
+                        etat_service_resp.status_code, str(etat_service_resp.json())))
+        else:
+            raise Exception("Erreur access Docker")
 
 logging.basicConfig()
 logging.getLogger('__main__').setLevel(logging.DEBUG)
