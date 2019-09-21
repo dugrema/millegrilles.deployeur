@@ -7,12 +7,12 @@
       "Mounts": [
         {
           "Type": "volume",
-          "Source": "mg-middleware-rabbitmq-data",
+          "Source": "mg-middleware-rabbitmq-data-${NOM_MILLEGRILLE}",
           "Target": "/var/lib/rabbitmq"
         },
         {
           "Type": "bind",
-          "Source": "/opt/millegrilles/dev2/mounts/mq-accounts",
+          "Source": "${MOUNTS}/mq-accounts",
           "Target": "/opt/rabbitmq/conf"
         }
       ],
