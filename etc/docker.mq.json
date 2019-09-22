@@ -20,7 +20,7 @@
         {
           "SecretName": "pki.middleware.ssl.cert",
           "File": {
-            "Name": "pki.middleware.ssl.cert",
+            "Name": "pki.millegrilles.ssl.cert",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -29,7 +29,7 @@
         {
           "SecretName": "pki.middleware.ssl.key",
           "File": {
-            "Name": "pki.middleware.ssl.key",
+            "Name": "pki.millegrilles.ssl.key",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -47,7 +47,7 @@
         {
           "SecretName": "pki.middleware.ssl.cert",
           "File": {
-            "Name": "pki.middleware.wadmin.cert",
+            "Name": "pki.millegrilles.wadmin.cert",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -56,7 +56,7 @@
         {
           "SecretName": "pki.middleware.ssl.key",
           "File": {
-            "Name": "pki.middleware.wadmin.key",
+            "Name": "pki.millegrilles.wadmin.key",
             "UID": "0",
             "GID": "0",
             "Mode": 292
