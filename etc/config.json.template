@@ -1,0 +1,3 @@
+{
+  "MG_MONGO_PASSWORD": "${MONGOPASSWORD}"
+}

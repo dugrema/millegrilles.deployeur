@@ -9,6 +9,8 @@ import requests_unixsocket
 import logging
 import os
 import base64
+import secrets
+import datetime
 
 class ConstantesEnvironnementMilleGrilles:
 
@@ -17,6 +19,8 @@ class ConstantesEnvironnementMilleGrilles:
     REPERTOIRE_MILLEGRILLES_ETC = '%s/etc' % REPERTOIRE_MILLEGRILLES
     REPERTOIRE_MILLEGRILLES_BIN = '%s/bin' % REPERTOIRE_MILLEGRILLES
     REPERTOIRE_MILLEGRILLES_CACERTS = '%s/cacerts' % REPERTOIRE_MILLEGRILLES
+    FICHIER_MONGO_SCRIPT_TEMPLATE = '%s/mongo_createusers.js.template' % REPERTOIRE_MILLEGRILLES_ETC
+    FICHIER_JSON_COMPTES_TEMPLATE = '%s/config.json.template' % REPERTOIRE_MILLEGRILLES_ETC
 
     # Par millegrille
     REPERTOIRE_MILLEGRILLE_MOUNTS = 'mounts'
@@ -357,6 +361,7 @@ class DeployeurDockerMilleGrille:
         # Version des secrets a utiliser
         self.__certificats = dict()
         self._dates_secrets = dict()
+        self.__mongo_config_datetag = None
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
@@ -391,9 +396,60 @@ class DeployeurDockerMilleGrille:
             # Fichier n'existe pas, on continue
             etat_mongo = dict()
 
+        # Verifier si on doit configurer de nouveaux secrets
+        if etat_mongo.get('comptesInitiaux') is None:
+            with open(ConstantesEnvironnementMilleGrilles.FICHIER_MONGO_SCRIPT_TEMPLATE, 'r') as fichier:
+                script_js = fichier.read()
+
+            with open(ConstantesEnvironnementMilleGrilles.FICHIER_JSON_COMPTES_TEMPLATE, 'r') as fichier:
+                template_json = fichier.read()
+
+            # Generer les mots de passe
+            mot_passe_transaction = secrets.token_hex(16)
+            mot_passe_domaines = secrets.token_hex(16)
+            mot_passe_root_mongo = secrets.token_hex(16)
+
+            script_js = script_js.replace('${NOM_MILLEGRILLE}', self.__nom_millegrille)
+            script_js = script_js.replace('${PWD_TRANSACTION}', mot_passe_transaction)
+            script_js = script_js.replace('${PWD_MGDOMAINES}', mot_passe_domaines)
+
+            compte_transaction = template_json.replace('${MONGOPASSWORD}', mot_passe_transaction)
+            compte_domaines = template_json.replace('${MONGOPASSWORD}', mot_passe_domaines)
+
+            # Inserer secrets dans docker
+            # passwd.mongo.root
+            # passwd.mongo.scriptinit
+            # passwd.python.domaines.json
+            # passwd.python.transactions.json
+            datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+            messages = [
+                {
+                    "Name": '%s.passwd.mongo.root.%s' % (self.__nom_millegrille, datetag),
+                    "Data": base64.encodebytes(mot_passe_root_mongo.encode('utf-8')).decode('utf-8')
+                }, {
+                    "Name": '%s.passwd.mongo.scriptinit.%s' % (self.__nom_millegrille, datetag),
+                    "Data": base64.encodebytes(script_js.encode('utf-8')).decode('utf-8')
+                }, {
+                    "Name": '%s.passwd.python.domaines.json.%s' % (self.__nom_millegrille, datetag),
+                    "Data": base64.encodebytes(mot_passe_domaines.encode('utf-8')).decode('utf-8')
+                }, {
+                    "Name": '%s.passwd.python.transactions.json.%s' % (self.__nom_millegrille, datetag),
+                    "Data": base64.encodebytes(mot_passe_transaction.encode('utf-8')).decode('utf-8')
+                },
+            ]
+
+            for message in messages:
+                resultat = self.__docker.post('secrets/create', message)
+                self.__logger.info("Insertion secret %s: %s" % (message["Name"], resultat.status_code))
+
+            etat_mongo['datetag'] = datetag
+            etat_mongo['comptesInitiaux'] = True
+
         # Enregistrer_fichier maj
         with open(etat_filename, 'w') as fichier:
             fichier.write(json.dumps(etat_mongo))
+
+        self.__mongo_config_datetag = etat_mongo['datetag']
 
     def configurer_mq(self):
         """
