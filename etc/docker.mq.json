@@ -12,7 +12,7 @@
         },
         {
           "Type": "bind",
-          "Source": "${MOUNTS}/mq-accounts",
+          "Source": "${MOUNTS}/mq/accounts",
           "Target": "/opt/rabbitmq/conf"
         }
       ],

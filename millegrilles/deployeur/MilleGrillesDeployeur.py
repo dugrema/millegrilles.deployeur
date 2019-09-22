@@ -84,6 +84,9 @@ class ServiceDockerConfiguration:
         self.__secrets = secrets
         self.__secrets_par_nom = dict()
         self.__dates_secrets = dict()
+
+        self.__repository = 'registry.maple.mdugre.info:5000'
+
         self.constantes = ConstantesEnvironnementMilleGrilles(nom_millegrille)
 
         config_json_filename = '/opt/millegrilles/etc/docker.%s.json' % nom_service
@@ -126,7 +129,7 @@ class ServiceDockerConfiguration:
         container_spec = task_template['ContainerSpec']
 
         # Remplacer image au besoin
-        image = container_spec['Image']
+        container_spec['Image'] = '%s/%s' % (self.__repository, container_spec['Image'])
 
         mounts = container_spec.get('Mounts')
         for mount in mounts:
