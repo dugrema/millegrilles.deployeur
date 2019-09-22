@@ -539,16 +539,9 @@ class DeployeurDockerMilleGrille:
 
         # Charger les autres certs
         rep_certs = self.constantes.rep_certs
-        for cert_nom in ['maitredescles', 'middleware']:
+        for cert_nom in ['maitredescles', 'middleware', 'deployeur']:
             # Conserver le cert pour creer les comptes dans MQ
             path_cert = '%s/%s_%s.cert.pem' % (rep_certs, self.__nom_millegrille, cert_nom)
-            with open(path_cert, 'r') as fichier:
-                self.ajouter_cert_ssl(fichier.read())
-
-        rep_secrets_deployeur = self.constantes.rep_secrets_deployeur
-        for cert_nom in ['deployeur']:
-            # Conserver le cert pour creer les comptes dans MQ
-            path_cert = '%s/%s_%s.cert.pem' % (rep_secrets_deployeur, self.__nom_millegrille, cert_nom)
             with open(path_cert, 'r') as fichier:
                 self.ajouter_cert_ssl(fichier.read())
 
@@ -616,7 +609,7 @@ class DeployeurDockerMilleGrille:
             )
             new_mq_accounts = self.constantes.rep_mq_accounts(
                 ConstantesEnvironnementMilleGrilles.MQ_NEW_USERS_FILE)
-            with open(new_mq_accounts, 'w+') as fichier:
+            with open(new_mq_accounts, 'a') as fichier:
                 fichier.write(compte)
 
 
