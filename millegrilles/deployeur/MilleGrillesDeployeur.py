@@ -125,16 +125,22 @@ class ServiceDockerConfiguration:
     def remplacer_variables(self):
         # Mounts
         config = self.__configuration_json
+
+        # /TaskTemplate
         task_template = config['TaskTemplate']
+
+        # /TaskTemplate/ContainerSpec
         container_spec = task_template['ContainerSpec']
 
-        # Remplacer image au besoin
+        # /TaskTemplate/ContainerSpec/Image
         container_spec['Image'] = '%s/%s' % (self.__repository, container_spec['Image'])
 
+        # /TaskTemplate/ContainerSpec/Mounts
         mounts = container_spec.get('Mounts')
         for mount in mounts:
             mount['Source'] = self.mapping(mount['Source'])
 
+        # /TaskTemplate/ContainerSpec/Secrets
         secrets = container_spec.get('Secrets')
         for secret in secrets:
             secret_name = secret['SecretName']
@@ -143,6 +149,15 @@ class ServiceDockerConfiguration:
                 secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
                 secret['SecretName'] = secret_name
                 secret['SecretID'] = self.__secrets_par_nom[secret_name]
+
+        # /TaskTemplate/Networks/Target
+        networks = task_template['Networks']
+        for network in networks:
+            network['Target'] = self.mapping(network['Target'])
+
+        # /Labels
+        config['Labels']['millegrille'] = self.__nom_millegrille
+
 
     def mapping(self, valeur):
         for cle in self.constantes.mapping:
