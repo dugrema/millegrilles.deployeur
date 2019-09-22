@@ -337,7 +337,7 @@ class DockerFacade:
         return liste
 
     def info_service(self, nom_service):
-        liste = self.get('services?filters=name=%s' % nom_service)
+        liste = self.get('services?filters={"name": ["%s"]}' % nom_service)
         return liste
 
 

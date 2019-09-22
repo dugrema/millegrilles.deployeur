@@ -3,12 +3,6 @@
   "TaskTemplate": {
     "ContainerSpec": {
       "Image": "mg_mongo:4.0_4",
-      "Command": [
-          "--replSet rs0",
-          "--sslMode requireSSL",
-          "--sslPEMKeyFile /run/secrets/pki.millegrilles.ssl.key_cert",
-          "--sslCAFile /run/secrets/pki.millegrilles.ssl.CAchain"
-      ],
       "Hostname": "mongo.local",
       "Env": [
         "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}",
@@ -53,6 +47,15 @@
           "SecretName": "pki.middleware.ssl.key",
           "File": {
             "Name": "pki.millegrilles.wadmin.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        },
+        {
+          "SecretName": "passwd.mongo.scriptinit",
+          "File": {
+            "Name": "mongo.accounts.js",
             "UID": "0",
             "GID": "0",
             "Mode": 292
