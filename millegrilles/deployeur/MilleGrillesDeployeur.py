@@ -119,6 +119,16 @@ class ServiceDockerConfiguration:
         self.remplacer_variables()
 
         self.__logger.debug("Template configuration docker MQ:\n%s" % str(mq_config))
+        config_path = '%s/%s' % (
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
+            self.__nom_millegrille
+        )
+        os.makedirs(config_path)
+        config_filename = '%s/config.%s.json' % (config_path,self.__nom_service)
+        with open(config_filename, 'wb') as fichier:
+            contenu = json.dumps(mq_config, indent=4)
+            contenu = contenu.encode('utf-8')
+            fichier.write(contenu)
 
         return mq_config
 
@@ -157,7 +167,6 @@ class ServiceDockerConfiguration:
 
         # /Labels
         config['Labels']['millegrille'] = self.__nom_millegrille
-
 
     def mapping(self, valeur):
         for cle in self.constantes.mapping:
