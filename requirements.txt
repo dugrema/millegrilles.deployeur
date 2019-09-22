@@ -1,7 +1,7 @@
 requests-unixsocket
 miniupnpc==2.0.2
 
-cryptography
+cryptography==2.7
 pika==0.12
 
 pymongo

@@ -116,6 +116,6 @@
     ]
   },
   "Labels": {
-    "millegrille": "test1"
+    "millegrille": "${NOM_MILLEGRILLE}"
   }
 }

@@ -2,6 +2,7 @@
 # Responsable de l'installation, mise a jour et health check
 from millegrilles.util.UtilScriptLigneCommande import ModeleConfiguration
 from millegrilles.util.Daemon import Daemon
+from millegrilles.SecuritePKI import EnveloppeCertificat
 
 import json
 import requests_unixsocket
@@ -24,14 +25,21 @@ class ConstantesEnvironnementMilleGrilles:
     REPERTOIRE_MILLEGRILLE_DBS = '%s/dbs' % REPERTOIRE_MILLEGRILLE_PKI
     REPERTOIRE_MILLEGRILLE_KEYS = '%s/keys' % REPERTOIRE_MILLEGRILLE_PKI
 
+    # Applications et comptes
+    MONGO_INITDB_ROOT_USERNAME = 'root'
+
     def __init__(self, nom_millegrille):
         self.nom_millegrille = nom_millegrille
         self.__mapping()
 
     def __mapping(self):
+        """
+        Liste de champs qui seront remplaces dans la configuration json des services
+        """
         self.mapping = {
             "NOM_MILLEGRILLE": self.nom_millegrille,
             "MOUNTS": self.rep_mounts,
+            "MONGO_INITDB_ROOT_USERNAME": ConstantesEnvironnementMilleGrilles.MONGO_INITDB_ROOT_USERNAME,
         }
 
     @property
@@ -65,6 +73,13 @@ class ConstantesEnvironnementMilleGrilles:
     @property
     def cert_ca_fullchain(self):
         return '%s/%s_fullchain.cert.pem' % (self.rep_certs, self.nom_millegrille)
+
+    def fichier_etc_mg(self, path):
+        return '%s/%s/%s' % (
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
+            self.nom_millegrille,
+            path
+        )
 
 class VersionMilleGrille:
 
@@ -123,7 +138,6 @@ class ServiceDockerConfiguration:
             ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
             self.__nom_millegrille
         )
-        os.makedirs(config_path, exist_ok=True)
         config_filename = '%s/docker.%s.json' % (config_path,self.__nom_service)
         with open(config_filename, 'wb') as fichier:
             contenu = json.dumps(mq_config, indent=4)
@@ -144,6 +158,15 @@ class ServiceDockerConfiguration:
 
         # /TaskTemplate/ContainerSpec/Image
         container_spec['Image'] = '%s/%s' % (self.__repository, container_spec['Image'])
+
+        # /TaskTemplate/ContainerSpec/Env
+        env_list = container_spec.get('Env')
+        if env_list is not None:
+            # Appliquer param mapping aux parametres
+            updated_env = list()
+            for env_param in env_list:
+                updated_env.append(self.mapping(env_param))
+            container_spec['Env'] = updated_env
 
         # /TaskTemplate/ContainerSpec/Mounts
         mounts = container_spec.get('Mounts')
@@ -206,10 +229,6 @@ class DeployeurMilleGrilles(Daemon, ModeleConfiguration):
         """
         # Verifier que docker est accessible
         self.configurer_swarm()
-
-        # Verifier que les secrets sont deployes sur docker
-
-        self.__logger.debug("Environnement docker pour millegrilles est pret")
 
     def configurer_millegrilles(self):
         for deployeur in self.__millegrilles:
@@ -299,15 +318,6 @@ class DockerFacade:
         liste = self.get('services', {'Name': nom_service})
         return liste
 
-    def preparer_service(self, service):
-        pass
-
-    def retirer_service(self, nom_service):
-        pass
-
-    def deployer_secrets(self, liste):
-        pass
-
 
 class DeployeurDockerMilleGrille:
     """
@@ -321,18 +331,79 @@ class DeployeurDockerMilleGrille:
         self.constantes = ConstantesEnvironnementMilleGrilles(nom_millegrille)
 
         # Version des secrets a utiliser
+        self.__certificats = dict()
         self._dates_secrets = dict()
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def configurer(self):
+        etc_mg = '%s/%s' % (ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC, self.__nom_millegrille)
+        os.makedirs(etc_mg, exist_ok=True)
+
         self.charger_configuration_services()
         self.preparer_reseau()
+
+        # Verifier que les secrets sont deployes sur docker
         self._dates_secrets['pki.millegrilles.ssl'] = self.deployer_certs_ssl()
         self._dates_secrets['pki.millegrilles.wadmin'] = self._dates_secrets['pki.millegrilles.ssl']
-
         self.__logger.info("Date fichiers cert: ssl=%s" % str(self._dates_secrets))
+
+        # Activer MQ
+        self.configurer_mq()
         self.activer_mq()
+
+        # Activer Mongo
+        self.configurer_mongo()
+
+        self.__logger.debug("Environnement docker pour millegrilles est pret")
+
+    def configurer_mongo(self):
+        etat_filename = self.constantes.fichier_etc_mg('mongo.etat.json')
+
+        try:
+            with open(etat_filename, 'r') as fichier:
+                fichier_str = fichier.read()
+                etat_mongo = json.loads(fichier_str)
+        except FileNotFoundError as fnf:
+            # Fichier n'existe pas, on continue
+            etat_mongo = dict()
+
+        # Enregistrer_fichier maj
+        with open(etat_filename, 'w') as fichier:
+            fichier.write(json.dumps(etat_mongo))
+
+    def configurer_mq(self):
+        """
+        S'assure que les liens compte-certificat sont configures dans MQ
+        """
+        # Fair liste des sujets de certs, comparer a liste de traitement MQ
+        etat_filename = self.constantes.fichier_etc_mg('mq.etat.json')
+
+        try:
+            with open(etat_filename, 'r') as fichier:
+                fichier_str = fichier.read()
+                etat_mongo = json.loads(fichier_str)
+        except FileNotFoundError as fnf:
+            # Fichier n'existe pas, on continue
+            etat_mongo = dict()
+
+        # Verifier la date du plus recent certificat configure
+        date_max_certificat = etat_mongo.get('date_max_certificat')
+        if date_max_certificat is None:
+            date_max_certificat = '0'
+
+        for sujet in self.__certificats:
+            enveloppe = self.__certificats[sujet]
+            if enveloppe.date_valide():
+                date_concat = enveloppe.date_valide_concat()
+                if int(date_concat) > int(date_max_certificat):
+                    date_max_certificat = date_concat
+
+        etat_mongo['date_max_certificat'] = date_max_certificat
+
+        # Enregistrer_fichier maj
+        with open(etat_filename, 'w') as fichier:
+            fichier.write(json.dumps(etat_mongo))
 
     def charger_configuration_services(self):
         config_version = VersionMilleGrille()
@@ -379,6 +450,12 @@ class DeployeurDockerMilleGrille:
                     etat_service_resp.status_code, str(etat_service_resp.json())))
 
 
+    def ajouter_cert_ssl(self, certificat):
+        enveloppe = EnveloppeCertificat(certificat_pem=certificat)
+        sujet = enveloppe.subject_rfc4514_string()
+        # Verifier si le certificat est expire
+        self.__certificats[sujet] = enveloppe
+
     def deployer_certs_ssl(self):
         # Faire une liste de tous les certificats et cles
         nom_middleware = '%s_middleware_' % self.__nom_millegrille
@@ -408,6 +485,9 @@ class DeployeurDockerMilleGrille:
                     cert = fichier.read()
                 with open('%s/%s' % (rep_cles, cle_nom), 'r') as fichier:
                     cle = fichier.read()
+
+                # Conserver le cert pour creer les comptes dans MQ
+                self.ajouter_cert_ssl(cert)
 
                 cle_cert = '%s\n%s' % (cle, cert)
                 cert = base64.encodebytes(cert.encode('utf-8'))
