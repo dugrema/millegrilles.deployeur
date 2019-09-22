@@ -123,8 +123,8 @@ class ServiceDockerConfiguration:
             ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
             self.__nom_millegrille
         )
-        os.makedirs(config_path)
-        config_filename = '%s/config.%s.json' % (config_path,self.__nom_service)
+        os.makedirs(config_path, exist_ok=True)
+        config_filename = '%s/docker.%s.json' % (config_path,self.__nom_service)
         with open(config_filename, 'wb') as fichier:
             contenu = json.dumps(mq_config, indent=4)
             contenu = contenu.encode('utf-8')
