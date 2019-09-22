@@ -22,11 +22,15 @@ class ConstantesEnvironnementMilleGrilles:
     REPERTOIRE_MILLEGRILLE_MOUNTS = 'mounts'
     REPERTOIRE_MILLEGRILLE_PKI = 'pki'
     REPERTOIRE_MILLEGRILLE_CERTS = '%s/certs' % REPERTOIRE_MILLEGRILLE_PKI
+    REPERTOIRE_MILLEGRILLE_CERTS = '%s/certs' % REPERTOIRE_MILLEGRILLE_PKI
+    MILLEGRILLES_DEPLOYEUR_SECRETS = '%s/deployeur' % REPERTOIRE_MILLEGRILLE_PKI
     REPERTOIRE_MILLEGRILLE_DBS = '%s/dbs' % REPERTOIRE_MILLEGRILLE_PKI
     REPERTOIRE_MILLEGRILLE_KEYS = '%s/keys' % REPERTOIRE_MILLEGRILLE_PKI
+    REPERTOIRE_MILLEGRILLE_MQ_ACCOUNTS = '%s/mq/accounts' % REPERTOIRE_MILLEGRILLE_MOUNTS
 
     # Applications et comptes
     MONGO_INITDB_ROOT_USERNAME = 'root'
+    MQ_NEW_USERS_FILE='new_users.txt'
 
     def __init__(self, nom_millegrille):
         self.nom_millegrille = nom_millegrille
@@ -65,6 +69,26 @@ class ConstantesEnvironnementMilleGrilles:
             self.nom_millegrille,
             ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_KEYS
         )
+
+    @property
+    def rep_secrets_deployeur(self):
+        return '%s/%s/%s' % (
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            self.nom_millegrille,
+            ConstantesEnvironnementMilleGrilles.MILLEGRILLES_DEPLOYEUR_SECRETS
+        )
+
+    def rep_mq_accounts(self, fichier):
+        return '%s/%s/%s/%s' % (
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            self.nom_millegrille,
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MQ_ACCOUNTS,
+            fichier
+        )
+
+    @property
+    def rep_etc_mg(self):
+        return '%s/%s' % (ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC, self.nom_millegrille)
 
     @property
     def cert_ca_chain(self):
@@ -337,8 +361,7 @@ class DeployeurDockerMilleGrille:
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def configurer(self):
-        etc_mg = '%s/%s' % (ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC, self.__nom_millegrille)
-        os.makedirs(etc_mg, exist_ok=True)
+        os.makedirs(self.constantes.rep_etc_mg, exist_ok=True)
 
         self.charger_configuration_services()
         self.preparer_reseau()
@@ -388,14 +411,20 @@ class DeployeurDockerMilleGrille:
             etat_mongo = dict()
 
         # Verifier la date du plus recent certificat configure
-        date_max_certificat = etat_mongo.get('date_max_certificat')
+        date_init_certificat = etat_mongo.get('date_max_certificat')
+        date_max_certificat = date_init_certificat
         if date_max_certificat is None:
             date_max_certificat = '0'
+            date_init_certificat = '0'
 
         for sujet in self.__certificats:
             enveloppe = self.__certificats[sujet]
             if enveloppe.date_valide():
+                self.__logger.debug("Cert valide: %s" % enveloppe.subject_rfc4514_string())
                 date_concat = enveloppe.date_valide_concat()
+                if int(date_concat) > int(date_init_certificat):
+                    self.ajouter_compte_mq(enveloppe)
+
                 if int(date_concat) > int(date_max_certificat):
                     date_max_certificat = date_concat
 
@@ -486,9 +515,6 @@ class DeployeurDockerMilleGrille:
                 with open('%s/%s' % (rep_cles, cle_nom), 'r') as fichier:
                     cle = fichier.read()
 
-                # Conserver le cert pour creer les comptes dans MQ
-                self.ajouter_cert_ssl(cert)
-
                 cle_cert = '%s\n%s' % (cle, cert)
                 cert = base64.encodebytes(cert.encode('utf-8'))
                 cle = base64.encodebytes(cle.encode('utf-8'))
@@ -510,6 +536,21 @@ class DeployeurDockerMilleGrille:
         # self.__logger.debug("Liste certs: %s" % str(groupes_certs))
         # Transmettre les secrets
         self._deployer_certs(groupes_certs)
+
+        # Charger les autres certs
+        rep_certs = self.constantes.rep_certs
+        for cert_nom in ['maitredescles', 'middleware']:
+            # Conserver le cert pour creer les comptes dans MQ
+            path_cert = '%s/%s_%s.cert.pem' % (rep_certs, self.__nom_millegrille, cert_nom)
+            with open(path_cert, 'r') as fichier:
+                self.ajouter_cert_ssl(fichier.read())
+
+        rep_secrets_deployeur = self.constantes.rep_secrets_deployeur
+        for cert_nom in ['deployeur']:
+            # Conserver le cert pour creer les comptes dans MQ
+            path_cert = '%s/%s_%s.cert.pem' % (rep_secrets_deployeur, self.__nom_millegrille, cert_nom)
+            with open(path_cert, 'r') as fichier:
+                self.ajouter_cert_ssl(fichier.read())
 
         return groupe_recent
 
@@ -555,6 +596,28 @@ class DeployeurDockerMilleGrille:
             self.__logger.debug("Node: %s" % str(node))
             label_resp = self.__docker.post('nodes/%s/update?version=%s' % (node_id, node_version), content)
             self.__logger.debug("Label add status:%s\n%s" % (label_resp.status_code, str(label_resp)))
+
+    def ajouter_compte_mq(self, enveloppe):
+        sujet = enveloppe.subject_rfc4514_string()
+        type_noeud = enveloppe.subject_organizational_unit_name
+        if type_noeud == 'middleware':
+            pass
+        elif type_noeud in ['maitredescles', 'deployeur']:
+            type_noeud = 'noeud'
+        else:
+            type_noeud = None  # Pas supporte
+
+        if type_noeud is not None:
+            compte="%s;%s;%s;%s\n" % (
+                enveloppe.fingerprint_ascii,
+                sujet,
+                self.__nom_millegrille,
+                type_noeud,
+            )
+            new_mq_accounts = self.constantes.rep_mq_accounts(
+                ConstantesEnvironnementMilleGrilles.MQ_NEW_USERS_FILE)
+            with open(new_mq_accounts, 'w+') as fichier:
+                fichier.write(compte)
 
 
 logging.basicConfig()

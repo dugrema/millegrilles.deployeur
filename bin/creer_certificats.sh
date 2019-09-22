@@ -158,8 +158,8 @@ creer_cert_noeud() {
              -out $CERT -infiles $REQ
 
   rm $REQ
-  ln -sf $CERT $REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}.cert.pem
-  ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}.key.pem
+  ln -sf $CERT $REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}.cert.pem
+  ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}.key.pem
 
   echo "[OK] Creation certificat $TYPE_NOEUD complet"
 }
@@ -167,6 +167,7 @@ creer_cert_noeud() {
 deplacer_cle_deployeur() {
   KEY=$REP_KEYS/${NOM_MILLEGRILLE}_deployeur
   mv $KEY* $REP_DEPLOYEURKEYS
+  ln -sf $REP_DEPLOYEURKEYS/${NOM_MILLEGRILLE}_deployeur_${HOSTNAME}_${CURDATE}.key.pem $REP_DEPLOYEURKEYS/${NOM_MILLEGRILLE}_deployeur.key.pem
 }
 
 preperation_acces_deployeur() {
