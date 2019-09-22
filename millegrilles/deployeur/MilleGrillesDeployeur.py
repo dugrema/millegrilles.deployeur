@@ -119,14 +119,14 @@ class VersionMilleGrille:
 
 class ServiceDockerConfiguration:
 
-    def __init__(self, nom_millegrille, nom_service, secrets):
+    def __init__(self, nom_millegrille, nom_service, docker_secrets, dates_secrets=dict()):
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
         self.__nom_millegrille = nom_millegrille
         self.__nom_service = nom_service
-        self.__secrets = secrets
+        self.__secrets = docker_secrets
         self.__secrets_par_nom = dict()
-        self.__dates_secrets = dict()
+        self.__dates_secrets = dates_secrets
 
         self.__repository = 'registry.maple.mdugre.info:5000'
 
@@ -137,42 +137,31 @@ class ServiceDockerConfiguration:
             config_str = fichier.read()
         self.__configuration_json = json.loads(config_str)
 
-        self.grouper_secrets()
+        for secret in docker_secrets:
+            self.__secrets_par_nom[secret['Spec']['Name']] = secret['ID']
 
-    def grouper_secrets(self):
-        date_ssl = '0'
-        for secret in self.__secrets:
-            id_secret = secret['ID']
-            nom_secret = secret['Spec']['Name']
-            self.__secrets_par_nom[nom_secret] = id_secret
-            self.__logger.debug("Secret: %s" % str(secret))
-            if nom_secret.startswith('%s.%s' % (self.__nom_millegrille, 'pki.middleware.ssl')):
-                date_secret = nom_secret.split('.')[-1]
-                if int(date_secret) > int(date_ssl):
-                    date_ssl = date_secret
-
-        self.__dates_secrets['ssl'] = date_ssl
+        self.__logger.info("Date secrets: %s" % str(dates_secrets))
 
     def formatter_service(self):
-        mq_config = self.__configuration_json
-        mq_config['Name'] = self.formatter_nom_service()
+        service_config = self.__configuration_json
+        service_config['Name'] = self.formatter_nom_service()
 
         # del mq_config['TaskTemplate']['ContainerSpec']['Secrets']
 
         self.remplacer_variables()
 
-        self.__logger.debug("Template configuration docker MQ:\n%s" % str(mq_config))
+        self.__logger.debug("Template configuration docker Service:\n%s" % str(service_config))
         config_path = '%s/%s' % (
             ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
             self.__nom_millegrille
         )
         config_filename = '%s/docker.%s.json' % (config_path,self.__nom_service)
         with open(config_filename, 'wb') as fichier:
-            contenu = json.dumps(mq_config, indent=4)
+            contenu = json.dumps(service_config, indent=4)
             contenu = contenu.encode('utf-8')
             fichier.write(contenu)
 
-        return mq_config
+        return service_config
 
     def remplacer_variables(self):
         # Mounts
@@ -206,7 +195,12 @@ class ServiceDockerConfiguration:
         for secret in secrets:
             secret_name = secret['SecretName']
             if secret_name.startswith('pki.middleware.ssl'):
-                date_secret = self.__dates_secrets['ssl']
+                date_secret = self.__dates_secrets['pki.millegrilles.ssl']
+                secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
+                secret['SecretName'] = secret_name
+                secret['SecretID'] = self.__secrets_par_nom[secret_name]
+            elif secret_name.startswith('passwd.mongo'):
+                date_secret = self.__dates_secrets['mongo_datetag']
                 secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
                 secret['SecretName'] = secret_name
                 secret['SecretID'] = self.__secrets_par_nom[secret_name]
@@ -343,7 +337,7 @@ class DockerFacade:
         return liste
 
     def info_service(self, nom_service):
-        liste = self.get('services', {'Name': nom_service})
+        liste = self.get('services?filters=name=%s' % nom_service)
         return liste
 
 
@@ -361,9 +355,22 @@ class DeployeurDockerMilleGrille:
         # Version des secrets a utiliser
         self.__certificats = dict()
         self._dates_secrets = dict()
-        self.__mongo_config_datetag = None
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
+    # def grouper_secrets(self):
+    #     date_ssl = '0'
+    #     for secret in self.__secrets:
+    #         id_secret = secret['ID']
+    #         nom_secret = secret['Spec']['Name']
+    #         self.__secrets_par_nom[nom_secret] = id_secret
+    #         self.__logger.debug("Secret: %s" % str(secret))
+    #         if nom_secret.startswith('%s.%s' % (self.__nom_millegrille, 'pki.middleware.ssl')):
+    #             date_secret = nom_secret.split('.')[-1]
+    #             if int(date_secret) > int(date_ssl):
+    #                 date_ssl = date_secret
+    #
+    #     self.__dates_secrets['ssl'] = date_ssl
 
     def configurer(self):
         os.makedirs(self.constantes.rep_etc_mg, exist_ok=True)
@@ -374,6 +381,7 @@ class DeployeurDockerMilleGrille:
         # Verifier que les secrets sont deployes sur docker
         self._dates_secrets['pki.millegrilles.ssl'] = self.deployer_certs_ssl()
         self._dates_secrets['pki.millegrilles.wadmin'] = self._dates_secrets['pki.millegrilles.ssl']
+        # self.grouper_secrets()
         self.__logger.info("Date fichiers cert: ssl=%s" % str(self._dates_secrets))
 
         # Activer MQ
@@ -382,6 +390,7 @@ class DeployeurDockerMilleGrille:
 
         # Activer Mongo
         self.configurer_mongo()
+        self.activer_mongo()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
@@ -449,7 +458,7 @@ class DeployeurDockerMilleGrille:
         with open(etat_filename, 'w') as fichier:
             fichier.write(json.dumps(etat_mongo))
 
-        self.__mongo_config_datetag = etat_mongo['datetag']
+        self._dates_secrets['mongo_datetag'] = etat_mongo['datetag']
 
     def configurer_mq(self):
         """
@@ -502,37 +511,39 @@ class DeployeurDockerMilleGrille:
         nom_service_complet = '%s_%s' % (self.__nom_millegrille, nom_service)
         etat_service_resp = self.__docker.info_service(nom_service_complet)
         mode = None
-        if etat_service_resp.status_code == 200 and force:
+        if etat_service_resp.status_code == 200:
             service_etat_json = etat_service_resp.json()
+            self.__logger.debug("SERVICES LISTING pour %s: \n%s\n-----------------------------\n" % (nom_service_complet, json.dumps(service_etat_json, indent=4)))
             if len(service_etat_json) == 0 and force:
                 mode = 'create'
-                self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)
+                self.__logger.warn("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, self.__nom_millegrille))
             else:
                 service_deploye = service_etat_json[0]
                 service_id = service_deploye['ID']
                 version_service = service_deploye['Version']['Index']
                 mode = '%s/update?version=%s' % (service_id, version_service)
-                self.__logger.warn("MQ sera re-deploye sur %s (force update), mode=%s" % (self.__nom_millegrille, mode))
+                self.__logger.warn("Service %s sera re-deploye sur %s (force update), mode=%s" % (nom_service_complet, self.__nom_millegrille, mode))
         else:
             mode = 'create'
-            self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)
+            self.__logger.warn("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, self.__nom_millegrille))
 
         if mode is not None:
-            secrets = self.__docker.get('secrets').json()
-            configurateur = ServiceDockerConfiguration(self.__nom_millegrille, nom_service, secrets)
+            docker_secrets = self.__docker.get('secrets').json()
+            configurateur = ServiceDockerConfiguration(
+                self.__nom_millegrille, nom_service, docker_secrets, self._dates_secrets)
             service_json = configurateur.formatter_service()
             etat_service_resp = self.__docker.post('services/%s' % mode, service_json)
             status_code = etat_service_resp.status_code
             if 200 <= status_code <= 201:
-                self.__logger.info("Deploiement de MQ avec ID %s" % str(etat_service_resp.json()))
+                self.__logger.info("Deploiement de Service %s avec ID %s" % (nom_service_complet, str(etat_service_resp.json())))
             elif status_code == 409:
                 # Service existe, on le met a jour
                 etat_service_resp = self.__docker.post('services/update', service_json)
                 status_code = etat_service_resp.status_code
-                self.__logger.info("Update service MQ, code %s\n%s" % (status_code, etat_service_resp.json()))
+                self.__logger.info("Update service %s, code %s\n%s" % (nom_service_complet, status_code, etat_service_resp.json()))
             else:
-                self.__logger.error("MQ Service deploy erreur: %d\n%s" % (
-                    etat_service_resp.status_code, str(etat_service_resp.json())))
+                self.__logger.error("Service %s deploy erreur: %d\n%s" % (
+                    nom_service_complet, etat_service_resp.status_code, str(etat_service_resp.json())))
 
 
     def ajouter_cert_ssl(self, certificat):
@@ -623,6 +634,12 @@ class DeployeurDockerMilleGrille:
         self.preparer_service('mq')
         node_name = 'mg-dev3'
         labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
+        self.deployer_labels(node_name, labels)
+
+    def activer_mongo(self):
+        self.preparer_service('mongo')
+        node_name = 'mg-dev3'
+        labels = {'netzone.private': 'true', 'millegrilles.database': 'true'}
         self.deployer_labels(node_name, labels)
 
     def deployer_labels(self, node_name, labels):

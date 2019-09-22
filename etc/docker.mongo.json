@@ -10,9 +10,9 @@
           "--sslCAFile /run/secrets/pki.millegrilles.ssl.CAchain"
       ],
       "Hostname": "mongo.local",
-      "env": [
+      "Env": [
         "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}",
-        "MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongo.root.password",
+        "MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongo.root.password"
       ],
       "Mounts": [
         {
