@@ -305,7 +305,7 @@ class DeployeurDockerMilleGrille:
         self._dates_secrets['pki.millegrilles.wadmin'] = self._dates_secrets['pki.millegrilles.ssl']
 
         self.__logger.info("Date fichiers cert: ssl=%s" % str(self._dates_secrets))
-        self.preparer_service('mq')
+        self.activer_mq()
 
     def charger_configuration_services(self):
         config_version = VersionMilleGrille()
@@ -417,9 +417,32 @@ class DeployeurDockerMilleGrille:
     def deployer_motsdepasse_python(self):
         pass
 
-    def deployer_service(self, configuration):
-        configuration['Name'] = '%s_%s' % (self.__nom_millegrille, configuration['Name'])
+    def activer_mq(self):
+        self.preparer_service('mq')
+        node_name = 'mg-dev3'
+        labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
+        self.deployer_labels(node_name, labels)
 
+    def deployer_labels(self, node_name, labels):
+        nodes_list = self.__docker.get('nodes').json()
+        node = [n for n in nodes_list if n['Description']['Hostname'] == node_name]
+        if len(node) == 1:
+            node = node[0]  # Conserver le node recherche
+            node_id = node['ID']
+            node_version = node['Version']['Index']
+            node_role = node['Spec']['Role']
+            node_availability = node['Spec']['Availability']
+            new_labels = labels.copy()
+            new_labels.update(node['Spec']['Labels'])
+            content = {
+                "Labels": new_labels,
+                "Role": node_role,
+                "Availability": node_availability
+            }
+
+            self.__logger.debug("Node: %s" % str(node))
+            label_resp = self.__docker.post('nodes/%s/update?version=%s' % (node_id, node_version), content)
+            self.__logger.debug("Label add status:%s\n%s" % (label_resp.status_code, str(label_resp)))
 
 
 logging.basicConfig()
