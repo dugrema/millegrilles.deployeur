@@ -323,11 +323,16 @@ class DeployeurDockerMilleGrille:
         etat_service_resp = self.__docker.info_service(nom_service_complet)
         mode = None
         if etat_service_resp.status_code == 200 and force:
-            service_etat_json = etat_service_resp.json()[0]
-            service_id = service_etat_json['ID']
-            version_service = service_etat_json['Version']['Index']
-            mode = '%s/update?version=%s' % (service_id, version_service)
-            self.__logger.warn("MQ sera re-deploye sur %s (force update), mode=%s" % (self.__nom_millegrille, mode))
+            service_etat_json = etat_service_resp.json()
+            if len(service_etat_json) == 0 and force:
+                mode = 'create'
+                self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)
+            else:
+                service_deploye = service_etat_json[0]
+                service_id = service_deploye['ID']
+                version_service = service_deploye['Version']['Index']
+                mode = '%s/update?version=%s' % (service_id, version_service)
+                self.__logger.warn("MQ sera re-deploye sur %s (force update), mode=%s" % (self.__nom_millegrille, mode))
         else:
             mode = 'create'
             self.__logger.warn("MQ non deploye sur %s, on le deploie" % self.__nom_millegrille)

@@ -20,31 +20,46 @@
         {
           "SecretName": "pki.middleware.ssl.cert",
           "File": {
-            "Name": "pki.middleware.ssl.cert"
+            "Name": "pki.middleware.ssl.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
           }
         },
         {
           "SecretName": "pki.middleware.ssl.key",
           "File": {
-            "Name": "pki.middleware.ssl.key"
+            "Name": "pki.middleware.ssl.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
           }
         },
         {
           "SecretName": "pki.middleware.ssl.CAchain",
           "File": {
-            "Name": "pki.millegrilles.ssl.CAchain"
+            "Name": "pki.millegrilles.ssl.CAchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
           }
         },
         {
           "SecretName": "pki.middleware.ssl.cert",
           "File": {
-            "Name": "pki.middleware.wadmin.cert"
+            "Name": "pki.middleware.wadmin.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
           }
         },
         {
           "SecretName": "pki.middleware.ssl.key",
           "File": {
-            "Name": "pki.middleware.wadmin.key"
+            "Name": "pki.middleware.wadmin.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
           }
         }
       ]
@@ -71,27 +86,36 @@
         "Replicas": 1
       }
     },
-    "EndpointSpec": {
-      "Ports": [
+    "Networks": [
         {
-          "Protocol": "tcp",
-          "PublishedPort": 8443,
-          "TargetPort": 443,
-          "PublishMode": "host"
-        },
-        {
-          "Protocol": "tcp",
-          "PublishedPort": 5671,
-          "TargetPort": 5671,
-          "PublishMode": "host"
-        },
-        {
-          "Protocol": "tcp",
-          "PublishedPort": 5673,
-          "TargetPort": 5673,
-          "PublishMode": "host"
+          "Target": "mg_test1_net"
         }
-      ]
-    }
+    ]
+  },
+  "EndpointSpec": {
+    "Mode": "vip",
+    "Ports": [
+      {
+        "Protocol": "tcp",
+        "PublishedPort": 8443,
+        "TargetPort": 443,
+        "PublishMode": "host"
+      },
+      {
+        "Protocol": "tcp",
+        "PublishedPort": 5671,
+        "TargetPort": 5671,
+        "PublishMode": "host"
+      },
+      {
+        "Protocol": "tcp",
+        "PublishedPort": 5673,
+        "TargetPort": 5673,
+        "PublishMode": "host"
+      }
+    ]
+  },
+  "Labels": {
+    "millegrille": "test1"
   }
 }
