@@ -125,13 +125,14 @@ creer_cert_noeud() {
   # Params
   # - TYPE_NOEUD: maitredescles, middleware, deployeur, noeud
   # - EXTENSION: noeud_req_extensions, middleware_req_extensions
+  # - PASSWORD: si un mot de passe doit etre genere
   set -e
 
   if [ -z $TYPE_NOEUD ]; then
     TYPE_NOEUD=noeud
   fi
 
-  if [ -z EXTENSION ]; then
+  if [ -z $EXTENSION ]; then
     EXTENSION=noeud_req_extensions
   fi
 
@@ -140,15 +141,27 @@ creer_cert_noeud() {
   KEY=$REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.key.pem
   CERT=$REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.cert.pem
   REQ=$REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.req.pem
+  PWDFILE_NOEUD=$REP_PWDS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}
   SUBJECT="/O=$NOM_MILLEGRILLE/OU=$TYPE_NOEUD/CN=$HOSTNAME"
 
-  PWDFILE=$REP_PWDS/${NOM_MILLEGRILLE}_millegrille
+  if [ -z $PASSWORD ]; then
+    NOM_NOEUD= \
+    openssl req -newkey rsa:2048 -sha512 -nodes \
+                -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
+                -out $REQ -outform PEM -keyout $KEY -keyform PEM \
+                -subj $SUBJECT
+  else
+    generer_pass_random $PWDFILE_NOEUD
+    PWDFILE=$REP_PWDS/${NOM_MILLEGRILLE}_millegrille
+    ln -sf ${PWDFILE_NOEUD}_${CURDATE}.txt $REP_PWDS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}.txt
 
-  NOM_NOEUD= \
-  openssl req -newkey rsa:2048 -sha512 -nodes \
-              -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-              -out $REQ -outform PEM -keyout $KEY -keyform PEM \
-              -subj $SUBJECT
+    NOM_NOEUD= \
+    openssl req -newkey rsa:2048 -sha512 -nodes \
+                -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
+                -out $REQ -outform PEM -keyout $KEY -keyform PEM \
+                -subj $SUBJECT \
+                -passout file:$PWDFILE_NOEUD.txt
+  fi
 
   NOM_NOEUD= \
   openssl ca -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
@@ -192,7 +205,7 @@ executer() {
 
   # Noeuds middleware, deployeur, maitredescles
   TYPE_NOEUD=middleware EXTENSION=middleware_req_extensions creer_cert_noeud
-  TYPE_NOEUD=maitredescles EXTENSION=noeud_req_extensions creer_cert_noeud
+  TYPE_NOEUD=maitredescles EXTENSION=noeud_req_extensions PASSWORD=true creer_cert_noeud
   TYPE_NOEUD=deployeur EXTENSION=noeud_req_extensions creer_cert_noeud
 
   creer_CA_files
