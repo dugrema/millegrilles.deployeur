@@ -4,6 +4,8 @@ from millegrilles.util.UtilScriptLigneCommande import ModeleConfiguration
 from millegrilles.util.Daemon import Daemon
 from millegrilles.SecuritePKI import EnveloppeCertificat
 
+from threading import Event
+
 import json
 import requests_unixsocket
 import logging
@@ -37,6 +39,8 @@ class ConstantesEnvironnementMilleGrilles:
     # Applications et comptes
     MONGO_INITDB_ROOT_USERNAME = 'root'
     MONGO_RSINIT_SCRIPT='mongo_rsinit.js'
+    MONGO_RUN_ADMIN='mongo_run_script_admin.sh'
+    MONGO_RUN_MG='mongo_run_script_mg.sh'
     MQ_NEW_USERS_FILE='new_users.txt'
 
     def __init__(self, nom_millegrille):
@@ -386,6 +390,8 @@ class DeployeurDockerMilleGrille:
         self.__certificats = dict()
         self._dates_secrets = dict()
 
+        self.__wait_event = Event()
+
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     # def grouper_secrets(self):
@@ -724,13 +730,17 @@ class DeployeurDockerMilleGrille:
         """
         rs.init(), et chargement des comptes initiaux.
         """
-        rsinit_script_src = '%s/%s' % (
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_BIN,
-            ConstantesEnvironnementMilleGrilles.MONGO_RSINIT_SCRIPT
-        )
-        rsinit_script_dst = self.constantes.rep_mongo_scripts(
-            ConstantesEnvironnementMilleGrilles.MONGO_RSINIT_SCRIPT)
-        shutil.copyfile(rsinit_script_src, rsinit_script_dst)
+
+        # Copier les scripts vers le repertoire de mongo
+        scripts = [
+            ConstantesEnvironnementMilleGrilles.MONGO_RSINIT_SCRIPT,
+            ConstantesEnvironnementMilleGrilles.MONGO_RUN_ADMIN,
+            ConstantesEnvironnementMilleGrilles.MONGO_RUN_MG
+        ]
+        for script in scripts:
+            source = '%s/%s' % (ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_BIN, script)
+            dest =  self.constantes.rep_mongo_scripts(script)
+            shutil.copyfile(rsinit_script_src, rsinit_script_dst)
 
         # Executer le script
         nom_container = '%s_mongo' % self.__nom_millegrille
@@ -742,7 +752,7 @@ class DeployeurDockerMilleGrille:
             container_id = container_mongo['Id']
             self.__logger.debug("Container mongo: %s" % container_mongo)
 
-            commande = '/opt/mongodb/scripts/run_script.sh mongo_rsinit.js'
+            commande = '/opt/mongodb/scripts/mongo_run_script.sh /opt/mongodb/scripts/mongo_rsinit.js'
             commande = commande.split(' ')
             self.__logger.debug("Commande a transmettre: %s" % commande)
 
@@ -750,6 +760,22 @@ class DeployeurDockerMilleGrille:
             self.__logger.debug("Output commande id %s (code %s)" % (
                 container_id, output.status_code))
             self.__logger.debug(output.content)
+            if output.status_code != 200:
+                raise Exception("Erreur d'execution de mongo rs.init()")
+
+            self.__wait_event.wait(20)  # Attendre que MongoDB redevienne Primaire
+
+            commande = '/opt/mongodb/scripts/mongo_run_script_mg.sh %s /run/secrets/mongo.accounts.js' % self.__nom_millegrille
+            commande = commande.split(' ')
+            self.__logger.debug("Commande a transmettre: %s" % commande)
+
+            output = self.__docker.container_exec(container_id, commande)
+            self.__logger.debug("Output commande id %s (code %s)" % (
+                container_id, output.status_code))
+            self.__logger.debug(output.content)
+            if output.status_code != 200:
+                raise Exception("Erreur d'execution de mongo.accounts.js")
+
         else:
             raise ValueError("Mongo pas trouve")
 

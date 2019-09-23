@@ -6,4 +6,4 @@ mongo -p $PASSWORD \
       --ssl --sslAllowInvalidCertificates --sslAllowInvalidHostnames \
       --sslCAFile /run/secrets/pki.millegrilles.ssl.CAchain \
       --sslPEMKeyFile /run/secrets/pki.millegrilles.ssl.key_cert \
-      /opt/mongodb/scripts/$1
+      $1
