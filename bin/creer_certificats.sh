@@ -156,7 +156,7 @@ creer_cert_noeud() {
     ln -sf ${PWDFILE_NOEUD}_${CURDATE}.txt $REP_PWDS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}.txt
 
     NOM_NOEUD= \
-    openssl req -newkey rsa:2048 -sha512 -nodes \
+    openssl req -newkey rsa:2048 -sha512 \
                 -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
                 -out $REQ -outform PEM -keyout $KEY -keyform PEM \
                 -subj $SUBJECT \

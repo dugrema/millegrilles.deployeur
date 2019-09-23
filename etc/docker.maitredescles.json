@@ -2,7 +2,7 @@
   "Name": "maitredescles-python",
   "TaskTemplate": {
     "ContainerSpec": {
-      "Image": "millegrilles_consignation_python_main.x86_64:1.13.50",
+      "Image": "${mg-python}",
       "Args": [
         "demarrer_domaine.py",
         "--info"

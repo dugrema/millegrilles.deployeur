@@ -144,6 +144,7 @@ class ServiceDockerConfiguration:
         self.__secrets = docker_secrets
         self.__secrets_par_nom = dict()
         self.__dates_secrets = dates_secrets
+        self.__versions_images = dict()
 
         self.__repository = 'registry.maple.mdugre.info:5000'
 
@@ -153,6 +154,13 @@ class ServiceDockerConfiguration:
         with open(config_json_filename, 'r') as fichier:
             config_str = fichier.read()
         self.__configuration_json = json.loads(config_str)
+
+        config_versions_name = '/opt/millegrilles/etc/docker.versions.json'
+        with open(config_versions_name) as fichier:
+            config_str = fichier.read()
+            if config_str is not None:
+                config_json = json.loads(config_str)
+                self.__versions_images = config_json
 
         for secret in docker_secrets:
             self.__secrets_par_nom[secret['Spec']['Name']] = secret['ID']
@@ -190,6 +198,10 @@ class ServiceDockerConfiguration:
         container_spec = task_template['ContainerSpec']
 
         # /TaskTemplate/ContainerSpec/Image
+        for image_name, image_docker in self.__versions_images.items():
+            image_tag = '${%s}' % image_name
+            if image_tag in container_spec['Image']:
+                container_spec['Image'] = container_spec['Image'].replace(image_tag, image_docker)
         container_spec['Image'] = '%s/%s' % (self.__repository, container_spec['Image'])
 
         # /TaskTemplate/ContainerSpec/Env
