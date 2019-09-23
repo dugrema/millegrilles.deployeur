@@ -1,4 +1,5 @@
 {
+    "coupdoeilreact": "coupdoeil_react.x86_64:1.13.6",
     "mongo": "mg_mongo:4.0_4",
     "mongoexpress": "mg_mongo_express:0.49_4",
     "mq": "mg_rabbitmq:3.7-management_10",

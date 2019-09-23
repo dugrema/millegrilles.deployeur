@@ -551,6 +551,7 @@ class DeployeurDockerMilleGrille:
         self.activer_ceduleur()
         self.activer_domaines()
         self.activer_maitredescles()
+        self.activer_coupdoeilreact()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
@@ -865,6 +866,11 @@ class DeployeurDockerMilleGrille:
     def activer_maitredescles(self):
         self.preparer_service('maitredescles')
         labels = {'millegrilles.maitredescles': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_coupdoeilreact(self):
+        self.preparer_service('coupdoeilreact')
+        labels = {'netzone.private': 'true', 'millegrilles.coupdoeil': 'true'}
         self.deployer_labels(self.__node_name, labels)
 
     def deployer_labels(self, node_name, labels):
