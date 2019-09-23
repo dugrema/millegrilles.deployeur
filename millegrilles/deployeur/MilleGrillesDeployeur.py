@@ -740,7 +740,8 @@ class DeployeurDockerMilleGrille:
         for script in scripts:
             source = '%s/%s' % (ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_BIN, script)
             dest =  self.constantes.rep_mongo_scripts(script)
-            shutil.copyfile(rsinit_script_src, rsinit_script_dst)
+            shutil.copyfile(source, dest)
+            os.chmod(dest, 750)
 
         # Executer le script
         nom_container = '%s_mongo' % self.__nom_millegrille
@@ -752,7 +753,7 @@ class DeployeurDockerMilleGrille:
             container_id = container_mongo['Id']
             self.__logger.debug("Container mongo: %s" % container_mongo)
 
-            commande = '/opt/mongodb/scripts/mongo_run_script.sh /opt/mongodb/scripts/mongo_rsinit.js'
+            commande = '/opt/mongodb/scripts/mongo_run_script_admin.sh /opt/mongodb/scripts/mongo_rsinit.js'
             commande = commande.split(' ')
             self.__logger.debug("Commande a transmettre: %s" % commande)
 
