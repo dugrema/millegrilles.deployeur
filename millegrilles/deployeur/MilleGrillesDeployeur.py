@@ -787,16 +787,17 @@ class DeployeurDockerMilleGrille:
                 if len(liste_containers) == 1:
                     container_mongo = liste_containers[0]
                     container_id = container_mongo['Id']
-
-                    # Tenter d'executer un script pour voir si mongo est pret
-                    commande = '/opt/mongodb/scripts/mongo_run_script_admin.sh dummy_script.js'
-                    commande = commande.split(' ')
-                    output = self.__docker.container_exec(container_id, commande)
-                    if output.status_code == 200:
-                        content = str(output.content)
-                        if 'Code:253' in content:
-                            mongo_pret = True
-                            break
+                    state = container_mongo['State']
+                    if state == 'running':
+                        # Tenter d'executer un script pour voir si mongo est pret
+                        commande = '/opt/mongodb/scripts/mongo_run_script_admin.sh dummy_script.js'
+                        commande = commande.split(' ')
+                        output = self.__docker.container_exec(container_id, commande)
+                        if output.status_code == 200:
+                            content = str(output.content)
+                            if 'Code:253' in content:
+                                mongo_pret = True
+                                break
 
                 self.__logger.info('Attente de chargement mongo (%d/%d)' % (essai, nb_essais_attente))
                 self.__wait_event.wait(10)  # Attendre que mongo soit pret
