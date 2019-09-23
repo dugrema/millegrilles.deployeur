@@ -90,7 +90,8 @@
     },
     "Networks": [
         {
-          "Target": "mg_${NOM_MILLEGRILLE}_net"
+          "Target": "mg_${NOM_MILLEGRILLE}_net",
+          "Aliases": ["mongo", "mongo.local"]
         }
     ]
   },
