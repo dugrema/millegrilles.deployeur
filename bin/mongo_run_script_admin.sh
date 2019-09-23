@@ -7,3 +7,5 @@ mongo -p $PASSWORD \
       --sslCAFile /run/secrets/pki.millegrilles.ssl.CAchain \
       --sslPEMKeyFile /run/secrets/pki.millegrilles.ssl.key_cert \
       $1
+
+echo Code:$?

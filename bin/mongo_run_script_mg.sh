@@ -15,3 +15,5 @@ mongo -u root -p $PASSWORD \
       --sslCAFile /run/secrets/pki.millegrilles.ssl.CAchain \
       --sslPEMKeyFile /run/secrets/pki.millegrilles.ssl.key_cert \
       mongo/mg-$NOM_MILLEGRILLE $SCRIPT
+
+echo Code:$?

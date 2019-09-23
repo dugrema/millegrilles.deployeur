@@ -15,6 +15,7 @@ import secrets
 import datetime
 import shutil
 
+
 class ConstantesEnvironnementMilleGrilles:
 
     # Globaux pour toutes les millegrilles
@@ -28,7 +29,6 @@ class ConstantesEnvironnementMilleGrilles:
     # Par millegrille
     REPERTOIRE_MILLEGRILLE_MOUNTS = 'mounts'
     REPERTOIRE_MILLEGRILLE_PKI = 'pki'
-    REPERTOIRE_MILLEGRILLE_CERTS = '%s/certs' % REPERTOIRE_MILLEGRILLE_PKI
     REPERTOIRE_MILLEGRILLE_CERTS = '%s/certs' % REPERTOIRE_MILLEGRILLE_PKI
     MILLEGRILLES_DEPLOYEUR_SECRETS = '%s/deployeur' % REPERTOIRE_MILLEGRILLE_PKI
     REPERTOIRE_MILLEGRILLE_DBS = '%s/dbs' % REPERTOIRE_MILLEGRILLE_PKI
@@ -124,6 +124,7 @@ class ConstantesEnvironnementMilleGrilles:
             path
         )
 
+
 class VersionMilleGrille:
 
     def __init__(self):
@@ -131,6 +132,7 @@ class VersionMilleGrille:
 
     def get_service(self, nom_service):
         return self.__services[nom_service]
+
 
 class ServiceDockerConfiguration:
 
@@ -165,7 +167,6 @@ class ServiceDockerConfiguration:
 
         self.remplacer_variables()
 
-        self.__logger.debug("Template configuration docker Service:\n%s" % str(service_config))
         config_path = '%s/%s' % (
             ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
             self.__nom_millegrille
@@ -210,11 +211,17 @@ class ServiceDockerConfiguration:
         secrets = container_spec.get('Secrets')
         for secret in secrets:
             secret_name = secret['SecretName']
-            if secret_name.startswith('pki.middleware.ssl'):
-                date_secret = self.__dates_secrets['pki.millegrilles.ssl']
-                secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
-                secret['SecretName'] = secret_name
-                secret['SecretID'] = self.__secrets_par_nom[secret_name]
+            if secret_name.startswith('pki'):
+                date_secret = None
+                if secret_name.startswith('pki.middleware.ssl') or secret_name.startswith('pki.millegrilles.wadmin'):
+                    date_secret = self.__dates_secrets['pki.millegrilles.ssl']
+
+                if date_secret is not None:
+                    secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
+                    secret['SecretName'] = secret_name
+                    secret['SecretID'] = self.__secrets_par_nom[secret_name]
+                else:
+                    self.__logger.warning("Date inconnue pour secrets %s" % secret_name)
             elif secret_name.startswith('passwd.mongo'):
                 date_secret = self.__dates_secrets['mongo_datetag']
                 secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
@@ -557,19 +564,18 @@ class DeployeurDockerMilleGrille:
         mode = None
         if etat_service_resp.status_code == 200:
             service_etat_json = etat_service_resp.json()
-            self.__logger.debug("SERVICES LISTING pour %s: \n%s\n-----------------------------\n" % (nom_service_complet, json.dumps(service_etat_json, indent=4)))
             if len(service_etat_json) == 0 and force:
                 mode = 'create'
-                self.__logger.warn("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, self.__nom_millegrille))
+                self.__logger.warning("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, self.__nom_millegrille))
             else:
                 service_deploye = service_etat_json[0]
                 service_id = service_deploye['ID']
                 version_service = service_deploye['Version']['Index']
                 mode = '%s/update?version=%s' % (service_id, version_service)
-                self.__logger.warn("Service %s sera re-deploye sur %s (force update), mode=%s" % (nom_service_complet, self.__nom_millegrille, mode))
+                self.__logger.warning("Service %s sera re-deploye sur %s (force update), mode=%s" % (nom_service_complet, self.__nom_millegrille, mode))
         else:
             mode = 'create'
-            self.__logger.warn("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, self.__nom_millegrille))
+            self.__logger.warning("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, self.__nom_millegrille))
 
         if mode is not None:
             docker_secrets = self.__docker.get('secrets').json()
@@ -604,11 +610,11 @@ class DeployeurDockerMilleGrille:
         certs_middleware = [f for f in os.listdir(rep_certs) if f.startswith(nom_middleware)]
         self.__logger.debug("Certs middleware: %s" % str(certs_middleware))
 
-        with open('%s' % self.constantes.cert_ca_chain, 'rb') as fichier:
-            cert_ca_chain = base64.encodebytes(fichier.read())
+        with open('%s' % self.constantes.cert_ca_chain, 'r') as fichier:
+            cert_ca_chain = fichier.read()  # base64.encodebytes()
 
-        with open('%s' % self.constantes.cert_ca_fullchain, 'rb') as fichier:
-            cert_ca_fullchain = base64.encodebytes(fichier.read())
+        with open('%s' % self.constantes.cert_ca_fullchain, 'r') as fichier:
+            cert_ca_fullchain = fichier.read()  # base64.encodebytes()
 
         # Grouper certs et cles, aussi generer key_cert dans meme fichier
         groupe_recent = '0'
@@ -627,17 +633,25 @@ class DeployeurDockerMilleGrille:
                     cle = fichier.read()
 
                 cle_cert = '%s\n%s' % (cle, cert)
-                cert = base64.encodebytes(cert.encode('utf-8'))
-                cle = base64.encodebytes(cle.encode('utf-8'))
-                cle_cert = base64.encodebytes(cle_cert.encode('utf-8'))
+                wadmin_fullchain_certs = '%s\n%s' % (cert, cert_ca_fullchain)
 
-                dict_key_prefix = '%s.pki.middleware.ssl' % self.__nom_millegrille
+                cert = base64.encodebytes(cert.encode('utf-8')).decode('utf-8')
+                cle = base64.encodebytes(cle.encode('utf-8')).decode('utf-8')
+                cle_cert = base64.encodebytes(cle_cert.encode('utf-8')).decode('utf-8')
+                cert_ca_chain = base64.encodebytes(cert_ca_chain.encode('utf-8')).decode('utf-8')
+                cert_ca_fullchain = base64.encodebytes(cert_ca_fullchain.encode('utf-8')).decode('utf-8')
+                wadmin_fullchain_certs = base64.encodebytes(wadmin_fullchain_certs.encode('utf-8')).decode('utf-8')
+
+                dict_key_middleware_prefix = '%s.pki.middleware.ssl' % self.__nom_millegrille
+                dict_key_wadmin_prefix = '%s.pki.millegrilles.wadmin' % self.__nom_millegrille
                 groupe = {
-                    '%s.CAchain.%s' % (dict_key_prefix, date): cert_ca_chain.decode('utf-8'),
-                    '%s.fullchain.%s' % (dict_key_prefix, date): cert_ca_fullchain.decode('utf-8'),
-                    '%s.cert.%s' % (dict_key_prefix, date): cert.decode('utf-8'),
-                    '%s.key.%s' % (dict_key_prefix, date): cle.decode('utf-8'),
-                    '%s.key_cert.%s' % (dict_key_prefix, date): cle_cert.decode('utf-8')
+                    '%s.CAchain.%s' % (dict_key_middleware_prefix, date): cert_ca_chain,
+                    '%s.fullchain.%s' % (dict_key_middleware_prefix, date): cert_ca_fullchain,
+                    '%s.cert.%s' % (dict_key_middleware_prefix, date): cert,
+                    '%s.key.%s' % (dict_key_middleware_prefix, date): cle,
+                    '%s.key_cert.%s' % (dict_key_middleware_prefix, date): cle_cert,
+                    '%s.cert.%s' % (dict_key_wadmin_prefix, date): wadmin_fullchain_certs,
+                    '%s.key.%s' % (dict_key_wadmin_prefix, date): cle,
                 }
 
                 groupes_certs[date] = groupe
@@ -659,6 +673,10 @@ class DeployeurDockerMilleGrille:
         return groupe_recent
 
     def deployer_certs_web(self):
+        """
+        Deploie les certs web.
+        :return:
+        """
         pass
 
     def _deployer_certs(self, groupes):
@@ -708,7 +726,6 @@ class DeployeurDockerMilleGrille:
                 "Availability": node_availability
             }
 
-            self.__logger.debug("Node: %s" % str(node))
             label_resp = self.__docker.post('nodes/%s/update?version=%s' % (node_id, node_version), content)
             self.__logger.debug("Label add status:%s\n%s" % (label_resp.status_code, str(label_resp)))
 
@@ -759,11 +776,32 @@ class DeployeurDockerMilleGrille:
 
             # Executer le script
             nom_container = '%s_mongo' % self.__nom_millegrille
-            containers_resp = self.__docker.info_container(nom_container)
-            liste_containers = containers_resp.json()
             # self.__logger.debug("Liste de containers: %s" % liste_containers)
-            if len(liste_containers) == 1:
-                container_mongo = liste_containers[0]
+
+            container_mongo = None
+            mongo_pret = False
+            nb_essais_attente = 10
+            for essai in range(1, nb_essais_attente+1):
+                containers_resp = self.__docker.info_container(nom_container)
+                liste_containers = containers_resp.json()
+                if len(liste_containers) == 1:
+                    container_mongo = liste_containers[0]
+                    container_id = container_mongo['Id']
+
+                    # Tenter d'executer un script pour voir si mongo est pret
+                    commande = '/opt/mongodb/scripts/mongo_run_script_admin.sh dummy_script.js'
+                    commande = commande.split(' ')
+                    output = self.__docker.container_exec(container_id, commande)
+                    if output.status_code == 200:
+                        content = str(output.content)
+                        if 'Code:253' in content:
+                            mongo_pret = True
+                            break
+
+                self.__logger.info('Attente de chargement mongo (%d/%d)' % (essai, nb_essais_attente))
+                self.__wait_event.wait(10)  # Attendre que mongo soit pret
+
+            if mongo_pret:
                 container_id = container_mongo['Id']
                 self.__logger.debug("Container mongo: %s" % container_mongo)
 
@@ -778,6 +816,10 @@ class DeployeurDockerMilleGrille:
                 if output.status_code != 200:
                     raise Exception("Erreur d'execution de mongo rs.init()")
 
+                content = str(output.content)
+                if 'Code:0' not in content:
+                    raise Exception("Resultat execution rs.init() incorrect")
+
                 self.__wait_event.wait(5)  # Attendre que MongoDB redevienne Primaire
 
                 commande = '/opt/mongodb/scripts/mongo_run_script_mg.sh %s /run/secrets/mongo.accounts.js' % self.__nom_millegrille
@@ -790,6 +832,10 @@ class DeployeurDockerMilleGrille:
                 self.__logger.debug(output.content)
                 if output.status_code != 200:
                     raise Exception("Erreur d'execution de mongo.accounts.js")
+
+                content = str(output.content)
+                if 'Code:0' not in content:
+                    raise Exception("Resultat execution creation comptes incorrect")
 
             else:
                 raise ValueError("Mongo pas trouve")
