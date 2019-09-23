@@ -252,6 +252,93 @@ class ServiceDockerConfiguration:
     def formatter_nom_service(self):
         return '%s_%s' % (self.__nom_millegrille, self.__nom_service)
 
+
+class GestionnaireComptesRabbitMQ:
+
+    def __init__(self, constantes, docker):
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+        self.__constantes = constantes
+        self.__docker = docker
+        self.__wait_event = Event()
+
+    def get_container_rabbitmq(self):
+        container_resp = self.__docker.info_container('%s_mq' % self.__constantes.nom_millegrille)
+        if container_resp.status_code == 200:
+            liste_containers = container_resp.json()
+            if len(liste_containers) == 1:
+                return liste_containers[0]
+
+        return None
+
+    def attendre_mq(self, attente_sec=180):
+        """
+        Attendre que le container et rabbitmq soit disponible. Effectue un ping a rabbitmq pour confirmer.
+        :param attente_sec:
+        :return:
+        """
+        mq_pret = False
+        nb_essais_max = int(attente_sec / 10) + 1
+        for essai in range(1, nb_essais_max):
+            container = self.get_container_rabbitmq()
+            if container is not None:
+                state = container['State']
+                if state == 'running':
+                    # Tenter d'executer un script pour voir si mongo est pret
+                    commande = 'rabbitmqctl ping'
+                    try:
+                        output = self.__executer_commande(commande)
+                        content = str(output)
+                        if 'Ping succeeded' in content:
+                            mq_pret = True
+                            break
+                    except Exception as e:
+                        self.__logger.warning("Erreur access rabbitmqctl: %s" % str(e))
+
+            self.__logger.debug("Attente MQ (%s/%s)" % (essai, nb_essais_max))
+            self.__wait_event.wait(10)
+
+        return mq_pret
+
+    def ajouter_compte(self, enveloppe):
+        nom_millegrille = self.__constantes.nom_millegrille
+        subject = enveloppe.subject_rfc4514_string_mq()
+        role = enveloppe.subject_organizational_unit_name
+
+        commandes = [
+            'rabbitmqctl add_user %s CLEAR_ME' % subject,
+            'rabbitmqctl clear_password %s',
+            'rabbitmqctl set_permissions -p %s %s ".*" ".*" ".*"' % (nom_millegrille, subject),
+            'rabbitmqctl set_topic_permissions -p %s %s millegrilles.middleware ".*" ".*"' % (nom_millegrille, subject),
+            'rabbitmqctl set_topic_permissions -p %s %s millegrilles.inter ".*" ".*"' % (nom_millegrille, subject),
+            'rabbitmqctl set_topic_permissions -p %s %s millegrilles.noeuds ".*" ".*"' % (nom_millegrille, subject),
+            'rabbitmqctl set_topic_permissions -p %s %s millegrilles.public ".*" ".*"' % (nom_millegrille, subject),
+        ]
+
+        for commande in commandes:
+            output = self.__executer_commande(commande)
+            self.__logger.debug("Output %s:\n%s" % (commande, str(output)))
+
+    def ajouter_vhost(self):
+        commande = 'rabbitmqctl add_vhost %s' % self.__constantes.nom_millegrille
+        output = self.__executer_commande(commande)
+        self.__logger.debug("Output %s:\n%s" % (commande, str(output)))
+
+    def __executer_commande(self, commande:str):
+        commande = commande.split(' ')
+        container = self.get_container_rabbitmq()
+        if container is None:
+            raise Exception("Container RabbitMQ non disponible")
+
+        id_container = container['Id']
+        commande_result = self.__docker.container_exec(id_container, commande)
+        if commande_result.status_code == 200:
+            output = commande_result.content
+            self.__logger.debug("Output ajouter_vhost():\n%s" % str(output))
+            return output
+        else:
+            raise Exception("Erreur ajout compte")
+
+
 class DeployeurMilleGrilles(Daemon, ModeleConfiguration):
     """
     Noeud gestionnaire d'une MilleGrille. Responsable de l'installation initiale, deploiement, entretient et healthcheck
@@ -399,6 +486,7 @@ class DeployeurDockerMilleGrille:
         self.__contexte = None  # Le contexte est initialise une fois que MQ actif
         self.__docker = docker
         self.constantes = ConstantesEnvironnementMilleGrilles(nom_millegrille)
+        self.__gestionnaire_rabbitmq = GestionnaireComptesRabbitMQ(self.constantes, docker)
 
         # Version des secrets a utiliser
         self.__certificats = dict()
@@ -437,8 +525,8 @@ class DeployeurDockerMilleGrille:
         self.__logger.info("Date fichiers cert: ssl=%s" % str(self._dates_secrets))
 
         # Activer MQ
-        self.configurer_mq()
         self.activer_mq()
+        self.configurer_mq()
 
         # Activer Mongo
         self.configurer_mongo()
@@ -546,14 +634,21 @@ class DeployeurDockerMilleGrille:
             date_max_certificat = '0'
             date_init_certificat = '0'
 
+        # Commencer par configurer le vhost de la nouvelle millegrille
+        if not self.__gestionnaire_rabbitmq.attendre_mq():
+            raise Exception("MQ pas disponible")
+        self.__gestionnaire_rabbitmq.ajouter_vhost()
+
         for sujet in self.__certificats:
             enveloppe = self.__certificats[sujet]
             if enveloppe.date_valide():
                 self.__logger.debug("Cert valide: %s" % enveloppe.subject_rfc4514_string_mq())
-                date_concat = enveloppe.date_valide_concat()
-                if int(date_concat) > int(date_init_certificat):
-                    self.ajouter_compte_mq(enveloppe)
 
+                # Ajouter le compte usager (subject et role) a MQ
+                self.__gestionnaire_rabbitmq.ajouter_compte(enveloppe)
+
+                # Conserver plus recent cert pour le mapping de secrets
+                date_concat = enveloppe.date_valide_concat()
                 if int(date_concat) > int(date_max_certificat):
                     date_max_certificat = date_concat
 
@@ -610,7 +705,7 @@ class DeployeurDockerMilleGrille:
 
     def ajouter_cert_ssl(self, certificat):
         enveloppe = EnveloppeCertificat(certificat_pem=certificat)
-        sujet = enveloppe.subject_rfc4514_string()
+        sujet = enveloppe.subject_rfc4514_string_mq()
         # Verifier si le certificat est expire
         self.__certificats[sujet] = enveloppe
 
@@ -745,28 +840,6 @@ class DeployeurDockerMilleGrille:
 
             label_resp = self.__docker.post('nodes/%s/update?version=%s' % (node_id, node_version), content)
             self.__logger.debug("Label add status:%s\n%s" % (label_resp.status_code, str(label_resp)))
-
-    def ajouter_compte_mq(self, enveloppe):
-        sujet = enveloppe.subject_rfc4514_string()
-        type_noeud = enveloppe.subject_organizational_unit_name
-        if type_noeud == 'middleware':
-            pass
-        elif type_noeud in ['maitredescles', 'deployeur']:
-            type_noeud = 'noeud'
-        else:
-            type_noeud = None  # Pas supporte
-
-        if type_noeud is not None:
-            compte="%s;%s;%s;%s\n" % (
-                enveloppe.fingerprint_ascii,
-                sujet,
-                self.__nom_millegrille,
-                type_noeud,
-            )
-            new_mq_accounts = self.constantes.rep_mq_accounts(
-                ConstantesEnvironnementMilleGrilles.MQ_NEW_USERS_FILE)
-            with open(new_mq_accounts, 'a') as fichier:
-                fichier.write(compte)
 
     def initialiser_db_mongo(self):
         """
