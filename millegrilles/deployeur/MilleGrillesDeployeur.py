@@ -505,6 +505,10 @@ class DeployeurDockerMilleGrille:
             etat_mongo['datetag'] = datetag
             etat_mongo['comptesInitiaux'] = True
 
+            # Enregistrer mot de passe pour mongoexpress
+            with open('%s/mongoexpress.password.txt' % self.constantes.rep_secrets_deployeur, 'w') as fichier:
+                fichier.write(mot_passe_web_mongoexpress)
+
         # Enregistrer_fichier maj
         with open(etat_filename, 'w') as fichier:
             fichier.write(json.dumps(etat_mongo))
