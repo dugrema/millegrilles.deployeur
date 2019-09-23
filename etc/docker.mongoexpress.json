@@ -5,21 +5,21 @@
       "Image": "mg_mongo_express:0.49_4",
       "Hostname": "mongoexpress.local",
       "Env": [
-        "ME_CONFIG_BASICAUTH_USERNAME: mongo",
-        "ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}",
-        "MONGODB_ADMINPASSWORD_FILE: /run/secrets/mongo.root.password",
-        "ME_CONFIG_BASICAUTH_PASSWORD_FILE: /run/secrets/mongoexpress.web.password",
-        "VCAP_APP_HOST: '::'",
-        "VCAP_APP_PORT: 443",
-        "ME_CONFIG_SITE_SSL_ENABLED: 'true'",
-        "ME_CONFIG_SITE_SSL_CRT_PATH: '/run/secrets/pki.millegrilles.wadmin.cert'",
-        "ME_CONFIG_SITE_SSL_KEY_PATH: '/run/secrets/pki.millegrilles.wadmin.key'",
-        "ME_CONFIG_MONGODB_SERVER: mongo",
-        "ME_CONFIG_MONGODB_SSL: 'true'",
-        "ME_CONFIG_MONGODB_KEY: /run/secrets/pki.millegrilles.ssl.key",
-        "ME_CONFIG_MONGODB_CERT: /run/secrets/pki.millegrilles.ssl.cert",
-        "ME_CONFIG_MONGODB_CACERT: /run/secrets/pki.millegrilles.ssl.CAchain",
-        "ME_CONFIG_MONGODB_SSLVALIDATE: 'true'"
+        "ME_CONFIG_BASICAUTH_USERNAME=mongo",
+        "ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_INITDB_ROOT_USERNAME}",
+        "MONGODB_ADMINPASSWORD_FILE=/run/secrets/mongo.root.password",
+        "ME_CONFIG_BASICAUTH_PASSWORD_FILE=/run/secrets/mongoexpress.web.password",
+        "VCAP_APP_HOST='::'",
+        "VCAP_APP_PORT=443",
+        "ME_CONFIG_SITE_SSL_ENABLED='true'",
+        "ME_CONFIG_SITE_SSL_CRT_PATH='/run/secrets/pki.millegrilles.wadmin.cert'",
+        "ME_CONFIG_SITE_SSL_KEY_PATH='/run/secrets/pki.millegrilles.wadmin.key'",
+        "ME_CONFIG_MONGODB_SERVER=mongo",
+        "ME_CONFIG_MONGODB_SSL='true'",
+        "ME_CONFIG_MONGODB_KEY=/run/secrets/pki.millegrilles.ssl.key",
+        "ME_CONFIG_MONGODB_CERT=/run/secrets/pki.millegrilles.ssl.cert",
+        "ME_CONFIG_MONGODB_CACERT=/run/secrets/pki.millegrilles.ssl.CAchain",
+        "ME_CONFIG_MONGODB_SSLVALIDATE='true'"
       ],
       "Secrets": [
         {
@@ -59,16 +59,25 @@
           }
         },
         {
-          "SecretName": "pki.middleware.ssl.key",
+          "SecretName": "pki.middleware.ssl.cert",
           "File": {
-            "Name": "pki.millegrilles.wadmin.key",
+            "Name": "pki.millegrilles.ssl.cert",
             "UID": "0",
             "GID": "0",
             "Mode": 292
           }
         },
         {
-          "SecretName": "pki.middleware.ssl.cert",
+          "SecretName": "pki.middleware.ssl.key",
+          "File": {
+            "Name": "pki.millegrilles.ssl.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        },
+        {
+          "SecretName": "pki.millegrilles.wadmin.cert",
           "File": {
             "Name": "pki.millegrilles.wadmin.cert",
             "UID": "0",
@@ -77,7 +86,7 @@
           }
         },
         {
-          "SecretName": "pki.middleware.ssl.key",
+          "SecretName": "pki.millegrilles.wadmin.key",
           "File": {
             "Name": "pki.millegrilles.wadmin.key",
             "UID": "0",

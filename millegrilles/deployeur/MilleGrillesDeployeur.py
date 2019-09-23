@@ -202,8 +202,9 @@ class ServiceDockerConfiguration:
 
         # /TaskTemplate/ContainerSpec/Mounts
         mounts = container_spec.get('Mounts')
-        for mount in mounts:
-            mount['Source'] = self.mapping(mount['Source'])
+        if mounts is not None:
+            for mount in mounts:
+                mount['Source'] = self.mapping(mount['Source'])
 
         # /TaskTemplate/ContainerSpec/Secrets
         secrets = container_spec.get('Secrets')
@@ -392,6 +393,8 @@ class DeployeurDockerMilleGrille:
 
         self.__wait_event = Event()
 
+        self.__node_name = 'mg-dev3'
+
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     # def grouper_secrets(self):
@@ -427,6 +430,7 @@ class DeployeurDockerMilleGrille:
         # Activer Mongo
         self.configurer_mongo()
         self.activer_mongo()
+        self.activer_mongoexpress()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
@@ -453,6 +457,7 @@ class DeployeurDockerMilleGrille:
             mot_passe_transaction = secrets.token_hex(16)
             mot_passe_domaines = secrets.token_hex(16)
             mot_passe_root_mongo = secrets.token_hex(16)
+            mot_passe_web_mongoexpress = secrets.token_hex(16)
 
             script_js = script_js.replace('${NOM_MILLEGRILLE}', self.__nom_millegrille)
             script_js = script_js.replace('${PWD_TRANSACTION}', mot_passe_transaction)
@@ -480,6 +485,9 @@ class DeployeurDockerMilleGrille:
                 }, {
                     "Name": '%s.passwd.python.transactions.json.%s' % (self.__nom_millegrille, datetag),
                     "Data": base64.encodebytes(mot_passe_transaction.encode('utf-8')).decode('utf-8')
+                }, {
+                    "Name": '%s.passwd.mongoexpress.web.%s' % (self.__nom_millegrille, datetag),
+                    "Data": base64.encodebytes(mot_passe_web_mongoexpress.encode('utf-8')).decode('utf-8')
                 },
             ]
 
@@ -663,25 +671,25 @@ class DeployeurDockerMilleGrille:
                 resultat = self.__docker.post('secrets/create', message)
                 self.__logger.debug("Secret %s, resultat %s" % (id_secret, resultat.status_code))
 
-    def deployer_motsdepasse_python(self):
-        pass
-
     def activer_mq(self):
         self.preparer_service('mq')
-        node_name = 'mg-dev3'
         labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
-        self.deployer_labels(node_name, labels)
+        self.deployer_labels(self.__node_name, labels)
 
     def activer_mongo(self):
         self.preparer_service('mongo')
-        node_name = 'mg-dev3'
         labels = {'netzone.private': 'true', 'millegrilles.database': 'true'}
-        self.deployer_labels(node_name, labels)
+        self.deployer_labels(self.__node_name, labels)
 
         # Si premiere execution, attendre deploiement:
         #  - executer rs.init()
         #  - ajouter comptes
         self.initialiser_db_mongo()
+
+    def activer_mongoexpress(self):
+        self.preparer_service('mongoexpress')
+        labels = {'netzone.private': 'true', 'millegrilles.consoles': 'true'}
+        self.deployer_labels(self.__node_name, labels)
 
     def deployer_labels(self, node_name, labels):
         nodes_list = self.__docker.get('nodes').json()
@@ -731,54 +739,67 @@ class DeployeurDockerMilleGrille:
         rs.init(), et chargement des comptes initiaux.
         """
 
-        # Copier les scripts vers le repertoire de mongo
-        scripts = [
-            ConstantesEnvironnementMilleGrilles.MONGO_RSINIT_SCRIPT,
-            ConstantesEnvironnementMilleGrilles.MONGO_RUN_ADMIN,
-            ConstantesEnvironnementMilleGrilles.MONGO_RUN_MG
-        ]
-        for script in scripts:
-            source = '%s/%s' % (ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_BIN, script)
-            dest =  self.constantes.rep_mongo_scripts(script)
-            shutil.copyfile(source, dest)
-            os.chmod(dest, 750)
+        etat_filename = self.constantes.fichier_etc_mg('mongo.etat.json')
+        with open(etat_filename, 'r') as fichier:
+            fichier_str = fichier.read()
+            etat_mongo = json.loads(fichier_str)
 
-        # Executer le script
-        nom_container = '%s_mongo' % self.__nom_millegrille
-        containers_resp = self.__docker.info_container(nom_container)
-        liste_containers = containers_resp.json()
-        # self.__logger.debug("Liste de containers: %s" % liste_containers)
-        if len(liste_containers) == 1:
-            container_mongo = liste_containers[0]
-            container_id = container_mongo['Id']
-            self.__logger.debug("Container mongo: %s" % container_mongo)
+        if etat_mongo.get('DB_INIT_OK') is None:
+            # Copier les scripts vers le repertoire de mongo
+            scripts = [
+                ConstantesEnvironnementMilleGrilles.MONGO_RSINIT_SCRIPT,
+                ConstantesEnvironnementMilleGrilles.MONGO_RUN_ADMIN,
+                ConstantesEnvironnementMilleGrilles.MONGO_RUN_MG
+            ]
+            for script in scripts:
+                source = '%s/%s' % (ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_BIN, script)
+                dest =  self.constantes.rep_mongo_scripts(script)
+                shutil.copyfile(source, dest)
+                os.chmod(dest, 750)
 
-            commande = '/opt/mongodb/scripts/mongo_run_script_admin.sh /opt/mongodb/scripts/mongo_rsinit.js'
-            commande = commande.split(' ')
-            self.__logger.debug("Commande a transmettre: %s" % commande)
+            # Executer le script
+            nom_container = '%s_mongo' % self.__nom_millegrille
+            containers_resp = self.__docker.info_container(nom_container)
+            liste_containers = containers_resp.json()
+            # self.__logger.debug("Liste de containers: %s" % liste_containers)
+            if len(liste_containers) == 1:
+                container_mongo = liste_containers[0]
+                container_id = container_mongo['Id']
+                self.__logger.debug("Container mongo: %s" % container_mongo)
 
-            output = self.__docker.container_exec(container_id, commande)
-            self.__logger.debug("Output commande id %s (code %s)" % (
-                container_id, output.status_code))
-            self.__logger.debug(output.content)
-            if output.status_code != 200:
-                raise Exception("Erreur d'execution de mongo rs.init()")
+                commande = '/opt/mongodb/scripts/mongo_run_script_admin.sh /opt/mongodb/scripts/mongo_rsinit.js'
+                commande = commande.split(' ')
+                self.__logger.debug("Commande a transmettre: %s" % commande)
 
-            self.__wait_event.wait(20)  # Attendre que MongoDB redevienne Primaire
+                output = self.__docker.container_exec(container_id, commande)
+                self.__logger.debug("Output commande id %s (code %s)" % (
+                    container_id, output.status_code))
+                self.__logger.debug(output.content)
+                if output.status_code != 200:
+                    raise Exception("Erreur d'execution de mongo rs.init()")
 
-            commande = '/opt/mongodb/scripts/mongo_run_script_mg.sh %s /run/secrets/mongo.accounts.js' % self.__nom_millegrille
-            commande = commande.split(' ')
-            self.__logger.debug("Commande a transmettre: %s" % commande)
+                self.__wait_event.wait(5)  # Attendre que MongoDB redevienne Primaire
 
-            output = self.__docker.container_exec(container_id, commande)
-            self.__logger.debug("Output commande id %s (code %s)" % (
-                container_id, output.status_code))
-            self.__logger.debug(output.content)
-            if output.status_code != 200:
-                raise Exception("Erreur d'execution de mongo.accounts.js")
+                commande = '/opt/mongodb/scripts/mongo_run_script_mg.sh %s /run/secrets/mongo.accounts.js' % self.__nom_millegrille
+                commande = commande.split(' ')
+                self.__logger.debug("Commande a transmettre: %s" % commande)
+
+                output = self.__docker.container_exec(container_id, commande)
+                self.__logger.debug("Output commande id %s (code %s)" % (
+                    container_id, output.status_code))
+                self.__logger.debug(output.content)
+                if output.status_code != 200:
+                    raise Exception("Erreur d'execution de mongo.accounts.js")
+
+            else:
+                raise ValueError("Mongo pas trouve")
+
+            etat_mongo['DB_INIT_OK'] = True
+            with open(etat_filename, 'w') as fichier:
+                fichier.write(json.dumps(etat_mongo))
 
         else:
-            raise ValueError("Mongo pas trouve")
+            self.__logger.debug("Mongo deja init, on skip")
 
 
 logging.basicConfig()
