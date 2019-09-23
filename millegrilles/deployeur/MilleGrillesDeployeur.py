@@ -213,7 +213,8 @@ class ServiceDockerConfiguration:
             secret_name = secret['SecretName']
             if secret_name.startswith('pki'):
                 date_secret = None
-                if secret_name.startswith('pki.middleware.ssl') or secret_name.startswith('pki.millegrilles.wadmin'):
+                if secret_name.startswith('pki.middleware.ssl') or \
+                        secret_name.startswith('pki.millegrilles.wadmin'):
                     date_secret = self.__dates_secrets['pki.millegrilles.ssl']
 
                 if date_secret is not None:
@@ -223,6 +224,11 @@ class ServiceDockerConfiguration:
                 else:
                     self.__logger.warning("Date inconnue pour secrets %s" % secret_name)
             elif secret_name.startswith('passwd.mongo'):
+                date_secret = self.__dates_secrets['mongo_datetag']
+                secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
+                secret['SecretName'] = secret_name
+                secret['SecretID'] = self.__secrets_par_nom[secret_name]
+            elif secret_name.startswith('passwd.python'):
                 date_secret = self.__dates_secrets['mongo_datetag']
                 secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
                 secret['SecretName'] = secret_name
@@ -439,6 +445,9 @@ class DeployeurDockerMilleGrille:
         self.activer_mongo()
         self.activer_mongoexpress()
 
+        # Activer les scripts python
+        self.activer_consignateur_transactions()
+
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
     def configurer_mongo(self):
@@ -488,10 +497,10 @@ class DeployeurDockerMilleGrille:
                     "Data": base64.encodebytes(script_js.encode('utf-8')).decode('utf-8')
                 }, {
                     "Name": '%s.passwd.python.domaines.json.%s' % (self.__nom_millegrille, datetag),
-                    "Data": base64.encodebytes(mot_passe_domaines.encode('utf-8')).decode('utf-8')
+                    "Data": base64.encodebytes(compte_domaines.encode('utf-8')).decode('utf-8')
                 }, {
                     "Name": '%s.passwd.python.transactions.json.%s' % (self.__nom_millegrille, datetag),
-                    "Data": base64.encodebytes(mot_passe_transaction.encode('utf-8')).decode('utf-8')
+                    "Data": base64.encodebytes(compte_transaction.encode('utf-8')).decode('utf-8')
                 }, {
                     "Name": '%s.passwd.mongoexpress.web.%s' % (self.__nom_millegrille, datetag),
                     "Data": base64.encodebytes(mot_passe_web_mongoexpress.encode('utf-8')).decode('utf-8')
@@ -540,7 +549,7 @@ class DeployeurDockerMilleGrille:
         for sujet in self.__certificats:
             enveloppe = self.__certificats[sujet]
             if enveloppe.date_valide():
-                self.__logger.debug("Cert valide: %s" % enveloppe.subject_rfc4514_string())
+                self.__logger.debug("Cert valide: %s" % enveloppe.subject_rfc4514_string_mq())
                 date_concat = enveloppe.date_valide_concat()
                 if int(date_concat) > int(date_init_certificat):
                     self.ajouter_compte_mq(enveloppe)
@@ -565,7 +574,6 @@ class DeployeurDockerMilleGrille:
         # Verifier que le service MQ est en fonction - sinon le deployer
         nom_service_complet = '%s_%s' % (self.__nom_millegrille, nom_service)
         etat_service_resp = self.__docker.info_service(nom_service_complet)
-        mode = None
         if etat_service_resp.status_code == 200:
             service_etat_json = etat_service_resp.json()
             if len(service_etat_json) == 0 and force:
@@ -711,6 +719,11 @@ class DeployeurDockerMilleGrille:
     def activer_mongoexpress(self):
         self.preparer_service('mongoexpress')
         labels = {'netzone.private': 'true', 'millegrilles.consoles': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_consignateur_transactions(self):
+        self.preparer_service('transaction')
+        labels = {'millegrilles.python': 'true'}
         self.deployer_labels(self.__node_name, labels)
 
     def deployer_labels(self, node_name, labels):
