@@ -206,6 +206,7 @@ class ServiceDockerConfiguration:
         if mounts is not None:
             for mount in mounts:
                 mount['Source'] = self.mapping(mount['Source'])
+                mount['Target'] = self.mapping(mount['Target'])
 
         # /TaskTemplate/ContainerSpec/Secrets
         secrets = container_spec.get('Secrets')
@@ -537,6 +538,7 @@ class DeployeurDockerMilleGrille:
         self.activer_consignateur_transactions()
         self.activer_ceduleur()
         self.activer_domaines()
+        self.activer_maitredescles()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
@@ -562,15 +564,18 @@ class DeployeurDockerMilleGrille:
             # Generer les mots de passe
             mot_passe_transaction = secrets.token_hex(16)
             mot_passe_domaines = secrets.token_hex(16)
+            mot_passe_maitredescles = secrets.token_hex(16)
             mot_passe_root_mongo = secrets.token_hex(16)
             mot_passe_web_mongoexpress = secrets.token_hex(16)
 
             script_js = script_js.replace('${NOM_MILLEGRILLE}', self.__nom_millegrille)
             script_js = script_js.replace('${PWD_TRANSACTION}', mot_passe_transaction)
             script_js = script_js.replace('${PWD_MGDOMAINES}', mot_passe_domaines)
+            script_js = script_js.replace('${PWD_MAITREDESCLES}', mot_passe_maitredescles)
 
             compte_transaction = template_json.replace('${MONGOPASSWORD}', mot_passe_transaction)
             compte_domaines = template_json.replace('${MONGOPASSWORD}', mot_passe_domaines)
+            compte_maitredescles = template_json.replace('${MONGOPASSWORD}', mot_passe_maitredescles)
 
             # Inserer secrets dans docker
             # passwd.mongo.root
@@ -591,6 +596,9 @@ class DeployeurDockerMilleGrille:
                 }, {
                     "Name": '%s.passwd.python.transactions.json.%s' % (self.__nom_millegrille, datetag),
                     "Data": base64.encodebytes(compte_transaction.encode('utf-8')).decode('utf-8')
+                }, {
+                    "Name": '%s.passwd.python.maitredescles.json.%s' % (self.__nom_millegrille, datetag),
+                    "Data": base64.encodebytes(compte_maitredescles.encode('utf-8')).decode('utf-8')
                 }, {
                     "Name": '%s.passwd.mongoexpress.web.%s' % (self.__nom_millegrille, datetag),
                     "Data": base64.encodebytes(mot_passe_web_mongoexpress.encode('utf-8')).decode('utf-8')
@@ -624,41 +632,50 @@ class DeployeurDockerMilleGrille:
         try:
             with open(etat_filename, 'r') as fichier:
                 fichier_str = fichier.read()
-                etat_mongo = json.loads(fichier_str)
+                etat_mq = json.loads(fichier_str)
         except FileNotFoundError as fnf:
             # Fichier n'existe pas, on continue
-            etat_mongo = dict()
+            etat_mq = dict()
+
+        initialser_comptes = True
+        if etat_mq.get('comptes_init_ok') is not None:
+            initialser_comptes = not etat_mq.get('comptes_init_ok')
 
         # Verifier la date du plus recent certificat configure
-        date_init_certificat = etat_mongo.get('date_max_certificat')
+        date_init_certificat = etat_mq.get('date_max_certificat')
         date_max_certificat = date_init_certificat
         if date_max_certificat is None:
             date_max_certificat = '0'
             date_init_certificat = '0'
 
         # Commencer par configurer le vhost de la nouvelle millegrille
-        if not self.__gestionnaire_rabbitmq.attendre_mq():
-            raise Exception("MQ pas disponible")
-        self.__gestionnaire_rabbitmq.ajouter_vhost()
+        if initialser_comptes:
+            if not self.__gestionnaire_rabbitmq.attendre_mq():
+                raise Exception("MQ pas disponible")
+            self.__gestionnaire_rabbitmq.ajouter_vhost()
 
         for sujet in self.__certificats:
             enveloppe = self.__certificats[sujet]
             if enveloppe.date_valide():
                 self.__logger.debug("Cert valide: %s" % enveloppe.subject_rfc4514_string_mq())
 
-                # Ajouter le compte usager (subject et role) a MQ
-                self.__gestionnaire_rabbitmq.ajouter_compte(enveloppe)
+                if initialser_comptes:
+                    # Ajouter le compte usager (subject et role) a MQ
+                    self.__gestionnaire_rabbitmq.ajouter_compte(enveloppe)
 
                 # Conserver plus recent cert pour le mapping de secrets
                 date_concat = enveloppe.date_valide_concat()
                 if int(date_concat) > int(date_max_certificat):
                     date_max_certificat = date_concat
 
-        etat_mongo['date_max_certificat'] = date_max_certificat
+        etat_mq['date_max_certificat'] = date_max_certificat
+
+        if initialser_comptes:
+            etat_mq['comptes_init_ok'] = True
 
         # Enregistrer_fichier maj
         with open(etat_filename, 'w') as fichier:
-            fichier.write(json.dumps(etat_mongo))
+            fichier.write(json.dumps(etat_mq))
 
     def charger_configuration_services(self):
         config_version = VersionMilleGrille()
@@ -831,6 +848,11 @@ class DeployeurDockerMilleGrille:
     def activer_domaines(self):
         self.preparer_service('domaines')
         labels = {'netzone.private': 'true', 'millegrilles.python': 'true', 'millegrilles.domaines': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_maitredescles(self):
+        self.preparer_service('maitredescles')
+        labels = {'millegrilles.maitredescles': 'true'}
         self.deployer_labels(self.__node_name, labels)
 
     def deployer_labels(self, node_name, labels):

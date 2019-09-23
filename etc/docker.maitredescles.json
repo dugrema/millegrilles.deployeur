@@ -1,0 +1,109 @@
+{
+  "Name": "maitredescles-python",
+  "TaskTemplate": {
+    "ContainerSpec": {
+      "Image": "millegrilles_consignation_python_main.x86_64:1.13.50",
+      "Args": [
+        "demarrer_domaine.py",
+        "--info"
+      ],
+      "Hostname": "maitredescles-python.local",
+      "Env": [
+        "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
+        "MG_DOMAINES_JSON=/opt/millegrilles/dist/domaines_MaitreDesCles.json",
+        "MG_CONFIG_JSON=/run/secrets/mg.maitredescles.json",
+        "MG_MONGO_USERNAME=maitredescles",
+        "MG_MQ_HOST=mq",
+        "MG_MQ_PORT=5673",
+        "MG_MQ_SSL=on",
+        "MG_MQ_AUTH_CERT=on",
+        "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
+        "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
+        "MG_MQ_CA_CERTS=/run/secrets/pki.millegrilles.ssl.CAchain",
+        "MG_MONGO_HOST=mongo",
+        "MG_MONGO_SSL=on",
+        "MG_MONGO_SSL_CERTFILE=/run/secrets/pki.millegrilles.ssl.key_cert",
+        "MG_MONGO_SSL_CA_CERTS=/run/secrets/pki.millegrilles.ssl.CAchain"
+      ],
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki",
+          "Target": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki"
+        }
+      ],
+      "Secrets": [
+        {
+          "SecretName": "pki.middleware.ssl.cert",
+          "File": {
+            "Name": "pki.millegrilles.ssl.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.middleware.ssl.key",
+          "File": {
+            "Name": "pki.millegrilles.ssl.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.middleware.ssl.CAchain",
+          "File": {
+            "Name": "pki.millegrilles.ssl.CAchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.middleware.ssl.key_cert",
+          "File": {
+            "Name": "pki.millegrilles.ssl.key_cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "passwd.python.maitredescles.json",
+          "File": {
+            "Name": "mg.maitredescles.json",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }
+      ]
+    },
+    "Placement": {
+      "Constraints": [
+        "node.labels.millegrilles.maitredescles == true"
+      ]
+    },
+    "Resources": {
+      "Limits": {
+        "NanoCPUs": 500000000,
+        "MemoryBytes": 104857600
+      }
+    },
+    "RestartPolicy": {
+      "Condition": "any",
+      "Delay": 30000000000,
+      "MaxAttempts": 10
+    },
+    "Mode": {
+      "Replicated": {
+        "Replicas": 1
+      }
+    },
+    "Networks": [
+        {
+          "Target": "mg_${NOM_MILLEGRILLE}_net"
+        }
+    ]
+  },
+  "Labels": {
+    "millegrille": "${NOM_MILLEGRILLE}"
+  }
+}
