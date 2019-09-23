@@ -106,17 +106,19 @@ commonName = supplied
 
 [ noeud_req_extensions ]
 
-subjectKeyIdentifier = hash
-basicConstraints     = CA:FALSE
-keyUsage             = digitalSignature, nonRepudiation, keyEncipherment
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+basicConstraints       = CA:FALSE
+keyUsage               = digitalSignature, nonRepudiation, keyEncipherment
 
 ####################################################################
 [ middleware_req_extensions ]
 
-subjectKeyIdentifier = hash
-basicConstraints     = CA:FALSE
-keyUsage             = digitalSignature, nonRepudiation, keyEncipherment
-subjectAltName       = @middleware_alts
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+basicConstraints       = CA:FALSE
+keyUsage               = digitalSignature, nonRepudiation, keyEncipherment
+subjectAltName         = @middleware_alts
 
 [ middleware_alts ]
 # Section swarm docker (sans suffixe)
