@@ -535,6 +535,7 @@ class DeployeurDockerMilleGrille:
 
         # Activer les scripts python
         self.activer_consignateur_transactions()
+        self.activer_ceduleur()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
@@ -818,6 +819,11 @@ class DeployeurDockerMilleGrille:
 
     def activer_consignateur_transactions(self):
         self.preparer_service('transaction')
+        labels = {'millegrilles.python': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_ceduleur(self):
+        self.preparer_service('ceduleur')
         labels = {'millegrilles.python': 'true'}
         self.deployer_labels(self.__node_name, labels)
 
