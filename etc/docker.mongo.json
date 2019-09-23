@@ -2,7 +2,7 @@
   "Name": "mongo",
   "TaskTemplate": {
     "ContainerSpec": {
-      "Image": "mg_mongo:4.0_4",
+      "Image": "${mongo}",
       "Hostname": "mongo.local",
       "Env": [
         "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}",

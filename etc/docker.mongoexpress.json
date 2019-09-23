@@ -2,7 +2,7 @@
   "Name": "mongoexpress",
   "TaskTemplate": {
     "ContainerSpec": {
-      "Image": "mg_mongo_express:0.49_4",
+      "Image": "${mongoexpress}",
       "Hostname": "mongoexpress.local",
       "Env": [
         "ME_CONFIG_BASICAUTH_USERNAME=mongo",

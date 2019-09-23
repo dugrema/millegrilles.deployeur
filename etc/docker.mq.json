@@ -2,7 +2,7 @@
   "Name": "mq",
   "TaskTemplate": {
     "ContainerSpec": {
-      "Image": "mg_rabbitmq:3.7-management_10",
+      "Image": "${mq}",
       "Hostname": "mq.local",
       "Mounts": [
         {
