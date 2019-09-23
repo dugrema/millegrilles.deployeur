@@ -284,11 +284,11 @@ class GestionnaireComptesRabbitMQ:
                 state = container['State']
                 if state == 'running':
                     # Tenter d'executer un script pour voir si mongo est pret
-                    commande = 'rabbitmqctl ping'
+                    commande = 'rabbitmqctl list_vhosts'
                     try:
                         output = self.__executer_commande(commande)
                         content = str(output)
-                        if 'Ping succeeded' in content:
+                        if 'Listing vhosts' in content:
                             mq_pret = True
                             break
                     except Exception as e:
