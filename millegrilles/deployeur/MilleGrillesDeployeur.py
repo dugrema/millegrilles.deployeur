@@ -11,6 +11,7 @@ import os
 import base64
 import secrets
 import datetime
+import shutil
 
 class ConstantesEnvironnementMilleGrilles:
 
@@ -31,9 +32,11 @@ class ConstantesEnvironnementMilleGrilles:
     REPERTOIRE_MILLEGRILLE_DBS = '%s/dbs' % REPERTOIRE_MILLEGRILLE_PKI
     REPERTOIRE_MILLEGRILLE_KEYS = '%s/keys' % REPERTOIRE_MILLEGRILLE_PKI
     REPERTOIRE_MILLEGRILLE_MQ_ACCOUNTS = '%s/mq/accounts' % REPERTOIRE_MILLEGRILLE_MOUNTS
+    REPERTOIRE_MILLEGRILLE_MONGO_SCRIPTS = '%s/mongo/scripts' % REPERTOIRE_MILLEGRILLE_MOUNTS
 
     # Applications et comptes
     MONGO_INITDB_ROOT_USERNAME = 'root'
+    MONGO_RSINIT_SCRIPT='mongo_rsinit.js'
     MQ_NEW_USERS_FILE='new_users.txt'
 
     def __init__(self, nom_millegrille):
@@ -87,6 +90,14 @@ class ConstantesEnvironnementMilleGrilles:
             ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
             self.nom_millegrille,
             ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MQ_ACCOUNTS,
+            fichier
+        )
+
+    def rep_mongo_scripts(self, fichier):
+        return '%s/%s/%s/%s' % (
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            self.nom_millegrille,
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MONGO_SCRIPTS,
             fichier
         )
 
@@ -339,6 +350,25 @@ class DockerFacade:
     def info_service(self, nom_service):
         liste = self.get('services?filters={"name": ["%s"]}' % nom_service)
         return liste
+
+    def info_container(self, nom_container):
+        liste = self.get('containers/json?filters={"name": ["%s"]}' % nom_container)
+        return liste
+
+    def container_exec(self, id_container: str, commande: list):
+        contenu = {
+            'AttachStdout': True,
+            'AttachStderr': True,
+            'Tty': False,
+            'AttachStdin': False,
+            'Cmd': commande,
+        }
+        self.__logger.debug("EXEC container id: %s" % id_container)
+        exec_start_result = self.post('containers/%s/exec' % id_container, contenu)
+
+        id_exec = exec_start_result.json()['Id']
+        exec_result = self.post('exec/%s/start' % id_exec, {"Detach": False})
+        return exec_result
 
 
 class DeployeurDockerMilleGrille:
@@ -642,6 +672,11 @@ class DeployeurDockerMilleGrille:
         labels = {'netzone.private': 'true', 'millegrilles.database': 'true'}
         self.deployer_labels(node_name, labels)
 
+        # Si premiere execution, attendre deploiement:
+        #  - executer rs.init()
+        #  - ajouter comptes
+        self.initialiser_db_mongo()
+
     def deployer_labels(self, node_name, labels):
         nodes_list = self.__docker.get('nodes').json()
         node = [n for n in nodes_list if n['Description']['Hostname'] == node_name]
@@ -684,6 +719,39 @@ class DeployeurDockerMilleGrille:
                 ConstantesEnvironnementMilleGrilles.MQ_NEW_USERS_FILE)
             with open(new_mq_accounts, 'a') as fichier:
                 fichier.write(compte)
+
+    def initialiser_db_mongo(self):
+        """
+        rs.init(), et chargement des comptes initiaux.
+        """
+        rsinit_script_src = '%s/%s' % (
+            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_BIN,
+            ConstantesEnvironnementMilleGrilles.MONGO_RSINIT_SCRIPT
+        )
+        rsinit_script_dst = self.constantes.rep_mongo_scripts(
+            ConstantesEnvironnementMilleGrilles.MONGO_RSINIT_SCRIPT)
+        shutil.copyfile(rsinit_script_src, rsinit_script_dst)
+
+        # Executer le script
+        nom_container = '%s_mongo' % self.__nom_millegrille
+        containers_resp = self.__docker.info_container(nom_container)
+        liste_containers = containers_resp.json()
+        # self.__logger.debug("Liste de containers: %s" % liste_containers)
+        if len(liste_containers) == 1:
+            container_mongo = liste_containers[0]
+            container_id = container_mongo['Id']
+            self.__logger.debug("Container mongo: %s" % container_mongo)
+
+            commande = '/opt/mongodb/scripts/run_script.sh mongo_rsinit.js'
+            commande = commande.split(' ')
+            self.__logger.debug("Commande a transmettre: %s" % commande)
+
+            output = self.__docker.container_exec(container_id, commande)
+            self.__logger.debug("Output commande id %s (code %s)" % (
+                container_id, output.status_code))
+            self.__logger.debug(output.content)
+        else:
+            raise ValueError("Mongo pas trouve")
 
 
 logging.basicConfig()

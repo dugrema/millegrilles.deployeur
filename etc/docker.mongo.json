@@ -13,6 +13,11 @@
           "Type": "bind",
           "Source": "${MOUNTS}/mongo/data",
           "Target": "/data/db"
+        },
+        {
+          "Type": "bind",
+          "Source": "${MOUNTS}/mongo/scripts",
+          "Target": "/opt/mongodb/scripts"
         }
       ],
       "Secrets": [
