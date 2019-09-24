@@ -896,10 +896,10 @@ class DeployeurDockerMilleGrille:
         labels = {'netzone.private': 'true', 'millegrilles.nginx': 'true'}
         self.deployer_labels(self.__node_name, labels)
 
-    def activer_nginx_public(self):
+    def activer_publicateur_local(self):
         self.preparer_service('publicateurlocal')
 
-    def activer_publicateur_local(self):
+    def activer_nginx_public(self):
         pass
 
     def activer_publicateur_public(self):

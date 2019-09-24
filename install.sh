@@ -14,6 +14,8 @@ installer_docker() {
     echo "[INFO] docker est deja installe"
   fi
 
+  echo "[INFO] Activation du redemarrage automatique de docker"
+  sudo systemctl enable docker
 }
 
 installer_deployeur() {
