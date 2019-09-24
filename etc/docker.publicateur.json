@@ -1,5 +1,5 @@
 {
-  "Name": "publicateur-local-python",
+  "Name": "publicateur-python",
   "TaskTemplate": {
     "ContainerSpec": {
       "Image": "${mg-python}",
@@ -7,9 +7,9 @@
         "demarrer_publicateur.py",
         "--info",
         "--webroot",
-        "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/local"
+        "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/public"
       ],
-      "Hostname": "publicateur-local-python.local",
+      "Hostname": "publicateur-python-public.local",
       "Env": [
         "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
         "MG_MQ_HOST=mq",
@@ -23,8 +23,8 @@
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/local",
-          "Target": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/local"
+          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/public",
+          "Target": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/public"
         }
       ],
       "Secrets": [
@@ -58,8 +58,7 @@
     "Placement": {
       "Constraints": [
         "node.labels.millegrilles.nginx == true",
-        "node.labels.netzone.public != true",
-        "node.labels.netzone.private == true"
+        "node.labels.netzone.public == true"
       ]
     },
     "Resources": {

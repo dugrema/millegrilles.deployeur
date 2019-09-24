@@ -557,9 +557,11 @@ class DeployeurDockerMilleGrille:
         self.activer_coupdoeilreact()
         self.activer_vitrine()
         self.activer_nginx_local()
-        self.activer_nginx_public()
         self.activer_publicateur_local()
-        self.activer_publicateur_public()
+
+        # Section public -- pas disponible au demarrage
+        # self.activer_nginx_public()
+        # self.activer_publicateur_public()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
@@ -900,11 +902,12 @@ class DeployeurDockerMilleGrille:
         self.preparer_service('publicateurlocal')
 
     def activer_nginx_public(self):
-        pass
+        self.preparer_service('nginxpublic')
+        labels = {'netzone.public': 'true', 'millegrilles.nginx': 'true'}
+        self.deployer_labels(self.__node_name, labels)
 
     def activer_publicateur_public(self):
-        pass
-
+        self.preparer_service('publicateurpublic')
 
     def deployer_labels(self, node_name, labels):
         nodes_list = self.__docker.get('nodes').json()

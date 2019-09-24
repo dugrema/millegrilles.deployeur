@@ -1,0 +1,84 @@
+{
+  "Name": "nginxpublic",
+  "TaskTemplate": {
+    "ContainerSpec": {
+      "Image": "${nginx}",
+      "Hostname": "www.${DOMAIN_PUBLIC}",
+      "Env": [
+        "NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
+        "NGINX_CONFIG_FILE=local.conf",
+        "WEB_CERT=pki.millegrilles.ssl.fullchain",
+        "WEB_KEY=pki.millegrilles.ssl.key",
+        "URL_DOMAIN=${DOMAIN_PUBLIC}"
+      ],
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/public",
+          "Target": "/usr/share/nginx/html"
+        }
+      ],
+      "Secrets": [
+        {
+          "SecretName": "pki.millegrilles.web.fullchain",
+          "File": {
+            "Name": "pki.millegrilles.web.fullchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.millegrilles.web.key",
+          "File": {
+            "Name": "pki.millegrilles.web.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }
+      ]
+    },
+    "Placement": {
+      "Constraints": [
+        "node.labels.millegrilles.nginx == true",
+        "node.labels.netzone.public == true"
+      ]
+    },
+    "Resources": {
+      "Limits": {
+        "NanoCPUs": 500000000,
+        "MemoryBytes": 52428800
+      }
+    },
+    "RestartPolicy": {
+      "Condition": "any",
+      "Delay": 30000000000,
+      "MaxAttempts": 10
+    },
+    "Mode": {
+      "Replicated": {
+        "Replicas": 1
+      }
+    },
+    "Networks": [
+        {
+          "Target": "mg_${NOM_MILLEGRILLE}_net",
+          "Aliases": ["www", "www.${DOMAIN_PUBLIC}"]
+        }
+    ]
+  },
+ "EndpointSpec": {
+    "Mode": "vip",
+    "Ports": [
+      {
+        "Protocol": "tcp",
+        "PublishedPort": 443,
+        "TargetPort": 443,
+        "PublishMode": "host"
+      }
+    ]
+  },
+  "Labels": {
+    "millegrille": "${NOM_MILLEGRILLE}"
+  }
+}
