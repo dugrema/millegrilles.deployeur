@@ -158,17 +158,23 @@ class ServiceDockerConfiguration:
             config_str = fichier.read()
         self.__configuration_json = json.loads(config_str)
 
-        config_versions_name = '/opt/millegrilles/etc/docker.versions.json'
-        with open(config_versions_name) as fichier:
-            config_str = fichier.read()
-            if config_str is not None:
-                config_json = json.loads(config_str)
-                self.__versions_images = config_json
+        self.__versions_images = ServiceDockerConfiguration.charger_versions()
 
         for secret in docker_secrets:
             self.__secrets_par_nom[secret['Spec']['Name']] = secret['ID']
 
         self.__logger.info("Date secrets: %s" % str(dates_secrets))
+
+    @staticmethod
+    def charger_versions():
+        config_versions_name = '/opt/millegrilles/etc/docker.versions.json'
+        with open(config_versions_name) as fichier:
+            config_str = fichier.read()
+            if config_str is not None:
+                config_json = json.loads(config_str)
+                return config_json
+
+        return None
 
     def formatter_service(self):
         service_config = self.__configuration_json
@@ -414,6 +420,11 @@ class DeployeurMilleGrilles:
         )
 
         self.__parser.add_argument(
+            '-n', required=True,
+            help="Nom du noeud docker local (node name)"
+        )
+
+        self.__parser.add_argument(
             '-d', action="store_true", required=False,
             help="Daemonize et ecouter messages sur MQ"
         )
@@ -421,6 +432,16 @@ class DeployeurMilleGrilles:
         self.__parser.add_argument(
             '--creer', required=False,
             help="Nom de la millegrille a creer"
+        )
+
+        self.__parser.add_argument(
+            '--majversions', required=False,
+            help="Mettre la jour les versions des services de la millegrille"
+        )
+
+        self.__parser.add_argument(
+            '--arreter', required=False,
+            help="Arreter la millegrille"
         )
 
     def __parse(self):
@@ -433,9 +454,11 @@ class DeployeurMilleGrilles:
         if self.__args.debug:
             self.__logger.setLevel(logging.DEBUG)
             logging.getLogger('millegrilles').setLevel(logging.DEBUG)
+            logging.getLogger('__main__').setLevel(logging.DEBUG)
         elif self.__args.info:
             self.__logger.setLevel(logging.INFO)
             logging.getLogger('millegrilles').setLevel(logging.INFO)
+            logging.getLogger('__main__').setLevel(logging.INFO)
 
     def configurer_environnement_docker(self):
         """
@@ -445,14 +468,29 @@ class DeployeurMilleGrilles:
         # Verifier que docker est accessible
         self.configurer_swarm()
 
-    def configurer_millegrilles(self):
+    def executer_millegrilles(self):
         for deployeur in self.__millegrilles:
-            deployeur.configurer()
+            if self.__args.creer is not None:
+                deployeur.configurer()
+            elif self.__args.arreter is not None:
+                deployeur.arreter()
+            elif self.__args.majversions is not None:
+                deployeur.maj_versions_images()
 
     def charger_liste_millegrilles(self):
+        node_name = self.__args.n
+
         if self.__args.creer is not None:
             nom_millegrille = self.__args.creer
-            self.__millegrilles.append(DeployeurDockerMilleGrille(nom_millegrille, self.__docker))
+            self.__millegrilles.append(DeployeurDockerMilleGrille(nom_millegrille, node_name,  self.__docker))
+
+        if self.__args.arreter is not None:
+            nom_millegrille = self.__args.arreter
+            self.__millegrilles.append(DeployeurDockerMilleGrille(nom_millegrille, node_name, self.__docker))
+
+        if self.__args.majversions is not None:
+            nom_millegrille = self.__args.majversions
+            self.__millegrilles.append(DeployeurDockerMilleGrille(nom_millegrille, node_name, self.__docker))
 
     def sanity_check_millegrille(self, nom_millegrille):
         """
@@ -470,9 +508,9 @@ class DeployeurMilleGrilles:
             self.__logger.info("Docker swarm initialise")
 
     def executer(self):
-        self.charger_liste_millegrilles()
         self.configurer_environnement_docker()
-        self.configurer_millegrilles()
+        self.charger_liste_millegrilles()
+        self.executer_millegrilles()
 
         self.__logger.info("Execution terminee")
 
@@ -506,6 +544,10 @@ class DockerFacade:
 
     def post(self, url, contenu):
         r = self.__session.post('http+unix://%s/%s' % (self.__docker_socket_path, url), json=contenu)
+        return r
+
+    def delete(self, url, contenu):
+        r = self.__session.delete('http+unix://%s/%s' % (self.__docker_socket_path, url), json=contenu)
         return r
 
     def get_docker_version(self):
@@ -548,6 +590,15 @@ class DockerFacade:
         liste = self.get('services')
         return liste
 
+    def liste_services_millegrille(self, nom_millegrille):
+        liste_services = self.get('services?filters={"label": ["millegrille=%s"]}' % nom_millegrille)
+        if liste_services.status_code != 200:
+            self.__logger.info("Liste services, code:%s, message:\n%s" % (
+            liste_services.status_code, json.dumps(liste_services.json(), indent=4)))
+            raise Exception("Liste services non disponible (erreur: %d)" % liste_services.status_code)
+
+        return liste_services.json()
+
     def info_service(self, nom_service):
         liste = self.get('services?filters={"name": ["%s"]}' % nom_service)
         return liste
@@ -555,6 +606,10 @@ class DockerFacade:
     def info_container(self, nom_container):
         liste = self.get('containers/json?filters={"name": ["%s"]}' % nom_container)
         return liste
+
+    def supprimer_service(self, id_service):
+        response = self.delete('services/%s' % id_service, {})
+        return response
 
     def container_exec(self, id_container: str, commande: list):
         contenu = {
@@ -577,20 +632,20 @@ class DeployeurDockerMilleGrille:
     S'occupe d'une MilleGrille configuree sur docker.
     """
 
-    def __init__(self, nom_millegrille, docker: DockerFacade):
+    def __init__(self, nom_millegrille, node_name, docker: DockerFacade):
         self.__nom_millegrille = nom_millegrille
-        self.__contexte = None  # Le contexte est initialise une fois que MQ actif
+        self.__node_name = node_name
         self.__docker = docker
+
         self.constantes = ConstantesEnvironnementMilleGrilles(nom_millegrille)
         self.__gestionnaire_rabbitmq = GestionnaireComptesRabbitMQ(self.constantes, docker)
 
         # Version des secrets a utiliser
         self.__certificats = dict()
         self._dates_secrets = dict()
-
         self.__wait_event = Event()
 
-        self.__node_name = 'mg-dev3'
+        self.__contexte = None  # Le contexte est initialise une fois que MQ actif
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
@@ -610,12 +665,42 @@ class DeployeurDockerMilleGrille:
         # self.grouper_secrets()
         self.__logger.info("Date fichiers cert: ssl=%s" % str(self._dates_secrets))
 
-        # Activer MQ
-        self.activer_mq()
-        self.configurer_mq()
+        self._deployer_services()
 
-        # Activer Mongo
-        self.configurer_mongo()
+        self.__logger.debug("Environnement docker pour millegrilles est pret")
+
+    def arreter(self):
+        self.__logger.info("Arreter millegrille ; %s" % self.__nom_millegrille)
+        liste_services = self.__docker.liste_services_millegrille(self.__nom_millegrille)
+        for service in liste_services:
+            id_service = service['ID']
+            self.__logger.info("Suppression service: %s" % service['Spec']['Name'])
+            self.__docker.supprimer_service(id_service)
+
+    def maj_versions_images(self):
+        """
+        Met a jour la version des images de la millegrille. Ne deploie pas de nouveaux services.
+        :return:
+        """
+        versions_images = ServiceDockerConfiguration.charger_versions()
+
+        liste_services = self.__docker.liste_services_millegrille(self.__nom_millegrille)
+        self.__logger.info("Services deployes: %s" % str(liste_services))
+        for service in liste_services:
+            name = service['Spec']['Name']
+            name = name.replace('%s_' % self.__nom_millegrille)  # Enlever prefixe (nom de la millegrille)
+            image = service['Spect']['TaskTemplate']['ContainerSpec']['Image']
+            version_deployee = image.split('/')
+            version_deployee = version_deployee[-1]  # Conserver derniere partie du nom d'image
+
+            image_config = versions_images.get(name)
+            if image_config != version_deployee:
+                self.__logger.info("Mise a jour version service %s" % name)
+                self.preparer_service(name)
+
+    def _deployer_services(self):
+        # Activer les serveurs middleware MQ et Mongo
+        self.activer_mq()
         self.activer_mongo()
 
         # Activer les scripts python
@@ -635,8 +720,6 @@ class DeployeurDockerMilleGrille:
         # Section public -- pas disponible au demarrage
         # self.activer_nginx_public()
         # self.activer_publicateur_public()
-
-        self.__logger.debug("Environnement docker pour millegrilles est pret")
 
     def configurer_mongo(self):
         etat_filename = self.constantes.fichier_etc_mg('mongo.etat.json')
@@ -915,8 +998,10 @@ class DeployeurDockerMilleGrille:
         self.preparer_service('mq')
         labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
         self.deployer_labels(self.__node_name, labels)
+        self.configurer_mq()
 
     def activer_mongo(self):
+        self.configurer_mongo()
         self.preparer_service('mongo')
         labels = {'netzone.private': 'true', 'millegrilles.database': 'true'}
         self.deployer_labels(self.__node_name, labels)
@@ -1100,10 +1185,8 @@ class DeployeurDockerMilleGrille:
             self.__logger.debug("Mongo deja init, on skip")
 
 
-logging.basicConfig()
-logging.getLogger('__main__').setLevel(logging.DEBUG)
-deployeur = DeployeurMilleGrilles()
-# deployeur.charger_liste_millegrilles()
-# deployeur.configurer_environnement_docker()
-# deployeur.configurer_millegrilles()
-deployeur.main()
+if __name__ == '__main__':
+    # logging.basicConfig()
+    # logging.getLogger('__main__').setLevel(logging.DEBUG)
+    deployeur = DeployeurMilleGrilles()
+    deployeur.main()
