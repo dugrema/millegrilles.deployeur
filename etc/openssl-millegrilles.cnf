@@ -127,8 +127,79 @@ DNS.2  = mq
 DNS.3  = consignationfichiers
 
 # Section .local
-DNS.4  = $NOM_NOEUD.local
+DNS.4  = ${NOM_MILLEGRILLE}.local
 DNS.5  = www-${NOM_MILLEGRILLE}.local
 DNS.6  = coupdoeil-${NOM_MILLEGRILLE}.local
 DNS.7  = mq-${NOM_MILLEGRILLE}.local
 DNS.8  = mongo-express-${NOM_MILLEGRILLE}.local
+DNS.9  = ${NOM_MILLEGRILLE}
+
+####################################################################
+[ mq_req_extensions ]
+
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+basicConstraints       = CA:FALSE
+keyUsage               = digitalSignature, nonRepudiation, keyEncipherment
+subjectAltName         = @mq_alts
+
+[ mq_alts ]
+# Section swarm docker (sans suffixe)
+DNS.1  = mq
+DNS.2  = $NOM_NOEUD
+DNS.3  = $NOM_NOEUD.local
+DNS.4  = www-${NOM_MILLEGRILLE}.local
+DNS.5  = mq-${NOM_MILLEGRILLE}.local
+
+####################################################################
+[ mongo_req_extensions ]
+
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+basicConstraints       = CA:FALSE
+keyUsage               = digitalSignature, nonRepudiation, keyEncipherment
+subjectAltName         = @mongo_alts
+
+[ mongo_alts ]
+# Section swarm docker (sans suffixe)
+DNS.1  = mongo
+DNS.2  = $NOM_NOEUD
+DNS.3  = $NOM_NOEUD.local
+DNS.4  = www-${NOM_MILLEGRILLE}.local
+DNS.5  = mongo-${NOM_MILLEGRILLE}.local
+
+####################################################################
+[ python_req_extensions ]
+
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+basicConstraints       = CA:FALSE
+keyUsage               = digitalSignature, nonRepudiation, keyEncipherment
+
+####################################################################
+[ coupdoeil_req_extensions ]
+
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+basicConstraints       = CA:FALSE
+keyUsage               = digitalSignature, nonRepudiation, keyEncipherment
+subjectAltName         = @coupdoeil_alts
+
+[ coupdoeil_alts ]
+DNS.1  = $NOM_NOEUD.local
+DNS.2  = www-${NOM_MILLEGRILLE}.local
+DNS.3  = coupdoeil-${NOM_MILLEGRILLE}.local
+
+####################################################################
+[ vitrine_req_extensions ]
+
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+basicConstraints       = CA:FALSE
+keyUsage               = digitalSignature, nonRepudiation, keyEncipherment
+subjectAltName         = @vitrine_alts
+
+[ vitrine_alts ]
+DNS.1  = $NOM_NOEUD.local
+DNS.2  = www-${NOM_MILLEGRILLE}.local
+DNS.3  = vitrine-${NOM_MILLEGRILLE}.local

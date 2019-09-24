@@ -207,6 +207,13 @@ executer() {
   TYPE_NOEUD=middleware EXTENSION=middleware_req_extensions creer_cert_noeud
   TYPE_NOEUD=maitredescles EXTENSION=noeud_req_extensions PASSWORD=true creer_cert_noeud
   TYPE_NOEUD=deployeur EXTENSION=noeud_req_extensions creer_cert_noeud
+  TYPE_NOEUD=mq EXTENSION=mq_req_extensions creer_cert_noeud
+  TYPE_NOEUD=mongo EXTENSION=mongo_req_extensions creer_cert_noeud
+  TYPE_NOEUD=coupdoeil EXTENSION=coupdoeil_req_extensions creer_cert_noeud
+  TYPE_NOEUD=vitrine EXTENSION=vitrine_req_extensions creer_cert_noeud
+  TYPE_NOEUD=domaines EXTENSION=python_req_extensions creer_cert_noeud
+  TYPE_NOEUD=transactions EXTENSION=python_req_extensions creer_cert_noeud
+  TYPE_NOEUD=ceduleur EXTENSION=python_req_extensions creer_cert_noeud
 
   creer_CA_files
   deplacer_cle_deployeur
