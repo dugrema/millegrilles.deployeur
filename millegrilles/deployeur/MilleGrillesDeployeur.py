@@ -555,6 +555,7 @@ class DeployeurDockerMilleGrille:
         self.activer_mongoexpress()
         self.activer_consignationfichiers()
         self.activer_coupdoeilreact()
+        self.activer_vitrine()
         self.activer_nginx_local()
         self.activer_nginx_public()
         self.activer_publicateur_local()
@@ -883,6 +884,11 @@ class DeployeurDockerMilleGrille:
     def activer_consignationfichiers(self):
         self.preparer_service('consignationfichiers')
         labels = {'netzone.private': 'true', 'millegrilles.consignationfichiers': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_vitrine(self):
+        self.preparer_service('vitrinereact')
+        labels = {'millegrilles.vitrine': 'true'}
         self.deployer_labels(self.__node_name, labels)
 
     def activer_nginx_local(self):

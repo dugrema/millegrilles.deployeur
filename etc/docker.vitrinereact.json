@@ -1,22 +1,30 @@
 {
-  "Name": "coupdoeilreact",
+  "Name": "vitrinereact",
   "TaskTemplate": {
     "ContainerSpec": {
-      "Image": "${coupdoeilreact}",
-      "Hostname": "coupdoeil.local",
+      "Image": "${vitrinereact}",
+      "Hostname": "vitrine-${NOM_MILLEGRILLE}.local",
       "Env": [
         "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
         "MG_MQ_URL=amqps://mq:5673/${NOM_MILLEGRILLE}",
         "MG_MQ_CAFILE=/run/secrets/pki.millegrilles.ssl.CAchain",
         "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
         "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
-        "CERT=/run/secrets/pki.millegrilles.ssl.cert",
+        "CERT=/run/secrets/pki.millegrilles.ssl.fullchain",
         "PRIVKEY=/run/secrets/pki.millegrilles.ssl.key",
         "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation"
       ],
       "Secrets": [
         {
           "SecretName": "pki.middleware.ssl.fullchain",
+          "File": {
+            "Name": "pki.millegrilles.ssl.fullchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.middleware.ssl.cert",
           "File": {
             "Name": "pki.millegrilles.ssl.cert",
             "UID": "0",
@@ -44,14 +52,13 @@
     },
     "Placement": {
       "Constraints": [
-        "node.labels.netzone.private == true",
-        "node.labels.millegrilles.coupdoeil == true"
+        "node.labels.millegrilles.vitrine == true"
       ]
     },
     "Resources": {
       "Limits": {
         "NanoCPUs": 1000000000,
-        "MemoryBytes": 209715200
+        "MemoryBytes": 314572800
       }
     },
     "RestartPolicy": {
@@ -66,7 +73,8 @@
     },
     "Networks": [
         {
-          "Target": "mg_${NOM_MILLEGRILLE}_net"
+          "Target": "mg_${NOM_MILLEGRILLE}_net",
+          "Aliases": ["vitrinereact", "vitrinereact.local"]
         }
     ]
   },
@@ -75,7 +83,7 @@
     "Ports": [
       {
         "Protocol": "tcp",
-        "PublishedPort": 7443,
+        "PublishedPort": 6443,
         "TargetPort": 443,
         "PublishMode": "host"
       }
