@@ -418,6 +418,11 @@ class DeployeurMilleGrilles:
             help="Daemonize et ecouter messages sur MQ"
         )
 
+        self.__parser.add_argument(
+            '--creer', required=False,
+            help="Nom de la millegrille a creer"
+        )
+
     def __parse(self):
         self.__args = self.__parser.parse_args()
 
@@ -445,7 +450,9 @@ class DeployeurMilleGrilles:
             deployeur.configurer()
 
     def charger_liste_millegrilles(self):
-        self.__millegrilles.append(DeployeurDockerMilleGrille('test1', self.__docker))
+        if self.__args.creer is not None:
+            nom_millegrille = self.__args.creer
+            self.__millegrilles.append(DeployeurDockerMilleGrille(nom_millegrille, self.__docker))
 
     def sanity_check_millegrille(self, nom_millegrille):
         """
@@ -466,6 +473,8 @@ class DeployeurMilleGrilles:
         self.charger_liste_millegrilles()
         self.configurer_environnement_docker()
         self.configurer_millegrilles()
+
+        self.__logger.info("Execution terminee")
 
     def main(self):
         self._configurer_logging()

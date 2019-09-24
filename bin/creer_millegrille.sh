@@ -33,10 +33,6 @@ creer_repertoires() {
 
   sudo chown root:$MILLEGRILLES_GROUP $REP_MONGO_DATA $REP_MONGO_SCRIPTS $REP_MQ_ACCOUNTS
   sudo chmod 2700 $REP_MONGO_DATA $REP_MQ_ACCOUNTS
-
-  sudo mkdir $MILLEGRILLES_LOGS
-  sudo chown $$MILLEGRILLES_USER_DEPLOYEUR:$$MILLEGRILLES_GROUP $MILLEGRILLES_LOGS
-  sudo chmod 2755 $MILLEGRILLES_LOGS
 }
 
 ajuster_access_rights() {

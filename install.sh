@@ -74,12 +74,19 @@ preparer_opt() {
   echo "[OK] $MILLEGRILLES_PATH pret"
 }
 
+preparer_var() {
+  sudo mkdir -p $MILLEGRILLES_LOGS
+  sudo chown $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $MILLEGRILLES_LOGS
+  sudo chmod 2755 $MILLEGRILLES_LOGS
+}
+
 # Execution de l'installation
 installer() {
   installer_docker
   installer_deployeur
   # preparer_comptes
   preparer_opt
+  preparer_var
 }
 
 creer_millegrille() {
