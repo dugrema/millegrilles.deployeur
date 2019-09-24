@@ -3,6 +3,7 @@
 from millegrilles.util.UtilScriptLigneCommande import ModeleConfiguration
 from millegrilles.util.Daemon import Daemon
 from millegrilles.SecuritePKI import EnveloppeCertificat
+from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
 
 from threading import Event
 
@@ -14,6 +15,8 @@ import base64
 import secrets
 import datetime
 import shutil
+import argparse
+import signal
 
 
 class ConstantesEnvironnementMilleGrilles:
@@ -366,26 +369,68 @@ class GestionnaireComptesRabbitMQ:
             raise Exception("Erreur ajout compte")
 
 
-class DeployeurMilleGrilles(Daemon, ModeleConfiguration):
+class DeployeurDaemon(Daemon):
+
+    def __init__(self, deployeur):
+        self.__pidfile = '/var/run/mg-deployeur.pid'
+        self.__stdout = '/var/log/millegrilles/mg-manager.log'
+        self.__stderr = '/var/log/millegrilles/mg-manager.err'
+
+        self.__deployeur = deployeur
+
+        super().__init__(self.__pidfile, stdout=self.__stdout, stderr=self.__stderr)
+
+    def run(self):
+        self.__deployeur.executer()
+
+
+class DeployeurMilleGrilles:
     """
     Noeud gestionnaire d'une MilleGrille. Responsable de l'installation initiale, deploiement, entretient et healthcheck
     """
 
     def __init__(self):
-        self.__pidfile = '/var/run/mg-manager.pid'
-        self.__stdout = '/var/logs/mg-manager.log'
-        self.__stderr = '/var/logs/mg-manager.err'
-        self.__docker = DockerFacade()
-        self.__millegrilles = list()
-
-        Daemon.__init__(self, self.__pidfile, self.__stdout, self.__stderr)
-        ModeleConfiguration.__init__(self)
-
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
-    def initialiser(self, init_document=False, init_message=False, connecter=False):
-        # Initialiser mais ne pas connecter a MQ
-        super().initialiser(init_document=init_document, init_message=init_message, connecter=connecter)
+        self.__docker = DockerFacade()
+        self.__millegrilles = list()
+        self.__parser = None
+        self.__args = None
+
+        self._configurer_parser()
+        self.__parse()
+
+    def _configurer_parser(self):
+        self.__parser = argparse.ArgumentParser(description="Fonctionnalite MilleGrilles")
+
+        self.__parser.add_argument(
+            '--debug', action="store_true", required=False,
+            help="Active le debugging (logger, tres verbose)"
+        )
+
+        self.__parser.add_argument(
+            '--info', action="store_true", required=False,
+            help="Afficher davantage de messages (verbose)"
+        )
+
+        self.__parser.add_argument(
+            '-d', action="store_true", required=False,
+            help="Daemonize et ecouter messages sur MQ"
+        )
+
+    def __parse(self):
+        self.__args = self.__parser.parse_args()
+
+    def _configurer_logging(self):
+        logging.basicConfig()
+
+        """ Utilise args pour ajuster le logging level (debug, info) """
+        if self.__args.debug:
+            self.__logger.setLevel(logging.DEBUG)
+            logging.getLogger('millegrilles').setLevel(logging.DEBUG)
+        elif self.__args.info:
+            self.__logger.setLevel(logging.INFO)
+            logging.getLogger('millegrilles').setLevel(logging.INFO)
 
     def configurer_environnement_docker(self):
         """
@@ -416,6 +461,21 @@ class DeployeurMilleGrilles(Daemon, ModeleConfiguration):
             self.__logger.info("Swarm pas configure")
             resultat = self.__docker.swarm_init()
             self.__logger.info("Docker swarm initialise")
+
+    def executer(self):
+        self.charger_liste_millegrilles()
+        self.configurer_environnement_docker()
+        self.configurer_millegrilles()
+
+    def main(self):
+        self._configurer_logging()
+
+        if self.__args.d:
+            self.__logger.info("Daemonize")
+            daemon = DeployeurDaemon(self)
+            daemon.start()
+        else:
+            self.executer()
 
 class DockerFacade:
     """
@@ -524,6 +584,10 @@ class DeployeurDockerMilleGrille:
         self.__node_name = 'mg-dev3'
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
+    def initialiser_contexte(self):
+        self.__contexte = ContexteRessourcesMilleGrilles()
+        self.__contexte.initialiser(init_document=False, connecter=False)
 
     def configurer(self):
         os.makedirs(self.constantes.rep_etc_mg, exist_ok=True)
@@ -1030,6 +1094,7 @@ class DeployeurDockerMilleGrille:
 logging.basicConfig()
 logging.getLogger('__main__').setLevel(logging.DEBUG)
 deployeur = DeployeurMilleGrilles()
-deployeur.charger_liste_millegrilles()
-deployeur.configurer_environnement_docker()
-deployeur.configurer_millegrilles()
+# deployeur.charger_liste_millegrilles()
+# deployeur.configurer_environnement_docker()
+# deployeur.configurer_millegrilles()
+deployeur.main()
