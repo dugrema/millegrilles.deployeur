@@ -248,9 +248,16 @@ class ServiceDockerConfiguration:
                 secret['SecretID'] = self.__secrets_par_nom[secret_name]
 
         # /TaskTemplate/Networks/Target
-        networks = task_template['Networks']
-        for network in networks:
-            network['Target'] = self.mapping(network['Target'])
+        networks = task_template.get('Networks')
+        if networks is not None:
+            for network in networks:
+                network['Target'] = self.mapping(network['Target'])
+                aliases = network.get('Aliases')
+                if aliases is not None:
+                    mapped_aliases = list()
+                    for alias in aliases:
+                        mapped_aliases.append(self.mapping(alias))
+                    network['Aliases'] = mapped_aliases
 
         # /Labels
         config['Labels']['millegrille'] = self.__nom_millegrille
@@ -511,20 +518,6 @@ class DeployeurDockerMilleGrille:
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
-    # def grouper_secrets(self):
-    #     date_ssl = '0'
-    #     for secret in self.__secrets:
-    #         id_secret = secret['ID']
-    #         nom_secret = secret['Spec']['Name']
-    #         self.__secrets_par_nom[nom_secret] = id_secret
-    #         self.__logger.debug("Secret: %s" % str(secret))
-    #         if nom_secret.startswith('%s.%s' % (self.__nom_millegrille, 'pki.middleware.ssl')):
-    #             date_secret = nom_secret.split('.')[-1]
-    #             if int(date_secret) > int(date_ssl):
-    #                 date_ssl = date_secret
-    #
-    #     self.__dates_secrets['ssl'] = date_ssl
-
     def configurer(self):
         os.makedirs(self.constantes.rep_etc_mg, exist_ok=True)
 
@@ -555,6 +548,10 @@ class DeployeurDockerMilleGrille:
         self.activer_mongoexpress()
         self.activer_consignationfichiers()
         self.activer_coupdoeilreact()
+        self.activer_nginx_local()
+        self.activer_nginx_public()
+        self.activer_publicateur_local()
+        self.activer_publicateur_public()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
@@ -880,6 +877,21 @@ class DeployeurDockerMilleGrille:
         self.preparer_service('consignationfichiers')
         labels = {'netzone.private': 'true', 'millegrilles.consignationfichiers': 'true'}
         self.deployer_labels(self.__node_name, labels)
+
+    def activer_nginx_local(self):
+        self.preparer_service('nginxlocal')
+        labels = {'netzone.private': 'true', 'millegrilles.nginx': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_nginx_public(self):
+        pass
+
+    def activer_publicateur_local(self):
+        pass
+
+    def activer_publicateur_public(self):
+        pass
+
 
     def deployer_labels(self, node_name, labels):
         nodes_list = self.__docker.get('nodes').json()
