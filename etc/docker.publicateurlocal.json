@@ -1,0 +1,90 @@
+{
+  "Name": "publicateur-local-python",
+  "TaskTemplate": {
+    "ContainerSpec": {
+      "Image": "${mg-python}",
+      "Args": [
+        "demarrer_publicateur.py",
+        "--info",
+        "--webroot",
+        "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/local"
+      ],
+      "Hostname": "publicateur-local-python.local",
+      "Env": [
+        "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
+        "MG_MQ_HOST=mq",
+        "MG_MQ_PORT=5673",
+        "MG_MQ_SSL=on",
+        "MG_MQ_AUTH_CERT=on",
+        "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.fullchain",
+        "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
+        "MG_MQ_CA_CERTS=/run/secrets/pki.millegrilles.ssl.CAchain"
+      ],
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/local",
+          "Target": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/local"
+        }
+      ],
+      "Secrets": [
+        {
+          "SecretName": "pki.middleware.ssl.fullchain",
+          "File": {
+            "Name": "pki.millegrilles.ssl.fullchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.middleware.ssl.key",
+          "File": {
+            "Name": "pki.millegrilles.ssl.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.middleware.ssl.CAchain",
+          "File": {
+            "Name": "pki.millegrilles.ssl.CAchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }
+      ]
+    },
+    "Placement": {
+      "Constraints": [
+        "node.labels.millegrilles.nginx == true",
+        "node.labels.netzone.public != true",
+        "node.labels.netzone.private == true"
+      ]
+    },
+    "Resources": {
+      "Limits": {
+        "NanoCPUs": 200000000,
+        "MemoryBytes": 41943040
+      }
+    },
+    "RestartPolicy": {
+      "Condition": "any",
+      "Delay": 30000000000,
+      "MaxAttempts": 10
+    },
+    "Mode": {
+      "Replicated": {
+        "Replicas": 1
+      }
+    },
+    "Networks": [
+        {
+          "Target": "mg_${NOM_MILLEGRILLE}_net"
+        }
+    ]
+  },
+  "Labels": {
+    "millegrille": "${NOM_MILLEGRILLE}"
+  }
+}

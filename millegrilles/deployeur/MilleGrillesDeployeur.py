@@ -204,6 +204,13 @@ class ServiceDockerConfiguration:
                 container_spec['Image'] = container_spec['Image'].replace(image_tag, image_docker)
         container_spec['Image'] = '%s/%s' % (self.__repository, container_spec['Image'])
 
+        # /TaskTemplate/ContainerSpec/Args
+        if container_spec.get('Args') is not None:
+            args_list = list()
+            for arg in container_spec.get('Args'):
+                args_list.append(self.mapping(arg))
+            container_spec['Args'] = args_list
+
         # /TaskTemplate/ContainerSpec/Env
         env_list = container_spec.get('Env')
         if env_list is not None:
@@ -884,7 +891,7 @@ class DeployeurDockerMilleGrille:
         self.deployer_labels(self.__node_name, labels)
 
     def activer_nginx_public(self):
-        pass
+        self.preparer_service('publicateurlocal')
 
     def activer_publicateur_local(self):
         pass
