@@ -544,13 +544,16 @@ class DeployeurDockerMilleGrille:
         # Activer Mongo
         self.configurer_mongo()
         self.activer_mongo()
-        self.activer_mongoexpress()
 
         # Activer les scripts python
         self.activer_consignateur_transactions()
         self.activer_ceduleur()
         self.activer_domaines()
         self.activer_maitredescles()
+
+        # Activer composants web
+        self.activer_mongoexpress()
+        self.activer_consignationfichiers()
         self.activer_coupdoeilreact()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
@@ -871,6 +874,11 @@ class DeployeurDockerMilleGrille:
     def activer_coupdoeilreact(self):
         self.preparer_service('coupdoeilreact')
         labels = {'netzone.private': 'true', 'millegrilles.coupdoeil': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_consignationfichiers(self):
+        self.preparer_service('consignationfichiers')
+        labels = {'netzone.private': 'true', 'millegrilles.consignationfichiers': 'true'}
         self.deployer_labels(self.__node_name, labels)
 
     def deployer_labels(self, node_name, labels):

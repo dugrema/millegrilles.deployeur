@@ -1,0 +1,92 @@
+{
+  "Name": "consignationfichiers",
+  "TaskTemplate": {
+    "ContainerSpec": {
+      "Image": "${consignationfichiers}",
+      "Hostname": "coupdoeil.local",
+      "Env": [
+        "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
+        "MG_MQ_URL=amqps://mq:5673/${NOM_MILLEGRILLE}",
+        "MG_MQ_CAFILE=/run/secrets/pki.millegrilles.ssl.CAchain",
+        "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
+        "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
+        "CERT=/run/secrets/pki.millegrilles.ssl.fullchain",
+        "PRIVKEY=/run/secrets/pki.millegrilles.ssl.key",
+        "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation"
+      ],
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation",
+          "Target": "/opt/millegrilles/consignation"
+        }
+      ],
+      "Secrets": [
+        {
+          "SecretName": "pki.middleware.ssl.fullchain",
+          "File": {
+            "Name": "pki.millegrilles.ssl.fullchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.middleware.ssl.cert",
+          "File": {
+            "Name": "pki.millegrilles.ssl.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.middleware.ssl.key",
+          "File": {
+            "Name": "pki.millegrilles.ssl.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.middleware.ssl.CAchain",
+          "File": {
+            "Name": "pki.millegrilles.ssl.CAchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }
+      ]
+    },
+    "Placement": {
+      "Constraints": [
+        "node.labels.netzone.private == true",
+        "node.labels.millegrilles.coupdoeil == true"
+      ]
+    },
+    "Resources": {
+      "Limits": {
+        "NanoCPUs": 500000000,
+        "MemoryBytes": 52428800
+      }
+    },
+    "RestartPolicy": {
+      "Condition": "any",
+      "Delay": 30000000000,
+      "MaxAttempts": 10
+    },
+    "Mode": {
+      "Replicated": {
+        "Replicas": 1
+      }
+    },
+    "Networks": [
+        {
+          "Target": "mg_${NOM_MILLEGRILLE}_net",
+          "Aliases": ["consignationfichiers", "consignationfichiers.local"]
+        }
+    ]
+  },
+  "Labels": {
+    "millegrille": "${NOM_MILLEGRILLE}"
+  }
+}
