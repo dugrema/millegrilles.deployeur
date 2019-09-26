@@ -18,6 +18,10 @@ installer_docker() {
   sudo systemctl enable docker
 }
 
+installer_avahi() {
+  sudo apt install -y avahi-daemon
+}
+
 installer_deployeur() {
   echo "[INFO] Installer deployeur Python et dependances"
   MG_CONSIGNATION=MilleGrilles.consignation.python
@@ -84,6 +88,8 @@ preparer_var() {
 installer() {
   installer_docker
   installer_deployeur
+  installer_avahi
+
   # preparer_comptes
   preparer_opt
   preparer_var
