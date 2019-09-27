@@ -731,6 +731,7 @@ class DeployeurDockerMilleGrille:
                 ConstantesGenerateurCertificat.ROLE_PUBLICATEUR,
                 ConstantesGenerateurCertificat.ROLE_VITRINE,
                 ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
+                ConstantesGenerateurCertificat.ROLE_NGINX,
             ]
             for role in roles:
                 combiner = role in [

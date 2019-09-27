@@ -16,7 +16,7 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.middleware.ssl.fullchain",
+          "SecretName": "pki.vitrine.fullchain",
           "File": {
             "Name": "pki.millegrilles.ssl.fullchain",
             "UID": "0",
@@ -24,7 +24,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.middleware.ssl.cert",
+          "SecretName": "pki.vitrine.cert",
           "File": {
             "Name": "pki.millegrilles.ssl.cert",
             "UID": "0",
@@ -32,7 +32,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.middleware.ssl.key",
+          "SecretName": "pki.vitrine.key",
           "File": {
             "Name": "pki.millegrilles.ssl.key",
             "UID": "0",
@@ -40,7 +40,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.middleware.ssl.CAchain",
+          "SecretName": "pki.ca.millegrille.fullchain",
           "File": {
             "Name": "pki.millegrilles.ssl.CAchain",
             "UID": "0",
