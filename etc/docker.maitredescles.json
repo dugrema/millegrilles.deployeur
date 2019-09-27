@@ -34,33 +34,41 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.middleware.ssl.cert",
+          "SecretName": "pki.ca.millegrille.cert",
           "File": {
-            "Name": "pki.millegrilles.ssl.cert",
+            "Name": "pki.ca.millegrille.cert",
             "UID": "0",
             "GID": "0",
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.middleware.ssl.key",
+          "SecretName": "pki.ca.millegrille.key",
           "File": {
-            "Name": "pki.millegrilles.ssl.key",
+            "Name": "pki.ca.millegrille.key",
             "UID": "0",
             "GID": "0",
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.middleware.ssl.CAchain",
+          "SecretName": "pki.ca.root.cert",
+          "File": {
+            "Name": "pki.ca.root.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.ca.root.key",
+          "File": {
+            "Name": "pki.ca.root.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.ca.millegrille.fullchain",
           "File": {
             "Name": "pki.millegrilles.ssl.CAchain",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }, {
-          "SecretName": "pki.middleware.ssl.key_cert",
-          "File": {
-            "Name": "pki.millegrilles.ssl.key_cert",
             "UID": "0",
             "GID": "0",
             "Mode": 292
