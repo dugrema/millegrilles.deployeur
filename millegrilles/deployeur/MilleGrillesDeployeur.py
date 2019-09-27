@@ -705,17 +705,6 @@ class DeployeurDockerMilleGrille:
             self._deployer_clecert('pki.ca.millegrille', millegrille_clecert)
             self._deployer_clecert('pki.mongo', mongo_clecert, combiner_cle_cert=True)
             self._deployer_clecert('pki.mq', mq_clecert)
-
-            # Passer les mots de passe au maitre des cles via docker secrets
-            message_cert = {
-                "Name": '%s.pki.ca.certfile.%s' % (self.__nom_millegrille, self.__datetag),
-                "Data": base64.b64encode(autorite_clecert.cert_bytes).decode('utf-8')
-            }
-            resultat = self.__docker.post('secrets/create', message_cert)
-            if resultat.status_code != 201:
-                raise Exception(
-                    "Ajout CA file status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
-
             # Passer les mots de passe au maitre des cles via docker secrets
             contenu = {
                 'pki.ca.root': autorite_clecert.password.decode('utf-8'),
@@ -729,6 +718,21 @@ class DeployeurDockerMilleGrille:
             resultat = self.__docker.post('secrets/create', message_cert)
             if resultat.status_code != 201:
                 raise Exception("Ajout password status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
+
+            # Generer et deployer cle pour tous les autres composants
+            roles = [
+                ConstantesGenerateurCertificat.ROLE_TRANSACTIONS,
+                ConstantesGenerateurCertificat.ROLE_DOMAINES,
+                ConstantesGenerateurCertificat.ROLE_CEDULEUR,
+                ConstantesGenerateurCertificat.ROLE_FICHIERS,
+                ConstantesGenerateurCertificat.ROLE_COUPDOEIL,
+                ConstantesGenerateurCertificat.ROLE_PUBLICATEUR,
+                ConstantesGenerateurCertificat.ROLE_VITRINE,
+            ]
+            for role in roles:
+                combiner = role in [ConstantesGenerateurCertificat.ROLE_TRANSACTIONS, ConstantesGenerateurCertificat.ROLE_DOMAINES]
+                clecert = renouvelleur.renouveller_par_role(role, self.__node_name)
+                self._deployer_clecert('pki.%s' % role, clecert, combiner_cle_cert=combiner)
 
             # Enregistrer_fichier maj
             etat['certificats_ok'] = True
