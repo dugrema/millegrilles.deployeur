@@ -636,6 +636,7 @@ class DeployeurDockerMilleGrille:
         self.__certificats = dict()
         self._dates_secrets = dict()
         self.__wait_event = Event()
+        self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
         self.__contexte = None  # Le contexte est initialise une fois que MQ actif
 
@@ -671,7 +672,7 @@ class DeployeurDockerMilleGrille:
             self.__docker.supprimer_service(id_service)
 
     def generer_certificats_initiaux(self):
-        etat_filename = self.constantes.fichier_etc_mg('mongo.etat.json')
+        etat_filename = self.constantes.fichier_etc_mg('certificats.etat.json')
         try:
             with open(etat_filename, 'r') as fichier:
                 fichier_str = fichier.read()
@@ -693,8 +694,19 @@ class DeployeurDockerMilleGrille:
             renouvelleur = RenouvelleurCertificat(self.__nom_millegrille, dict_ca, millegrille_clecert, autorite_clecert)
 
             deployeur_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_DEPLOYEUR, self.__node_name)
+            with open('%s/deployeur_%s.cert.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag), 'wb') as fichier:
+                fichier.write(deployeur_clecert.cert_bytes)
+            with open('%s/deployeur_%s.key.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag), 'wb') as fichier:
+                fichier.write(deployeur_clecert.private_key_bytes)
+
             mongo_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_MONGO, self.__node_name)
             mq_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_MQ, self.__node_name)
+
+            # Conserver les nouveaux certificats et cles dans docker
+            self._deployer_clecert('pki.ca.root', autorite_clecert)
+            self._deployer_clecert('pki.ca.millegrille', millegrille_clecert)
+            self._deployer_clecert('pki.middleware.mongo', mongo_clecert)
+            self._deployer_clecert('pki.middleware.mq', mq_clecert)
 
             # Enregistrer_fichier maj
             etat['certificats_ok'] = True
@@ -1010,6 +1022,7 @@ class DeployeurDockerMilleGrille:
         pass
 
     def _deployer_certs(self, groupes):
+        """ old... deprecated """
         for groupe in groupes.values():
             for id_secret, contenu in groupe.items():
                 message = {
@@ -1018,6 +1031,45 @@ class DeployeurDockerMilleGrille:
                 }
                 resultat = self.__docker.post('secrets/create', message)
                 self.__logger.debug("Secret %s, resultat %s" % (id_secret, resultat.status_code))
+
+    def _deployer_clecert(self, id_secret: str, clecert: EnveloppeCleCert, combiner_cle_cert=False):
+        datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+
+        contenu_cle = base64.encodebytes(clecert.private_key_bytes).decode('utf-8')
+        if clecert.chaine is not None:
+            contenu_cert = base64.encodebytes(clecert.chaine.encode('utf-8')).decode('utf-8')
+        else:
+            contenu_cert = base64.encodebytes(clecert.cert_bytes).decode('utf-8')
+
+        id_secret_key_formatte = '%s.%s.key.%s' % (self.__nom_millegrille, id_secret, datetag)
+        message_key = {
+            "Name": id_secret_key_formatte,
+            "Data": contenu_cle
+        }
+        resultat = self.__docker.post('secrets/create', message_key)
+        self.__logger.debug("Secret %s, resultat %s" % (id_secret_key_formatte, resultat.status_code))
+
+        id_secret_cert_formatte = '%s.%s.cert.%s' % (self.__nom_millegrille, id_secret, datetag)
+        message_cert = {
+            "Name": id_secret_cert_formatte,
+            "Data": contenu_cert
+        }
+        resultat = self.__docker.post('secrets/create', message_cert)
+        self.__logger.debug("Secret %s, resultat %s" % (id_secret_cert_formatte, resultat.status_code))
+
+        if combiner_cle_cert:
+            cle = clecert.private_key_bytes.decode('utf-8')
+            cert = clecert.cert_bytes.decode('utf-8')
+            cle_cert_combine = '%s\n%s' % (cle, cert)
+            cle_cert_combine = base64.encodebytes(cle_cert_combine.encode('utf-8')).decode('utf-8')
+
+            id_secret_cle_cert_formatte = '%s.%s.key_cert.%s' % (self.__nom_millegrille, id_secret, datetag)
+            message_cert = {
+                "Name": id_secret_cle_cert_formatte,
+                "Data": cle_cert_combine
+            }
+            resultat = self.__docker.post('secrets/create', message_cert)
+            self.__logger.debug("Secret %s, resultat %s" % (id_secret_cle_cert_formatte, resultat.status_code))
 
     def activer_mq(self):
         self.preparer_service('mq')
