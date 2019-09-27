@@ -734,6 +734,9 @@ class DeployeurDockerMilleGrille:
                 clecert = renouvelleur.renouveller_par_role(role, self.__node_name)
                 self._deployer_clecert('pki.%s' % role, clecert, combiner_cle_cert=combiner)
 
+                # Ajouter compte pour le role a MQ
+                self.ajouter_cert_ssl(clecert.cert_bytes.decode('utf-8'))
+
             # Enregistrer_fichier maj
             etat['certificats_ok'] = True
             with open(etat_filename, 'w') as fichier:
