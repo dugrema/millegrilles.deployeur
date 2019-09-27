@@ -19,7 +19,7 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.middleware.ssl.cert",
+          "SecretName": "pki.ceduleur.cert",
           "File": {
             "Name": "pki.millegrilles.ssl.cert",
             "UID": "0",
@@ -27,7 +27,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.middleware.ssl.key",
+          "SecretName": "pki.ceduleur.key",
           "File": {
             "Name": "pki.millegrilles.ssl.key",
             "UID": "0",
@@ -35,7 +35,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.middleware.ssl.CAchain",
+          "SecretName": "pki.ca.millegrille.fullchain",
           "File": {
             "Name": "pki.millegrilles.ssl.CAchain",
             "UID": "0",

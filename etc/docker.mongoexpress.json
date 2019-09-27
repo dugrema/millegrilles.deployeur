@@ -22,7 +22,7 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.middleware.ssl.key_cert",
+          "SecretName": "pki.mongoexpress.key_cert",
           "File": {
             "Name": "pki.millegrilles.ssl.key_cert",
             "UID": "0",
@@ -31,7 +31,7 @@
           }
         },
         {
-          "SecretName": "pki.middleware.ssl.CAchain",
+          "SecretName": "pki.ca.millegrille.fullchain",
           "File": {
             "Name": "pki.millegrilles.ssl.CAchain",
             "UID": "0",
@@ -58,7 +58,7 @@
           }
         },
         {
-          "SecretName": "pki.middleware.ssl.cert",
+          "SecretName": "pki.mongoexpress.cert",
           "File": {
             "Name": "pki.millegrilles.ssl.cert",
             "UID": "0",
@@ -67,7 +67,7 @@
           }
         },
         {
-          "SecretName": "pki.middleware.ssl.key",
+          "SecretName": "pki.mongoexpress.key",
           "File": {
             "Name": "pki.millegrilles.ssl.key",
             "UID": "0",
@@ -76,7 +76,7 @@
           }
         },
         {
-          "SecretName": "pki.millegrilles.wadmin.cert",
+          "SecretName": "pki.mongoexpress.cert",
           "File": {
             "Name": "pki.millegrilles.wadmin.cert",
             "UID": "0",
@@ -85,7 +85,7 @@
           }
         },
         {
-          "SecretName": "pki.millegrilles.wadmin.key",
+          "SecretName": "pki.mongoexpress.key",
           "File": {
             "Name": "pki.millegrilles.wadmin.key",
             "UID": "0",

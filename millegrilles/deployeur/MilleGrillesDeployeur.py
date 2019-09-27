@@ -342,6 +342,8 @@ class GestionnaireComptesRabbitMQ:
         for commande in commandes:
             output = self.__executer_commande(commande)
             self.__logger.debug("Output %s:\n%s" % (commande, str(output)))
+            if 'does not exist' in str(output):
+                raise Exception("Erreur creation compte %s:\n%s" % (subject, str(output)))
 
     def ajouter_vhost(self):
         commande = 'rabbitmqctl add_vhost %s' % self.__constantes.nom_millegrille
@@ -728,9 +730,14 @@ class DeployeurDockerMilleGrille:
                 ConstantesGenerateurCertificat.ROLE_COUPDOEIL,
                 ConstantesGenerateurCertificat.ROLE_PUBLICATEUR,
                 ConstantesGenerateurCertificat.ROLE_VITRINE,
+                ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
             ]
             for role in roles:
-                combiner = role in [ConstantesGenerateurCertificat.ROLE_TRANSACTIONS, ConstantesGenerateurCertificat.ROLE_DOMAINES]
+                combiner = role in [
+                    ConstantesGenerateurCertificat.ROLE_TRANSACTIONS,
+                    ConstantesGenerateurCertificat.ROLE_DOMAINES,
+                    ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
+                ]
                 clecert = renouvelleur.renouveller_par_role(role, self.__node_name)
                 self._deployer_clecert('pki.%s' % role, clecert, combiner_cle_cert=combiner)
 
@@ -776,7 +783,7 @@ class DeployeurDockerMilleGrille:
         self.activer_consignateur_transactions()
         self.activer_ceduleur()
         self.activer_domaines()
-        self.activer_maitredescles()
+        # self.activer_maitredescles()
 
         # Activer composants web
         self.activer_mongoexpress()
