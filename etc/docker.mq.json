@@ -36,7 +36,7 @@
           }
         },
         {
-          "SecretName": "pki.ca.certfile",
+          "SecretName": "pki.ca.millegrille.fullchain",
           "File": {
             "Name": "pki.millegrilles.ssl.CAchain",
             "UID": "0",
