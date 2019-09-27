@@ -1083,6 +1083,18 @@ class DeployeurDockerMilleGrille:
             raise Exception(
                 "Ajout cert status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
 
+        if clecert.chaine is not None:
+            contenu_fullchain = base64.b64encode(''.join(clecert.chaine).encode('utf-8')).decode('utf-8')
+            id_secret_fullchain_formatte = '%s.%s.fullchain.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
+            message_fullchain = {
+                "Name": id_secret_fullchain_formatte,
+                "Data": contenu_fullchain
+            }
+            resultat = self.__docker.post('secrets/create', message_fullchain)
+            if resultat.status_code != 201:
+                raise Exception(
+                    "Ajout fullchain status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
+
         if combiner_cle_cert:
             cle = clecert.private_key_bytes.decode('utf-8')
             cert = clecert.cert_bytes.decode('utf-8')

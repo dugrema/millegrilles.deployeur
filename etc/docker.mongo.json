@@ -22,7 +22,7 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.middleware.ssl.key_cert",
+          "SecretName": "pki.mongo.key_cert",
           "File": {
             "Name": "pki.millegrilles.ssl.key_cert",
             "UID": "0",
@@ -31,7 +31,16 @@
           }
         },
         {
-          "SecretName": "pki.middleware.ssl.CAchain",
+          "SecretName": "pki.mongo.fullchain",
+          "File": {
+            "Name": "pki.mongo.fullchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        },
+        {
+          "SecretName": "pki.ca.certfile",
           "File": {
             "Name": "pki.millegrilles.ssl.CAchain",
             "UID": "0",
@@ -49,7 +58,7 @@
           }
         },
         {
-          "SecretName": "pki.middleware.ssl.key",
+          "SecretName": "pki.mongo.key",
           "File": {
             "Name": "pki.millegrilles.wadmin.key",
             "UID": "0",
