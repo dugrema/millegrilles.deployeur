@@ -1058,10 +1058,7 @@ class DeployeurDockerMilleGrille:
         # datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
         contenu_cle = base64.encodebytes(clecert.private_key_bytes).decode('utf-8')
-        if clecert.chaine is not None:
-            contenu_cert = base64.encodebytes(clecert.chaine.encode('utf-8')).decode('utf-8')
-        else:
-            contenu_cert = base64.encodebytes(clecert.cert_bytes).decode('utf-8')
+        contenu_cert = base64.encodebytes(clecert.cert_bytes).decode('utf-8')
 
         id_secret_key_formatte = '%s.%s.key.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
         message_key = {
