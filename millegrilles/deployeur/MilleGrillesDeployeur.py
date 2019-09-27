@@ -131,14 +131,13 @@ class ConstantesEnvironnementMilleGrilles:
 
 class ServiceDockerConfiguration:
 
-    def __init__(self, nom_millegrille, nom_service, docker_secrets, dates_secrets=dict()):
+    def __init__(self, nom_millegrille, nom_service, docker_secrets):
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
         self.__nom_millegrille = nom_millegrille
         self.__nom_service = nom_service
         self.__secrets = docker_secrets
         self.__secrets_par_nom = dict()
-        self.__dates_secrets = dates_secrets
         self.__versions_images = dict()
 
         self.__repository = 'registry.maple.mdugre.info:5000'
@@ -154,8 +153,6 @@ class ServiceDockerConfiguration:
 
         for secret in docker_secrets:
             self.__secrets_par_nom[secret['Spec']['Name']] = secret['ID']
-
-        self.__logger.info("Date secrets: %s" % str(dates_secrets))
 
     @staticmethod
     def charger_versions():
@@ -189,6 +186,8 @@ class ServiceDockerConfiguration:
         return service_config
 
     def remplacer_variables(self):
+        self.__logger.debug("Remplacer variables %s" % self.__nom_service)
+
         # Mounts
         config = self.__configuration_json
 
@@ -231,30 +230,11 @@ class ServiceDockerConfiguration:
         # /TaskTemplate/ContainerSpec/Secrets
         secrets = container_spec.get('Secrets')
         for secret in secrets:
+            self.__logger.debug("Mapping secret %s" % secret)
             secret_name = secret['SecretName']
-            if secret_name.startswith('pki'):
-                date_secret = None
-                if secret_name.startswith('pki.middleware.ssl') or \
-                        secret_name.startswith('pki.millegrilles.wadmin'):
-                    date_secret = self.__dates_secrets['pki.millegrilles.ssl']
-
-                if date_secret is not None:
-                    secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
-                    secret['SecretName'] = secret_name
-                    secret['SecretID'] = self.__secrets_par_nom[secret_name]
-                else:
-                    self.__logger.warning("Date inconnue pour secrets %s" % secret_name)
-            elif secret_name.startswith('passwd.mongo'):
-                date_secret = self.__dates_secrets['mongo_datetag']
-                secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
-                secret['SecretName'] = secret_name
-                secret['SecretID'] = self.__secrets_par_nom[secret_name]
-            elif secret_name.startswith('passwd.python'):
-                date_secret = self.__dates_secrets['mongo_datetag']
-                secret_name = '%s.%s.%s' % (self.__nom_millegrille, secret_name, date_secret)
-                secret['SecretName'] = secret_name
-                secret['SecretID'] = self.__secrets_par_nom[secret_name]
-
+            secret_dict = self.trouver_secret(secret_name)
+            secret['SecretName'] = secret_dict['Name']
+            secret['SecretID'] = secret_dict['Id']
         # /TaskTemplate/Networks/Target
         networks = task_template.get('Networks')
         if networks is not None:
@@ -279,6 +259,23 @@ class ServiceDockerConfiguration:
 
     def formatter_nom_service(self):
         return '%s_%s' % (self.__nom_millegrille, self.__nom_service)
+
+    def trouver_secret(self, nom_secret):
+        prefixe_secret = '%s.%s' % (self.__nom_millegrille, nom_secret)
+        secrets = {}  # Date, {key,cert,key_cert: Id)
+        for secret_name, secret_id in self.__secrets_par_nom.items():
+            if secret_name.startswith(prefixe_secret):
+                secret_name_list = secret_name.split('.')
+                secret_date = secret_name_list[-1]
+                secrets[secret_date] = {'Name': secret_name, 'Id': secret_id}
+
+        # Trier liste de dates en ordre decroissant - trouver plus recent groupe complet (cle et cert presents)
+        dates = sorted(secrets.keys(), reverse=True)
+
+        for secret_date in dates:
+            return secrets[secret_date]
+
+        return None
 
 
 class GestionnaireComptesRabbitMQ:
@@ -654,8 +651,8 @@ class DeployeurDockerMilleGrille:
         self.generer_certificats_initiaux()  # Genere certificats pour demarrer le systeme, au besoin
 
         # Verifier que les secrets sont deployes sur docker
-        self._dates_secrets['pki.millegrilles.ssl'] = self.deployer_certs_ssl()
-        self._dates_secrets['pki.millegrilles.wadmin'] = self._dates_secrets['pki.millegrilles.ssl']
+        # self._dates_secrets['pki.millegrilles.ssl'] = self.deployer_certs_ssl()
+        # self._dates_secrets['pki.millegrilles.wadmin'] = self._dates_secrets['pki.millegrilles.ssl']
         # self.grouper_secrets()
         self.__logger.info("Date fichiers cert: ssl=%s" % str(self._dates_secrets))
 
@@ -694,6 +691,7 @@ class DeployeurDockerMilleGrille:
             renouvelleur = RenouvelleurCertificat(self.__nom_millegrille, dict_ca, millegrille_clecert, autorite_clecert)
 
             deployeur_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_DEPLOYEUR, self.__node_name)
+            os.makedirs(self.constantes.rep_secrets_deployeur, exist_ok=True)
             with open('%s/deployeur_%s.cert.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag), 'wb') as fichier:
                 fichier.write(deployeur_clecert.cert_bytes)
             with open('%s/deployeur_%s.key.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag), 'wb') as fichier:
@@ -705,8 +703,32 @@ class DeployeurDockerMilleGrille:
             # Conserver les nouveaux certificats et cles dans docker
             self._deployer_clecert('pki.ca.root', autorite_clecert)
             self._deployer_clecert('pki.ca.millegrille', millegrille_clecert)
-            self._deployer_clecert('pki.middleware.mongo', mongo_clecert)
-            self._deployer_clecert('pki.middleware.mq', mq_clecert)
+            self._deployer_clecert('pki.mongo', mongo_clecert, combiner_cle_cert=True)
+            self._deployer_clecert('pki.mq', mq_clecert)
+
+            # Passer les mots de passe au maitre des cles via docker secrets
+            message_cert = {
+                "Name": '%s.pki.ca.certfile.%s' % (self.__nom_millegrille, self.__datetag),
+                "Data": base64.b64encode(autorite_clecert.cert_bytes).decode('utf-8')
+            }
+            resultat = self.__docker.post('secrets/create', message_cert)
+            if resultat.status_code != 201:
+                raise Exception(
+                    "Ajout CA file status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
+
+            # Passer les mots de passe au maitre des cles via docker secrets
+            contenu = {
+                'pki.ca.root': autorite_clecert.password.decode('utf-8'),
+                'pki.ca.millegrille': millegrille_clecert.password.decode('utf-8'),
+            }
+            contenu = base64.encodebytes(json.dumps(contenu).encode('utf-8')).decode('utf-8')
+            message_cert = {
+                "Name": 'pki.ca.passwords',
+                "Data": contenu
+            }
+            resultat = self.__docker.post('secrets/create', message_cert)
+            if resultat.status_code != 201:
+                raise Exception("Ajout password status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
 
             # Enregistrer_fichier maj
             etat['certificats_ok'] = True
@@ -922,7 +944,7 @@ class DeployeurDockerMilleGrille:
         if mode is not None:
             docker_secrets = self.__docker.get('secrets').json()
             configurateur = ServiceDockerConfiguration(
-                self.__nom_millegrille, nom_service, docker_secrets, self._dates_secrets)
+                self.__nom_millegrille, nom_service, docker_secrets)
             service_json = configurateur.formatter_service()
             etat_service_resp = self.__docker.post('services/%s' % mode, service_json)
             status_code = etat_service_resp.status_code
@@ -944,75 +966,75 @@ class DeployeurDockerMilleGrille:
         # Verifier si le certificat est expire
         self.__certificats[sujet] = enveloppe
 
-    def deployer_certs_ssl(self):
-        # Faire une liste de tous les certificats et cles
-        nom_middleware = '%s_middleware_' % self.__nom_millegrille
-        rep_certs = self.constantes.rep_certs
-        rep_cles = self.constantes.rep_cles
-        certs_middleware = [f for f in os.listdir(rep_certs) if f.startswith(nom_middleware)]
-        self.__logger.debug("Certs middleware: %s" % str(certs_middleware))
-
-        with open('%s' % self.constantes.cert_ca_chain, 'r') as fichier:
-            cert_ca_chain = fichier.read()  # base64.encodebytes()
-
-        with open('%s' % self.constantes.cert_ca_fullchain, 'r') as fichier:
-            cert_ca_fullchain = fichier.read()  # base64.encodebytes()
-
-        # Grouper certs et cles, aussi generer key_cert dans meme fichier
-        groupe_recent = '0'
-        groupes_certs = dict()
-        for cert_nom in certs_middleware:
-            cle_nom = cert_nom.replace('cert', 'key')
-            cert_noms = cert_nom.split('.')[0].split('_')
-            if len(cert_noms) == 4:
-                date = cert_noms[3]
-                self.__logger.debug("Cert %s et cle %s pour date %s" % (cert_nom, cle_nom, date))
-
-                # Charger contenu certificat et cle, combiner key_cert
-                with open('%s/%s' % (rep_certs, cert_nom), 'r') as fichier:
-                    cert = fichier.read()
-                with open('%s/%s' % (rep_cles, cle_nom), 'r') as fichier:
-                    cle = fichier.read()
-
-                cle_cert = '%s\n%s' % (cle, cert)
-                wadmin_fullchain_certs = '%s\n%s' % (cert, cert_ca_fullchain)
-
-                cert = base64.encodebytes(cert.encode('utf-8')).decode('utf-8')
-                cle = base64.encodebytes(cle.encode('utf-8')).decode('utf-8')
-                cle_cert = base64.encodebytes(cle_cert.encode('utf-8')).decode('utf-8')
-                cert_ca_chain = base64.encodebytes(cert_ca_chain.encode('utf-8')).decode('utf-8')
-                cert_ca_fullchain = base64.encodebytes(cert_ca_fullchain.encode('utf-8')).decode('utf-8')
-                wadmin_fullchain_certs = base64.encodebytes(wadmin_fullchain_certs.encode('utf-8')).decode('utf-8')
-
-                dict_key_middleware_prefix = '%s.pki.middleware.ssl' % self.__nom_millegrille
-                dict_key_wadmin_prefix = '%s.pki.millegrilles.wadmin' % self.__nom_millegrille
-                groupe = {
-                    '%s.CAchain.%s' % (dict_key_middleware_prefix, date): cert_ca_chain,
-                    '%s.fullchain.%s' % (dict_key_middleware_prefix, date): cert_ca_fullchain,
-                    '%s.cert.%s' % (dict_key_middleware_prefix, date): cert,
-                    '%s.key.%s' % (dict_key_middleware_prefix, date): cle,
-                    '%s.key_cert.%s' % (dict_key_middleware_prefix, date): cle_cert,
-                    '%s.cert.%s' % (dict_key_wadmin_prefix, date): wadmin_fullchain_certs,
-                    '%s.key.%s' % (dict_key_wadmin_prefix, date): cle,
-                }
-
-                groupes_certs[date] = groupe
-                if date is not None and int(date) > int(groupe_recent):
-                    groupe_recent = date
-
-        # self.__logger.debug("Liste certs: %s" % str(groupes_certs))
-        # Transmettre les secrets
-        self._deployer_certs(groupes_certs)
-
-        # Charger les autres certs
-        rep_certs = self.constantes.rep_certs
-        for cert_nom in ['maitredescles', 'middleware', 'deployeur']:
-            # Conserver le cert pour creer les comptes dans MQ
-            path_cert = '%s/%s_%s.cert.pem' % (rep_certs, self.__nom_millegrille, cert_nom)
-            with open(path_cert, 'r') as fichier:
-                self.ajouter_cert_ssl(fichier.read())
-
-        return groupe_recent
+    # def deployer_certs_ssl(self):
+    #     # Faire une liste de tous les certificats et cles
+    #     nom_middleware = '%s_middleware_' % self.__nom_millegrille
+    #     rep_certs = self.constantes.rep_certs
+    #     rep_cles = self.constantes.rep_cles
+    #     certs_middleware = [f for f in os.listdir(rep_certs) if f.startswith(nom_middleware)]
+    #     self.__logger.debug("Certs middleware: %s" % str(certs_middleware))
+    #
+    #     with open('%s' % self.constantes.cert_ca_chain, 'r') as fichier:
+    #         cert_ca_chain = fichier.read()  # base64.encodebytes()
+    #
+    #     with open('%s' % self.constantes.cert_ca_fullchain, 'r') as fichier:
+    #         cert_ca_fullchain = fichier.read()  # base64.encodebytes()
+    #
+    #     # Grouper certs et cles, aussi generer key_cert dans meme fichier
+    #     groupe_recent = '0'
+    #     groupes_certs = dict()
+    #     for cert_nom in certs_middleware:
+    #         cle_nom = cert_nom.replace('cert', 'key')
+    #         cert_noms = cert_nom.split('.')[0].split('_')
+    #         if len(cert_noms) == 4:
+    #             date = cert_noms[3]
+    #             self.__logger.debug("Cert %s et cle %s pour date %s" % (cert_nom, cle_nom, date))
+    #
+    #             # Charger contenu certificat et cle, combiner key_cert
+    #             with open('%s/%s' % (rep_certs, cert_nom), 'r') as fichier:
+    #                 cert = fichier.read()
+    #             with open('%s/%s' % (rep_cles, cle_nom), 'r') as fichier:
+    #                 cle = fichier.read()
+    #
+    #             cle_cert = '%s\n%s' % (cle, cert)
+    #             wadmin_fullchain_certs = '%s\n%s' % (cert, cert_ca_fullchain)
+    #
+    #             cert = base64.encodebytes(cert.encode('utf-8')).decode('utf-8')
+    #             cle = base64.encodebytes(cle.encode('utf-8')).decode('utf-8')
+    #             cle_cert = base64.encodebytes(cle_cert.encode('utf-8')).decode('utf-8')
+    #             cert_ca_chain = base64.encodebytes(cert_ca_chain.encode('utf-8')).decode('utf-8')
+    #             cert_ca_fullchain = base64.encodebytes(cert_ca_fullchain.encode('utf-8')).decode('utf-8')
+    #             wadmin_fullchain_certs = base64.encodebytes(wadmin_fullchain_certs.encode('utf-8')).decode('utf-8')
+    #
+    #             dict_key_middleware_prefix = '%s.pki.middleware.ssl' % self.__nom_millegrille
+    #             dict_key_wadmin_prefix = '%s.pki.millegrilles.wadmin' % self.__nom_millegrille
+    #             groupe = {
+    #                 '%s.CAchain.%s' % (dict_key_middleware_prefix, date): cert_ca_chain,
+    #                 '%s.fullchain.%s' % (dict_key_middleware_prefix, date): cert_ca_fullchain,
+    #                 '%s.cert.%s' % (dict_key_middleware_prefix, date): cert,
+    #                 '%s.key.%s' % (dict_key_middleware_prefix, date): cle,
+    #                 '%s.key_cert.%s' % (dict_key_middleware_prefix, date): cle_cert,
+    #                 '%s.cert.%s' % (dict_key_wadmin_prefix, date): wadmin_fullchain_certs,
+    #                 '%s.key.%s' % (dict_key_wadmin_prefix, date): cle,
+    #             }
+    #
+    #             groupes_certs[date] = groupe
+    #             if date is not None and int(date) > int(groupe_recent):
+    #                 groupe_recent = date
+    #
+    #     # self.__logger.debug("Liste certs: %s" % str(groupes_certs))
+    #     # Transmettre les secrets
+    #     self._deployer_certs(groupes_certs)
+    #
+    #     # Charger les autres certs
+    #     rep_certs = self.constantes.rep_certs
+    #     for cert_nom in ['maitredescles', 'middleware', 'deployeur']:
+    #         # Conserver le cert pour creer les comptes dans MQ
+    #         path_cert = '%s/%s_%s.cert.pem' % (rep_certs, self.__nom_millegrille, cert_nom)
+    #         with open(path_cert, 'r') as fichier:
+    #             self.ajouter_cert_ssl(fichier.read())
+    #
+    #     return groupe_recent
 
     def deployer_certs_web(self):
         """
@@ -1021,19 +1043,19 @@ class DeployeurDockerMilleGrille:
         """
         pass
 
-    def _deployer_certs(self, groupes):
-        """ old... deprecated """
-        for groupe in groupes.values():
-            for id_secret, contenu in groupe.items():
-                message = {
-                    "Name": id_secret,
-                    "Data": contenu
-                }
-                resultat = self.__docker.post('secrets/create', message)
-                self.__logger.debug("Secret %s, resultat %s" % (id_secret, resultat.status_code))
+    # def _deployer_certs(self, groupes):
+    #     """ old... deprecated """
+    #     for groupe in groupes.values():
+    #         for id_secret, contenu in groupe.items():
+    #             message = {
+    #                 "Name": id_secret,
+    #                 "Data": contenu
+    #             }
+    #             resultat = self.__docker.post('secrets/create', message)
+    #             self.__logger.debug("Secret %s, resultat %s" % (id_secret, resultat.status_code))
 
     def _deployer_clecert(self, id_secret: str, clecert: EnveloppeCleCert, combiner_cle_cert=False):
-        datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        # datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
         contenu_cle = base64.encodebytes(clecert.private_key_bytes).decode('utf-8')
         if clecert.chaine is not None:
@@ -1041,21 +1063,25 @@ class DeployeurDockerMilleGrille:
         else:
             contenu_cert = base64.encodebytes(clecert.cert_bytes).decode('utf-8')
 
-        id_secret_key_formatte = '%s.%s.key.%s' % (self.__nom_millegrille, id_secret, datetag)
+        id_secret_key_formatte = '%s.%s.key.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
         message_key = {
             "Name": id_secret_key_formatte,
             "Data": contenu_cle
         }
         resultat = self.__docker.post('secrets/create', message_key)
-        self.__logger.debug("Secret %s, resultat %s" % (id_secret_key_formatte, resultat.status_code))
+        if resultat.status_code != 201:
+            raise Exception(
+                "Ajout key status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
 
-        id_secret_cert_formatte = '%s.%s.cert.%s' % (self.__nom_millegrille, id_secret, datetag)
+        id_secret_cert_formatte = '%s.%s.cert.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
         message_cert = {
             "Name": id_secret_cert_formatte,
             "Data": contenu_cert
         }
         resultat = self.__docker.post('secrets/create', message_cert)
-        self.__logger.debug("Secret %s, resultat %s" % (id_secret_cert_formatte, resultat.status_code))
+        if resultat.status_code != 201:
+            raise Exception(
+                "Ajout cert status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
 
         if combiner_cle_cert:
             cle = clecert.private_key_bytes.decode('utf-8')
@@ -1063,13 +1089,15 @@ class DeployeurDockerMilleGrille:
             cle_cert_combine = '%s\n%s' % (cle, cert)
             cle_cert_combine = base64.encodebytes(cle_cert_combine.encode('utf-8')).decode('utf-8')
 
-            id_secret_cle_cert_formatte = '%s.%s.key_cert.%s' % (self.__nom_millegrille, id_secret, datetag)
+            id_secret_cle_cert_formatte = '%s.%s.key_cert.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
             message_cert = {
                 "Name": id_secret_cle_cert_formatte,
                 "Data": cle_cert_combine
             }
             resultat = self.__docker.post('secrets/create', message_cert)
-            self.__logger.debug("Secret %s, resultat %s" % (id_secret_cle_cert_formatte, resultat.status_code))
+            if resultat.status_code != 201:
+                raise Exception(
+                    "Ajout key_cert status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
 
     def activer_mq(self):
         self.preparer_service('mq')
