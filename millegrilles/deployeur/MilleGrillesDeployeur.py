@@ -1,9 +1,11 @@
 # Deployeur de MilleGrille
 # Responsable de l'installation, mise a jour et health check
+
 from millegrilles.util.UtilScriptLigneCommande import ModeleConfiguration
 from millegrilles.util.Daemon import Daemon
 from millegrilles.SecuritePKI import EnveloppeCertificat
 from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
+from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurInitial, EnveloppeCleCert, RenouvelleurCertificat
 
 from threading import Event
 
@@ -16,7 +18,6 @@ import secrets
 import datetime
 import shutil
 import argparse
-import signal
 
 
 class ConstantesEnvironnementMilleGrilles:
@@ -126,15 +127,6 @@ class ConstantesEnvironnementMilleGrilles:
             self.nom_millegrille,
             path
         )
-
-
-class VersionMilleGrille:
-
-    def __init__(self):
-        self.__services = {}
-
-    def get_service(self, nom_service):
-        return self.__services[nom_service]
 
 
 class ServiceDockerConfiguration:
@@ -656,8 +648,9 @@ class DeployeurDockerMilleGrille:
     def configurer(self):
         os.makedirs(self.constantes.rep_etc_mg, exist_ok=True)
 
-        self.charger_configuration_services()
         self.preparer_reseau()
+
+        self.generer_certificats_initiaux()  # Genere certificats pour demarrer le systeme, au besoin
 
         # Verifier que les secrets sont deployes sur docker
         self._dates_secrets['pki.millegrilles.ssl'] = self.deployer_certs_ssl()
@@ -676,6 +669,41 @@ class DeployeurDockerMilleGrille:
             id_service = service['ID']
             self.__logger.info("Suppression service: %s" % service['Spec']['Name'])
             self.__docker.supprimer_service(id_service)
+
+    def generer_certificats_initiaux(self):
+        etat_filename = self.constantes.fichier_etc_mg('mongo.etat.json')
+        try:
+            with open(etat_filename, 'r') as fichier:
+                fichier_str = fichier.read()
+                etat = json.loads(fichier_str)
+        except FileNotFoundError as fnf:
+            # Fichier n'existe pas, on continue
+            etat = dict()
+
+        if etat.get('certificats_ok') is None:
+            self.__logger.info("Generer certificat root, millegrille, mongo, mq et deployeur")
+            generateur_mg_initial = GenerateurInitial(self.__nom_millegrille)
+            millegrille_clecert = generateur_mg_initial.generer()
+            autorite_clecert = generateur_mg_initial.autorite
+
+            dict_ca = {
+                autorite_clecert.skid: autorite_clecert.cert,
+                millegrille_clecert.skid: millegrille_clecert.cert,
+            }
+            renouvelleur = RenouvelleurCertificat(self.__nom_millegrille, dict_ca, millegrille_clecert, autorite_clecert)
+
+            deployeur_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_DEPLOYEUR, self.__node_name)
+            mongo_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_MONGO, self.__node_name)
+            mq_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_MQ, self.__node_name)
+
+            # Enregistrer_fichier maj
+            etat['certificats_ok'] = True
+            with open(etat_filename, 'w') as fichier:
+                fichier.write(json.dumps(etat))
+
+        else:
+            self.__logger.debug("Certificats initaux deja crees")
+
 
     def maj_versions_images(self):
         """
@@ -855,9 +883,6 @@ class DeployeurDockerMilleGrille:
         # Enregistrer_fichier maj
         with open(etat_filename, 'w') as fichier:
             fichier.write(json.dumps(etat_mq))
-
-    def charger_configuration_services(self):
-        config_version = VersionMilleGrille()
 
     def preparer_reseau(self):
         nom_reseau = 'mg_%s_net' % self.__nom_millegrille
