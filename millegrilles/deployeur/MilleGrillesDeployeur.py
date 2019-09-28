@@ -793,12 +793,13 @@ class DeployeurDockerMilleGrille:
         self.activer_mq()
         self.activer_mongo()
 
-        # Activer le maitre des cles
+        # Activer le maitre des cles et transactions (importants pour les autres services)
+        self.activer_consignateur_transactions()
+        self.__wait_event.wait(5)
         self.activer_maitredescles()
-        self.__wait_event.wait(10)  # Attendre que le maitre des cles soit pret
+        self.__wait_event.wait(10)
 
         # Activer les scripts python
-        self.activer_consignateur_transactions()
         self.activer_ceduleur()
         self.activer_domaines()
 
