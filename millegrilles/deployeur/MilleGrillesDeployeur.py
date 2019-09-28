@@ -351,7 +351,9 @@ class GestionnaireComptesRabbitMQ:
             commande = 'rabbitmqctl add_vhost %s' % self.__constantes.nom_millegrille
             output = self.__executer_commande(commande)
             self.__logger.debug("Essai %d: Output %s:\n%s" % (tentative, commande, str(output)))
-            if 'Error:' not in str(output):
+            if 'vhost_already_exists' in str(output):
+                return  # Ok, deja cree
+            elif 'Error:' not in str(output):
                 return  # Ok, le vhost est pret
 
         raise Exception("Erreur ajout vhost")
@@ -479,6 +481,7 @@ class DeployeurMilleGrilles:
         node_name = self.__args.n
         if node_name is None:
             node_name = socket.gethostname()
+        self.__logger.info("Node name, utilisation de : %s" % node_name)
 
         if self.__args.creer is not None:
             nom_millegrille = self.__args.creer
@@ -723,7 +726,7 @@ class DeployeurDockerMilleGrille:
             }
             contenu = base64.encodebytes(json.dumps(contenu).encode('utf-8')).decode('utf-8')
             message_cert = {
-                "Name": 'pki.ca.passwords',
+                "Name": '%s.pki.ca.passwords.%s' % (self.__nom_millegrille, self.__datetag),
                 "Data": contenu
             }
             resultat = self.__docker.post('secrets/create', message_cert)

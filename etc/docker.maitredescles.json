@@ -103,6 +103,14 @@
             "Mode": 292
           }
         }, {
+          "SecretName": "pki.ca.passwords",
+          "File": {
+            "Name": "pki.ca.passwords",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
           "SecretName": "passwd.python.maitredescles.json",
           "File": {
             "Name": "mg.maitredescles.json",
