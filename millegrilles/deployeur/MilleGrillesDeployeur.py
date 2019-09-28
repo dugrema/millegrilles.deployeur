@@ -18,6 +18,7 @@ import secrets
 import datetime
 import shutil
 import argparse
+import socket
 
 
 class ConstantesEnvironnementMilleGrilles:
@@ -417,7 +418,7 @@ class DeployeurMilleGrilles:
         )
 
         self.__parser.add_argument(
-            '-n', required=True,
+            '-n', required=False,
             help="Nom du noeud docker local (node name)"
         )
 
@@ -476,6 +477,8 @@ class DeployeurMilleGrilles:
 
     def charger_liste_millegrilles(self):
         node_name = self.__args.n
+        if node_name is None:
+            node_name = socket.gethostname()
 
         if self.__args.creer is not None:
             nom_millegrille = self.__args.creer
