@@ -27,13 +27,50 @@
       ],
       "Mounts": [
         {
-          "Type": "bind",
-          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki",
-          "Target": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki"
+          "Type": "volume",
+          "Source": "maitredescles_secrets",
+          "Target": "/opt/millegrilles/dist/secure/maitredescles"
+        },
+        {
+          "Type": "volume",
+          "Source": "pki_workdir",
+          "Target": "/opt/millegrilles/dist/secure/pki"
         }
       ],
       "Secrets": [
         {
+          "SecretName": "pki.maitredescles.cert",
+          "File": {
+            "Name": "pki.millegrilles.ssl.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.maitredescles.key",
+          "File": {
+            "Name": "pki.millegrilles.ssl.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.maitredescles.key_cert",
+          "File": {
+            "Name": "pki.millegrilles.ssl.key_cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "SecretName": "pki.ca.millegrille.fullchain",
+          "File": {
+            "Name": "pki.millegrilles.ssl.CAchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
           "SecretName": "pki.ca.millegrille.cert",
           "File": {
             "Name": "pki.ca.millegrille.cert",
@@ -61,14 +98,6 @@
           "SecretName": "pki.ca.root.key",
           "File": {
             "Name": "pki.ca.root.key",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }, {
-          "SecretName": "pki.ca.millegrille.fullchain",
-          "File": {
-            "Name": "pki.millegrilles.ssl.CAchain",
             "UID": "0",
             "GID": "0",
             "Mode": 292

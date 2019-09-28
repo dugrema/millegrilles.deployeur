@@ -346,9 +346,15 @@ class GestionnaireComptesRabbitMQ:
                 raise Exception("Erreur creation compte %s:\n%s" % (subject, str(output)))
 
     def ajouter_vhost(self):
-        commande = 'rabbitmqctl add_vhost %s' % self.__constantes.nom_millegrille
-        output = self.__executer_commande(commande)
-        self.__logger.debug("Output %s:\n%s" % (commande, str(output)))
+        for tentative in range(0, 5):
+            commande = 'rabbitmqctl add_vhost %s' % self.__constantes.nom_millegrille
+            output = self.__executer_commande(commande)
+            self.__logger.debug("Essai %d: Output %s:\n%s" % (tentative, commande, str(output)))
+            if 'Error:' not in str(output):
+                return  # Ok, le vhost est pret
+
+        raise Exception("Erreur ajout vhost")
+
 
     def __executer_commande(self, commande:str):
         commande = commande.split(' ')
@@ -732,12 +738,14 @@ class DeployeurDockerMilleGrille:
                 ConstantesGenerateurCertificat.ROLE_VITRINE,
                 ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
                 ConstantesGenerateurCertificat.ROLE_NGINX,
+                ConstantesGenerateurCertificat.ROLE_MAITREDESCLES,
             ]
             for role in roles:
                 combiner = role in [
                     ConstantesGenerateurCertificat.ROLE_TRANSACTIONS,
                     ConstantesGenerateurCertificat.ROLE_DOMAINES,
                     ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
+                    ConstantesGenerateurCertificat.ROLE_MAITREDESCLES,
                 ]
                 clecert = renouvelleur.renouveller_par_role(role, self.__node_name)
                 self._deployer_clecert('pki.%s' % role, clecert, combiner_cle_cert=combiner)
@@ -752,7 +760,6 @@ class DeployeurDockerMilleGrille:
 
         else:
             self.__logger.debug("Certificats initaux deja crees")
-
 
     def maj_versions_images(self):
         """
@@ -780,11 +787,14 @@ class DeployeurDockerMilleGrille:
         self.activer_mq()
         self.activer_mongo()
 
+        # Activer le maitre des cles
+        self.activer_maitredescles()
+        self.__wait_event.wait(10)  # Attendre que le maitre des cles soit pret
+
         # Activer les scripts python
         self.activer_consignateur_transactions()
         self.activer_ceduleur()
         self.activer_domaines()
-        # self.activer_maitredescles()
 
         # Activer composants web
         self.activer_mongoexpress()
@@ -1319,3 +1329,4 @@ if __name__ == '__main__':
     # logging.getLogger('__main__').setLevel(logging.DEBUG)
     deployeur = DeployeurMilleGrilles()
     deployeur.main()
+
