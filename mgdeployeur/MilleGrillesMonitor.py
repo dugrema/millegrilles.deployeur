@@ -226,6 +226,15 @@ class MonitorMilleGrille:
         self.__logger.info("Fin execution thread %s" % self.__nom_millegrille)
 
 
+class RenouvellementCertificats:
+
+    def __init__(self):
+        self.__liste_demandes = dict()  # Key=Role, Valeur={clecert,datedemande,property}
+
+
+
+
+
 class MonitorMessageHandler(BaseCallback):
 
     def __init__(self, contexte):
