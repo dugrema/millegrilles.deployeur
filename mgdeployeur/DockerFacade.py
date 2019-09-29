@@ -268,6 +268,9 @@ class ServiceDockerConfiguration:
         # Trier liste de dates en ordre decroissant - trouver plus recent groupe complet (cle et cert presents)
         dates = sorted(secrets.keys(), reverse=True)
 
+        if len(secrets) == 0:
+            raise Exception("Secret %s non trouve" % nom_secret)
+
         for secret_date in dates:
             return secrets[secret_date]
 

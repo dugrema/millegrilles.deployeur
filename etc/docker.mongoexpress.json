@@ -29,17 +29,7 @@
             "GID": "0",
             "Mode": 292
           }
-        },
-        {
-          "SecretName": "pki.ca.millegrille.fullchain",
-          "File": {
-            "Name": "pki.millegrilles.ssl.CAchain",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        },
-        {
+        }, {
           "SecretName": "passwd.mongoexpress.web",
           "File": {
             "Name": "mongoexpress.web.password",
@@ -47,8 +37,7 @@
             "GID": "0",
             "Mode": 292
           }
-        },
-        {
+        }, {
           "SecretName": "passwd.mongo.root",
           "File": {
             "Name": "mongo.root.password",
@@ -56,17 +45,7 @@
             "GID": "0",
             "Mode": 292
           }
-        },
-        {
-          "SecretName": "pki.mongoexpress.cert",
-          "File": {
-            "Name": "pki.millegrilles.ssl.cert",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        },
-        {
+        }, {
           "SecretName": "pki.mongoexpress.key",
           "File": {
             "Name": "pki.millegrilles.ssl.key",
@@ -74,20 +53,37 @@
             "GID": "0",
             "Mode": 292
           }
-        },
-        {
-          "SecretName": "pki.mongoexpress.cert",
+        }, {
+          "SecretName": "pki.mongoexpress.key",
           "File": {
-            "Name": "pki.millegrilles.wadmin.cert",
+            "Name": "pki.millegrilles.wadmin.key",
             "UID": "0",
             "GID": "0",
             "Mode": 292
           }
-        },
+        }
+      ],
+      "Configs": [
         {
-          "SecretName": "pki.mongoexpress.key",
+          "ConfigName": "pki.mongoexpress.cert",
           "File": {
-            "Name": "pki.millegrilles.wadmin.key",
+            "Name": "/run/secrets/pki.millegrilles.wadmin.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "ConfigName": "pki.ca.millegrille.fullchain",
+          "File": {
+            "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "ConfigName": "pki.mongoexpress.cert",
+          "File": {
+            "Name": "/run/secrets/pki.millegrilles.ssl.cert",
             "UID": "0",
             "GID": "0",
             "Mode": 292

@@ -29,14 +29,6 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.publicateur.fullchain",
-          "File": {
-            "Name": "pki.millegrilles.ssl.fullchain",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }, {
           "SecretName": "pki.publicateur.key",
           "File": {
             "Name": "pki.millegrilles.ssl.key",
@@ -44,10 +36,21 @@
             "GID": "0",
             "Mode": 292
           }
-        }, {
-          "SecretName": "pki.ca.millegrille.fullchain",
+        }
+      ],
+      "Configs": [
+        {
+          "ConfigName": "pki.publicateur.fullchain",
           "File": {
-            "Name": "pki.millegrilles.ssl.CAchain",
+            "Name": "/run/secrets/pki.millegrilles.ssl.fullchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "ConfigName": "pki.ca.millegrille.fullchain",
+          "File": {
+            "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
             "UID": "0",
             "GID": "0",
             "Mode": 292

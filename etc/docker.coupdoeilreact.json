@@ -16,14 +16,6 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.coupdoeil.fullchain",
-          "File": {
-            "Name": "pki.millegrilles.ssl.cert",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }, {
           "SecretName": "pki.coupdoeil.key",
           "File": {
             "Name": "pki.millegrilles.ssl.key",
@@ -31,10 +23,21 @@
             "GID": "0",
             "Mode": 292
           }
-        }, {
-          "SecretName": "pki.ca.millegrille.fullchain",
+        }
+      ],
+      "Configs": [
+        {
+          "ConfigName": "pki.coupdoeil.fullchain",
           "File": {
-            "Name": "pki.millegrilles.ssl.CAchain",
+            "Name": "/run/secrets/pki.millegrilles.ssl.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "ConfigName": "pki.ca.millegrille.fullchain",
+          "File": {
+            "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
             "UID": "0",
             "GID": "0",
             "Mode": 292

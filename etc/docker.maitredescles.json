@@ -114,7 +114,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.ca.root.cert",
+          "ConfigName": "pki.ca.root.cert",
           "File": {
             "Name": "/run/secrets/pki.ca.root.cert",
             "UID": "0",

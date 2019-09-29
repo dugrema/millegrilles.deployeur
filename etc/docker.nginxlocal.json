@@ -20,17 +20,20 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.nginx.fullchain",
+          "SecretName": "pki.nginx.key",
           "File": {
-            "Name": "pki.millegrilles.ssl.fullchain",
+            "Name": "pki.millegrilles.ssl.key",
             "UID": "0",
             "GID": "0",
             "Mode": 292
           }
-        }, {
-          "SecretName": "pki.nginx.key",
+        }
+      ],
+      "Configs": [
+        {
+          "ConfigName": "pki.nginx.fullchain",
           "File": {
-            "Name": "pki.millegrilles.ssl.key",
+            "Name": "/run/secrets/pki.millegrilles.ssl.fullchain",
             "UID": "0",
             "GID": "0",
             "Mode": 292
