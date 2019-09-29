@@ -25,25 +25,9 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.transaction.cert",
-          "File": {
-            "Name": "pki.millegrilles.ssl.cert",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }, {
           "SecretName": "pki.transaction.key",
           "File": {
             "Name": "pki.millegrilles.ssl.key",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }, {
-          "SecretName": "pki.ca.millegrille.fullchain",
-          "File": {
-            "Name": "pki.millegrilles.ssl.CAchain",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -60,6 +44,26 @@
           "SecretName": "passwd.python.transactions.json",
           "File": {
             "Name": "mg.transaction.json",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }
+      ],
+      "Configs": [
+        {
+          "ConfigName": "pki.transaction.cert",
+          "File": {
+            "Name": "/run/secrets/pki.millegrilles.ssl.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        },
+        {
+          "ConfigName": "pki.ca.millegrille.fullchain",
+          "File": {
+            "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
             "UID": "0",
             "GID": "0",
             "Mode": 292
