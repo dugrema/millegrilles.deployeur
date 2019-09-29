@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source /opt/millegrilles/etc/paths.env
+source /opt/mgdeployeur/etc/paths.env
 
 REP_MILLEGRILLE=$MILLEGRILLES_PATH/$NOM_MILLEGRILLE
 CURDATE=`date +%Y%m%d%H%M%S`

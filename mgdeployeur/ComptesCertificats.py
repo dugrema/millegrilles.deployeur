@@ -1,4 +1,4 @@
-from millegrilles.Constantes import ConstantesEnvironnementMilleGrilles
+from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
 
 from threading import Event
 
@@ -61,10 +61,10 @@ class GestionnaireComptesRabbitMQ:
             "rabbitmqctl add_user %s CLEAR_ME" % subject,
             "rabbitmqctl clear_password %s",
             "rabbitmqctl set_permissions -p %s %s .* .* .*" % (nom_millegrille, subject),
-            "rabbitmqctl set_topic_permissions -p %s %s millegrilles.middleware .* .*" % (nom_millegrille, subject),
-            "rabbitmqctl set_topic_permissions -p %s %s millegrilles.inter .* .*" % (nom_millegrille, subject),
-            "rabbitmqctl set_topic_permissions -p %s %s millegrilles.noeuds .* .*" % (nom_millegrille, subject),
-            "rabbitmqctl set_topic_permissions -p %s %s millegrilles.public .* .*" % (nom_millegrille, subject),
+            "rabbitmqctl set_topic_permissions -p %s %s mgdeployeur.middleware .* .*" % (nom_millegrille, subject),
+            "rabbitmqctl set_topic_permissions -p %s %s mgdeployeur.inter .* .*" % (nom_millegrille, subject),
+            "rabbitmqctl set_topic_permissions -p %s %s mgdeployeur.noeuds .* .*" % (nom_millegrille, subject),
+            "rabbitmqctl set_topic_permissions -p %s %s mgdeployeur.public .* .*" % (nom_millegrille, subject),
         ]
 
         for commande in commandes:

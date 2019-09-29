@@ -5,9 +5,9 @@ from millegrilles.SecuritePKI import EnveloppeCertificat
 from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurInitial, \
     EnveloppeCleCert, RenouvelleurCertificat
-from millegrilles.Constantes import ConstantesEnvironnementMilleGrilles
-from millegrilles.DockerFacade import DockerFacade, ServiceDockerConfiguration
-from millegrilles.ComptesCertificats import GestionnaireComptesRabbitMQ, GestionnaireComptesMongo
+from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
+from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
+from mgdeployeur.ComptesCertificats import GestionnaireComptesRabbitMQ, GestionnaireComptesMongo
 
 from threading import Event, Thread
 

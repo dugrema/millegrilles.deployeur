@@ -4,9 +4,9 @@ from millegrilles.util.Daemon import Daemon
 class DeployeurDaemon(Daemon):
 
     def __init__(self, deployeur):
-        self.__pidfile = '/var/run/millegrilles/mg-deployeur.pid'
-        self.__stdout = '/var/log/millegrilles/mg-manager.log'
-        self.__stderr = '/var/log/millegrilles/mg-manager.err'
+        self.__pidfile = '/var/run/mgdeployeur/mg-deployeur.pid'
+        self.__stdout = '/var/log/mgdeployeur/mg-manager.log'
+        self.__stderr = '/var/log/mgdeployeur/mg-manager.err'
 
         self.__deployeur = deployeur
 

@@ -11,7 +11,7 @@ if [ -z $NOM_MILLEGRILLE ]; then
   fi
 fi
 
-source /opt/millegrilles/etc/paths.env
+source /opt/mgdeployeur/etc/paths.env
 REP_MILLEGRILLE=$MILLEGRILLES_PATH/$NOM_MILLEGRILLE
 
 creer_repertoires() {

@@ -2,6 +2,7 @@ import logging
 import requests_unixsocket
 import json
 
+from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
 
 class DockerConstantes:
 
@@ -124,7 +125,7 @@ class ServiceDockerConfiguration:
 
         self.__repository = 'registry.maple.mdugre.info:5000'
 
-        # self.constantes = ConstantesEnvironnementMilleGrilles(nom_millegrille)
+        self.constantes = ConstantesEnvironnementMilleGrilles(nom_millegrille)
 
         config_json_filename = '/opt/millegrilles/etc/docker.%s.json' % nom_service
         with open(config_json_filename, 'r') as fichier:
