@@ -2,8 +2,11 @@ from millegrilles.util.Daemon import Daemon
 from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
 from millegrilles.dao.MessageDAO import BaseCallback
 from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
+from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
+from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
 from millegrilles.SecuritePKI import GestionnaireEvenementsCertificat
 from millegrilles import Constantes
+from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat
 
 from threading import Thread, Event
 
@@ -77,6 +80,9 @@ class DeployeurMonitor:
         self.__contexte = None
         self.__args = args
 
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
         self.__configuration_deployeur_fichier = ConstantesEnvironnementMilleGrilles.FICHIER_JSON_CONFIG_DEPLOYEUR
         self.__configuration_deployeur = None
 
@@ -84,8 +90,7 @@ class DeployeurMonitor:
 
         self.__millegrilles_monitors = dict()
 
-        signal.signal(signal.SIGINT, self.exit_gracefully)
-        signal.signal(signal.SIGTERM, self.exit_gracefully)
+        self.__docker = DockerFacade()
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
@@ -124,7 +129,7 @@ class DeployeurMonitor:
     def __demarrer_monitoring(self, nom_millegrille, config):
         self.__logger.info("Demarrage monitoring des MilleGrilles")
 
-        millegrille_monitor = MonitorMilleGrille(nom_millegrille, config)
+        millegrille_monitor = MonitorMilleGrille(nom_millegrille, self.__args.node, config, self.__docker)
         self.__millegrilles_monitors[nom_millegrille] = millegrille_monitor
         millegrille_monitor.start()
 
@@ -154,20 +159,27 @@ class DeployeurMonitor:
 
 class MonitorMilleGrille:
 
-    def __init__(self, nom_millegrille: str, config: dict):
+    def __init__(self, nom_millegrille: str, node_name: str, config: dict, docker: DockerFacade):
         self.__nom_millegrille = nom_millegrille
+        self.__node_name = node_name
         self.__config = config
+        self.__docker = docker
+
         self.__stop_event = Event()
+
+        self.__deployeur = None
 
         self.__certificat_event_handler = None
         self.__message_handler = None
 
-        self.__renouvellement_certificats = RenouvellementCertificats(nom_millegrille)
+        self.__renouvellement_certificats = None
 
         self.__thread = None
         self.__contexte = None
 
         self.__channel = None
+
+        self.__cedule_redemarrage = None
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
@@ -180,12 +192,16 @@ class MonitorMilleGrille:
         self.__contexte.initialiser(init_document=False, connecter=True)
 
         # Message handler et Q pour monitor
-        self.__message_handler = MonitorMessageHandler(self.__contexte)
+        self.__message_handler = MonitorMessageHandler(self.__contexte, self.__renouvellement_certificats)
         self.__contexte.message_dao.register_channel_listener(self)
 
         # Message handler et Q pour certificat
         self.__certificat_event_handler = GestionnaireEvenementsCertificat(self.__contexte)
         self.__certificat_event_handler.initialiser()
+
+        # Configurer le deployeur de MilleGrilles
+        self.__deployeur = DeployeurDockerMilleGrille(self.__nom_millegrille, self.__node_name, self.__docker, dict())
+        self.__renouvellement_certificats = RenouvellementCertificats(self.__nom_millegrille, self, self.__deployeur)
 
     def register_mq_handler(self, queue):
         nom_queue = queue.method.queue
@@ -231,11 +247,22 @@ class MonitorMilleGrille:
 
         self.__logger.info("Fin execution thread %s" % self.__nom_millegrille)
 
+    def ceduler_redemarrage(self, delai=30, nom_service=None):
+        delta = datetime.timedelta(seconds=delai)
+        temps_courant = datetime.datetime.utcnow()
+        redemarrage = temps_courant + delta
+        if self.__cedule_redemarrage is not None:
+            self.__cedule_redemarrage = redemarrage
+        elif self.__cedule_redemarrage < redemarrage:
+            self.__cedule_redemarrage = redemarrage  # on pousse le redemarrage a plus tard
+
 
 class RenouvellementCertificats:
 
-    def __init__(self, nom_millegrille):
+    def __init__(self, nom_millegrille, monitor: MonitorMilleGrille, deployeur: DeployeurDockerMilleGrille):
         self.__nom_millegrille = nom_millegrille
+        self.__monitor = monitor
+        self.__deployeur = deployeur
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
@@ -270,6 +297,20 @@ class RenouvellementCertificats:
             clecert = demande['clecert']
             cert_pem = message['cert']
             clecert.cert_from_pem_bytes(cert_pem.encode('utf-8'))
+
+            # Verifier que la cle et le nouveau cert correspondent
+            correspondance = clecert.cle_correspondent()
+            if not correspondance:
+                raise Exception("La cle et le certificat ne correspondent pas pour: %s" % role)
+
+            # On a maintenant une cle et son certificat correspondant. Il faut la sauvegarder dans
+            # docker puis redeployer le service pour l'utiliser.
+            id_secret = 'pki.%s' % role
+            combiner_clecert = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
+            self.__deployeur.deployer_clecert(id_secret, clecert, combiner_cle_cert=combiner_clecert)
+
+            # Redemarrer service pour utiliser le nouveau certificat
+            self.__deployeur.deployer_services()  # Pour l'instant on redeploie tous les services
 
 
 class MonitorMessageHandler(BaseCallback):

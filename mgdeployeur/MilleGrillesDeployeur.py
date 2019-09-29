@@ -203,7 +203,7 @@ class DeployeurDockerMilleGrille:
         os.makedirs(self.constantes.rep_etc_mg, exist_ok=True)
         self.preparer_reseau()
         self.generer_certificats_initiaux()  # Genere certificats pour demarrer le systeme, au besoin
-        self._deployer_services()
+        self.deployer_services()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
@@ -266,10 +266,10 @@ class DeployeurDockerMilleGrille:
             certificats_expiration['mq'] = int(mongo_clecert.not_valid_after.timestamp())
 
             # Conserver les nouveaux certificats et cles dans docker
-            self._deployer_clecert('pki.ca.root', autorite_clecert)
-            self._deployer_clecert('pki.ca.millegrille', millegrille_clecert)
-            self._deployer_clecert('pki.mongo', mongo_clecert, combiner_cle_cert=True)
-            self._deployer_clecert('pki.mq', mq_clecert)
+            self.deployer_clecert('pki.ca.root', autorite_clecert)
+            self.deployer_clecert('pki.ca.millegrille', millegrille_clecert)
+            self.deployer_clecert('pki.mongo', mongo_clecert, combiner_cle_cert=True)
+            self.deployer_clecert('pki.mq', mq_clecert)
             # Passer les mots de passe au maitre des cles via docker secrets
             contenu = {
                 'pki.ca.root': autorite_clecert.password.decode('utf-8'),
@@ -298,14 +298,9 @@ class DeployeurDockerMilleGrille:
                 ConstantesGenerateurCertificat.ROLE_MAITREDESCLES,
             ]
             for role in roles:
-                combiner = role in [
-                    ConstantesGenerateurCertificat.ROLE_TRANSACTIONS,
-                    ConstantesGenerateurCertificat.ROLE_DOMAINES,
-                    ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
-                    ConstantesGenerateurCertificat.ROLE_MAITREDESCLES,
-                ]
+                combiner = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
                 clecert = renouvelleur.renouveller_par_role(role, self.__node_name)
-                self._deployer_clecert('pki.%s' % role, clecert, combiner_cle_cert=combiner)
+                self.deployer_clecert('pki.%s' % role, clecert, combiner_cle_cert=combiner)
 
                 # Ajouter compte pour le role a MQ
                 self.ajouter_cert_ssl(clecert.cert_bytes.decode('utf-8'))
@@ -341,7 +336,7 @@ class DeployeurDockerMilleGrille:
                 self.__logger.info("Mise a jour version service %s" % name)
                 self.preparer_service(name)
 
-    def _deployer_services(self):
+    def deployer_services(self):
         # Activer les serveurs middleware MQ et Mongo
         self.activer_mq()
         self.activer_mongo()
@@ -507,13 +502,13 @@ class DeployeurDockerMilleGrille:
         """
         pass
 
-    def _deployer_clecert(self, id_secret: str, clecert: EnveloppeCleCert, combiner_cle_cert=False):
-        # datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+    def deployer_clecert(self, id_secret: str, clecert: EnveloppeCleCert, combiner_cle_cert=False):
+        datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
         contenu_cle = base64.encodebytes(clecert.private_key_bytes).decode('utf-8')
         contenu_cert = base64.encodebytes(clecert.cert_bytes).decode('utf-8')
 
-        id_secret_key_formatte = '%s.%s.key.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
+        id_secret_key_formatte = '%s.%s.key.%s' % (self.__nom_millegrille, id_secret, datetag)
         message_key = {
             "Name": id_secret_key_formatte,
             "Data": contenu_cle
@@ -523,7 +518,7 @@ class DeployeurDockerMilleGrille:
             raise Exception(
                 "Ajout key status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
 
-        id_secret_cert_formatte = '%s.%s.cert.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
+        id_secret_cert_formatte = '%s.%s.cert.%s' % (self.__nom_millegrille, id_secret, datetag)
         message_cert = {
             "Name": id_secret_cert_formatte,
             "Labels": {
@@ -538,7 +533,7 @@ class DeployeurDockerMilleGrille:
 
         if clecert.chaine is not None:
             contenu_fullchain = base64.b64encode(''.join(clecert.chaine).encode('utf-8')).decode('utf-8')
-            id_secret_fullchain_formatte = '%s.%s.fullchain.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
+            id_secret_fullchain_formatte = '%s.%s.fullchain.%s' % (self.__nom_millegrille, id_secret, datetag)
             message_fullchain = {
                 "Name": id_secret_fullchain_formatte,
                 "Labels": {
@@ -557,7 +552,7 @@ class DeployeurDockerMilleGrille:
             cle_cert_combine = '%s\n%s' % (cle, cert)
             cle_cert_combine = base64.encodebytes(cle_cert_combine.encode('utf-8')).decode('utf-8')
 
-            id_secret_cle_cert_formatte = '%s.%s.key_cert.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
+            id_secret_cle_cert_formatte = '%s.%s.key_cert.%s' % (self.__nom_millegrille, id_secret, datetag)
             message_cert = {
                 "Name": id_secret_cle_cert_formatte,
                 "Data": cle_cert_combine
