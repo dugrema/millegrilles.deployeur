@@ -34,9 +34,6 @@ class DeployeurMilleGrilles:
         self.__parser = None
         self.__args = None
 
-        self.__threads = list()
-        self.__stop_event = Event()
-
         self._configurer_parser()
         self.__parse()
 
@@ -60,11 +57,6 @@ class DeployeurMilleGrilles:
             '--node', required=False,
             default=socket.gethostname(),
             help="Nom du noeud docker local (node name)"
-        )
-
-        self.__parser.add_argument(
-            '-d', action="store_true", required=False,
-            help="Daemonize et ecouter messages sur MQ"
         )
 
         self.__parser.add_argument(
@@ -120,21 +112,6 @@ class DeployeurMilleGrilles:
         # Sauvegarder la configuration mise a jour
         with open(self.__configuration_deployeur_fichier, 'w') as fichier:
             json.dump(self.__configuration_deployeur, fichier)
-
-        # Une fois l'initalisation completee, on peut entrer en mode daemon (background)
-        if self.__args.d:
-            # On est en mode daemon, activer monitoring des MilleGrilles
-            self.__executer_daemon()
-
-    def __executer_daemon(self):
-        for deployeur in self.__millegrilles:
-            thread_monitor = Thread(target=deployeur.executer_monitoring)
-            self.__threads.append(thread_monitor)
-            thread_monitor.start()
-
-        # Entrer en mode d'attente jusqu'a l'arret
-        while not self.__stop_event.is_set():
-            self.__stop_event.wait(60)
 
     def charger_liste_millegrilles(self):
         node_name = self.__args.node
@@ -222,10 +199,6 @@ class DeployeurDockerMilleGrille:
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
-    def initialiser_contexte(self):
-        self.__contexte = ContexteRessourcesMilleGrilles()
-        self.__contexte.initialiser(init_document=False, connecter=True)
-
     def configurer(self):
         os.makedirs(self.constantes.rep_etc_mg, exist_ok=True)
         self.preparer_reseau()
@@ -233,12 +206,6 @@ class DeployeurDockerMilleGrille:
         self._deployer_services()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
-
-    def executer_monitoring(self):
-        self.__logger.info("Demarrage monitoring MilleGrille %s" % self.__nom_millegrille)
-        self.initialiser_contexte()
-
-        self.__logger.info("Fin monitoring MilleGrille %s" % self.__nom_millegrille)
 
     def arreter(self):
         self.__logger.info("Arreter millegrille ; %s" % self.__nom_millegrille)
