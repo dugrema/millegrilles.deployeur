@@ -7,6 +7,7 @@ from threading import Thread, Event
 import logging
 import argparse
 import socket
+import signal
 
 
 class DeployeurDaemon(Daemon):
@@ -78,7 +79,17 @@ class DeployeurMonitor:
         self.__threads = list()
         self.__stop_event = Event()
 
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
+    def exit_gracefully(self, signum=None, frame=None):
+        if signum in [signal.SIGKILL, signal.SIGTERM, signal.SIGINT]:
+            try:
+                self.__contexte.message_dao.deconnecter()
+            except Exception:
+                self.__logger.warning("Erreur fermeture RabbitMQ")
 
     def executer_monitoring(self):
         self._initialiser_contexte()
