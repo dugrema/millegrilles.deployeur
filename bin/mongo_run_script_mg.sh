@@ -12,8 +12,8 @@ PASSWORD=`cat /run/secrets/mongo.root.password`
 mongo -u root -p $PASSWORD \
       --authenticationDatabase admin \
       --ssl --sslAllowInvalidCertificates --sslAllowInvalidHostnames \
-      --sslCAFile /run/secrets/pki.mgdeployeur.ssl.CAchain \
-      --sslPEMKeyFile /run/secrets/pki.mgdeployeur.ssl.key_cert \
+      --sslCAFile /run/secrets/pki.millegrilles.ssl.CAchain \
+      --sslPEMKeyFile /run/secrets/pki.millegrilles.ssl.key_cert \
       mongo/mg-$NOM_MILLEGRILLE $SCRIPT
 
 echo Code:$?
