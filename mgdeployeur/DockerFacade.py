@@ -114,13 +114,15 @@ class DockerFacade:
 
 class ServiceDockerConfiguration:
 
-    def __init__(self, nom_millegrille, nom_service, docker_secrets):
+    def __init__(self, nom_millegrille, nom_service, docker_secrets, docker_configs):
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
         self.__nom_millegrille = nom_millegrille
         self.__nom_service = nom_service
         self.__secrets = docker_secrets
+        self.__configs = docker_configs
         self.__secrets_par_nom = dict()
+        self.__configs_par_nom = dict()
         self.__versions_images = dict()
 
         self.__repository = 'registry.maple.mdugre.info:5000'
@@ -136,6 +138,9 @@ class ServiceDockerConfiguration:
 
         for secret in docker_secrets:
             self.__secrets_par_nom[secret['Spec']['Name']] = secret['ID']
+
+        for config in docker_configs:
+            self.__configs_par_nom[config['Spec']['Name']] = config['ID']
 
     @staticmethod
     def charger_versions():
@@ -172,10 +177,10 @@ class ServiceDockerConfiguration:
         self.__logger.debug("Remplacer variables %s" % self.__nom_service)
 
         # Mounts
-        config = self.__configuration_json
+        config_service = self.__configuration_json
 
         # /TaskTemplate
-        task_template = config['TaskTemplate']
+        task_template = config_service['TaskTemplate']
 
         # /TaskTemplate/ContainerSpec
         container_spec = task_template['ContainerSpec']
@@ -218,6 +223,14 @@ class ServiceDockerConfiguration:
             secret_dict = self.trouver_secret(secret_name)
             secret['SecretName'] = secret_dict['Name']
             secret['SecretID'] = secret_dict['Id']
+        # /TaskTemplate/ContainerSpec/Secrets
+        configs = container_spec.get('Configs')
+        for config in configs:
+            self.__logger.debug("Mapping configs %s" % config)
+            config_name = config['ConfigName']
+            config_dict = self.trouver_config(config_name)
+            config['ConfigName'] = config_dict['Name']
+            config['ConfigID'] = config_dict['Id']
         # /TaskTemplate/Networks/Target
         networks = task_template.get('Networks')
         if networks is not None:
@@ -231,7 +244,7 @@ class ServiceDockerConfiguration:
                     network['Aliases'] = mapped_aliases
 
         # /Labels
-        config['Labels']['millegrille'] = self.__nom_millegrille
+        config_service['Labels']['millegrille'] = self.__nom_millegrille
 
     def mapping(self, valeur):
         for cle in self.constantes.mapping:
@@ -257,5 +270,22 @@ class ServiceDockerConfiguration:
 
         for secret_date in dates:
             return secrets[secret_date]
+
+        return None
+
+    def trouver_config(self, nom_config):
+        prefixe_config = '%s.%s' % (self.__nom_millegrille, nom_config)
+        configs = {}  # Date, {key,cert,key_cert: Id)
+        for config_name, config_id in self.__configs_par_nom.items():
+            if config_name.startswith(prefixe_config):
+                config_name_list = config_name.split('.')
+                config_date = config_name_list[-1]
+                configs[config_date] = {'Name': config_name, 'Id': config_id}
+
+        # Trier liste de dates en ordre decroissant - trouver plus recent groupe complet (cle et cert presents)
+        dates = sorted(configs.keys(), reverse=True)
+
+        for config_date in dates:
+            return configs[config_date]
 
         return None

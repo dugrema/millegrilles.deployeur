@@ -468,8 +468,9 @@ class DeployeurDockerMilleGrille:
 
         if mode is not None:
             docker_secrets = self.__docker.get('secrets').json()
+            docker_configs = self.__docker.get('configs').json()
             configurateur = ServiceDockerConfiguration(
-                self.__nom_millegrille, nom_service, docker_secrets)
+                self.__nom_millegrille, nom_service, docker_secrets, docker_configs)
             service_json = configurateur.formatter_service()
             etat_service_resp = self.__docker.post('services/%s' % mode, service_json)
             status_code = etat_service_resp.status_code
@@ -516,9 +517,12 @@ class DeployeurDockerMilleGrille:
         id_secret_cert_formatte = '%s.%s.cert.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
         message_cert = {
             "Name": id_secret_cert_formatte,
+            "Labels": {
+                "certificat": "true"
+            },
             "Data": contenu_cert
         }
-        resultat = self.__docker.post('secrets/create', message_cert)
+        resultat = self.__docker.post('configs/create', message_cert)
         if resultat.status_code != 201:
             raise Exception(
                 "Ajout cert status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
@@ -528,9 +532,12 @@ class DeployeurDockerMilleGrille:
             id_secret_fullchain_formatte = '%s.%s.fullchain.%s' % (self.__nom_millegrille, id_secret, self.__datetag)
             message_fullchain = {
                 "Name": id_secret_fullchain_formatte,
+                "Labels": {
+                    "certificat": "true"
+                },
                 "Data": contenu_fullchain
             }
-            resultat = self.__docker.post('secrets/create', message_fullchain)
+            resultat = self.__docker.post('configs/create', message_fullchain)
             if resultat.status_code != 201:
                 raise Exception(
                     "Ajout fullchain status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
