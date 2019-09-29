@@ -26,6 +26,10 @@ class ConstantesEnvironnementMilleGrilles:
     MONGO_RUN_MG='mongo_run_script_mg.sh'
     MQ_NEW_USERS_FILE='new_users.txt'
 
+    ROUTING_RENOUVELLEMENT_CERT = 'deployeur.renouvellementCert'
+
+    LOGGING_FORMAT = '%(asctime)s %(threadName)s %(levelname)s: %(message)s'
+
     def __init__(self, nom_millegrille):
         self.nom_millegrille = nom_millegrille
         self.__mapping()
