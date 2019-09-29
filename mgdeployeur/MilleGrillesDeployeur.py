@@ -236,9 +236,12 @@ class DeployeurDockerMilleGrille:
             with open(etat_filename, 'r') as fichier:
                 fichier_str = fichier.read()
                 etat = json.loads(fichier_str)
+                certificats_expiration = etat.get('expiration')
         except FileNotFoundError as fnf:
             # Fichier n'existe pas, on continue
             etat = dict()
+            certificats_expiration = dict()
+            etat['expiration'] = certificats_expiration
 
         if etat.get('certificats_ok') is None:
             self.__logger.info("Generer certificat root, millegrille, mongo, mq et deployeur")
@@ -257,6 +260,10 @@ class DeployeurDockerMilleGrille:
 
             mongo_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_MONGO, self.__node_name)
             mq_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_MQ, self.__node_name)
+
+            # Set date expiration certificat
+            certificats_expiration['mongo'] = int(mongo_clecert.not_valid_after.timestamp())
+            certificats_expiration['mq'] = int(mongo_clecert.not_valid_after.timestamp())
 
             # Conserver les nouveaux certificats et cles dans docker
             self._deployer_clecert('pki.ca.root', autorite_clecert)
@@ -302,6 +309,8 @@ class DeployeurDockerMilleGrille:
 
                 # Ajouter compte pour le role a MQ
                 self.ajouter_cert_ssl(clecert.cert_bytes.decode('utf-8'))
+
+                certificats_expiration[role] = int(clecert.not_valid_after.timestamp())
 
             # Enregistrer_fichier maj
             etat['certificats_ok'] = True
