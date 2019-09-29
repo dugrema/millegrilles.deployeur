@@ -6,7 +6,8 @@ from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
 from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
 from millegrilles.SecuritePKI import GestionnaireEvenementsCertificat
 from millegrilles import Constantes
-from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat
+from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurCertificat
+from millegrilles.domaines.MaitreDesCles import ConstantesMaitreDesCles
 
 from threading import Thread, Event
 
@@ -177,6 +178,7 @@ class MonitorMilleGrille:
         self.__thread = None
         self.__contexte = None
 
+        self.__queue_reponse = None
         self.__channel = None
 
         self.__cedule_redemarrage = None
@@ -256,6 +258,10 @@ class MonitorMilleGrille:
         elif self.__cedule_redemarrage < redemarrage:
             self.__cedule_redemarrage = redemarrage  # on pousse le redemarrage a plus tard
 
+    @property
+    def generateur_transactions(self):
+        return self.__contexte.generateur_transaction
+
 
 class RenouvellementCertificats:
 
@@ -279,11 +285,35 @@ class RenouvellementCertificats:
             fichier_etat = json.load(fichier)
 
         date_courante = datetime.datetime.utcnow()
-        for role, date_epoch in fichier_etat[ConstantesEnvironnementMilleGrilles.CHAMP_EXPIRATION]:
+        for role, date_epoch in fichier_etat[ConstantesEnvironnementMilleGrilles.CHAMP_EXPIRATION].items():
             date_exp = datetime.datetime.fromtimestamp(date_epoch)
             date_comparaison = date_exp - self.__delta_expiration
             if date_courante > date_comparaison:
                 self.__logger.info("Certificat role %s du pour renouvellement (expiration: %s)" % (role, str(date_exp)))
+
+    def transmettre_demande_renouvellement(self, role, node):
+        generateur_csr = GenerateurCertificat(self.__nom_millegrille)
+        clecert = generateur_csr.preparer_key_request(role, node)
+
+        demande = {
+            'csr': clecert.csr_bytes.decode('utf-8'),
+            'datedemande': int(datetime.datetime.utcnow().timestamp()),
+            'role': role,
+        }
+
+        persistance_memoire = {
+            'clecert': clecert,
+        }
+        persistance_memoire.update(demande)
+        self.__liste_demandes[role] = persistance_memoire
+
+        self.__logger.debug("Demande:\n%s" % json.dumps(demande, indent=2))
+
+        domaine = ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT
+        generateur_transactions = self.__monitor.generateur_transactions
+        generateur_transactions.soumettre_transaction(demande, domaine, correlation_id=role, reply_to=None)
+
+        return persistance_memoire
 
     def traiter_reponse_renouvellement(self, message, correlation_id):
         role = correlation_id
@@ -311,6 +341,9 @@ class RenouvellementCertificats:
 
             # Redemarrer service pour utiliser le nouveau certificat
             self.__deployeur.deployer_services()  # Pour l'instant on redeploie tous les services
+        else:
+            self.__logger.warning("Recu reponse de renouvellement non sollicitee, role: %s" % role)
+            raise Exception("Recu reponse de renouvellement non sollicitee, role: %s" % role)
 
 
 class MonitorMessageHandler(BaseCallback):
