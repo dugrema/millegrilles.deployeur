@@ -3,6 +3,7 @@ from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
 from millegrilles.dao.MessageDAO import BaseCallback
 from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
 from millegrilles.SecuritePKI import GestionnaireEvenementsCertificat
+from millegrilles import Constantes
 
 from threading import Thread, Event
 
@@ -11,6 +12,7 @@ import argparse
 import socket
 import signal
 import json
+import datetime
 
 
 class DeployeurDaemon(Daemon):
@@ -160,6 +162,8 @@ class MonitorMilleGrille:
         self.__certificat_event_handler = None
         self.__message_handler = None
 
+        self.__renouvellement_certificats = RenouvellementCertificats(nom_millegrille)
+
         self.__thread = None
         self.__contexte = None
 
@@ -188,7 +192,7 @@ class MonitorMilleGrille:
         self.__queue_reponse = nom_queue
 
         routing_keys = [
-            ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_CERT
+            ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_CERT,
         ]
 
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
@@ -196,6 +200,8 @@ class MonitorMilleGrille:
         for routing in routing_keys:
             self.__channel.queue_bind(queue=nom_queue, exchange=exchange_noeuds, routing_key=routing, callback=None)
             self.__channel.queue_bind(queue=nom_queue, exchange=exchange_middleware, routing_key=routing, callback=None)
+
+        self.__channel.queue_bind(queue=nom_queue, exchange=exchange_middleware, routing_key='ceduleur.#', callback=None)
 
         self.__channel.basic_consume(self.__message_handler.callbackAvecAck, queue=nom_queue, no_ack=False)
 
@@ -228,20 +234,62 @@ class MonitorMilleGrille:
 
 class RenouvellementCertificats:
 
-    def __init__(self):
+    def __init__(self, nom_millegrille):
+        self.__nom_millegrille = nom_millegrille
+
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
         self.__liste_demandes = dict()  # Key=Role, Valeur={clecert,datedemande,property}
+        self.__constantes = ConstantesEnvironnementMilleGrilles(self.__nom_millegrille)
+        self.__fichier_etat_certificats = self.__constantes.fichier_etc_mg(
+            ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
 
+        # Detecter expiration a moins de 31 jours
+        self.__delta_expiration = datetime.timedelta(days=31)
 
+    def trouver_certs_a_renouveller(self):
+        with open(self.__fichier_etat_certificats, 'r') as fichier:
+            fichier_etat = json.load(fichier)
 
+        date_courante = datetime.datetime.utcnow()
+        for role, date_epoch in fichier_etat[ConstantesEnvironnementMilleGrilles.CHAMP_EXPIRATION]:
+            date_exp = datetime.datetime.fromtimestamp(date_epoch)
+            date_comparaison = date_exp - self.__delta_expiration
+            if date_courante > date_comparaison:
+                self.__logger.info("Certificat role %s du pour renouvellement (expiration: %s)" % (role, str(date_exp)))
+
+    def traiter_reponse_renouvellement(self, message, correlation_id):
+        role = correlation_id
+        demande = self.__liste_demandes.get(role)
+
+        if demande is not None:
+            # Traiter la reponse
+            del self.__liste_demandes[role]  # Effacer la demande (on a la reponse)
+
+            # Extraire le certificat et ajouter a clecert
+            clecert = demande['clecert']
+            cert_pem = message['cert']
+            clecert.cert_from_pem_bytes(cert_pem.encode('utf-8'))
 
 
 class MonitorMessageHandler(BaseCallback):
 
-    def __init__(self, contexte):
+    def __init__(self, contexte, renouvelleur: RenouvellementCertificats):
         super().__init__(contexte)
+        self.__renouvelleur = renouvelleur
 
     def traiter_message(self, ch, method, properties, body):
-        super().traiter_message(ch, method, properties, body)
+        routing_key = method.routing_key
+        correlation_id = properties.correlation_id
+        message_dict = self.json_helper.bin_utf8_json_vers_dict(body)
+        evenement = message_dict.get(Constantes.EVENEMENT_MESSAGE_EVENEMENT)
+
+        if evenement == Constantes.EVENEMENT_CEDULEUR:
+            pass
+        elif evenement == ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE:
+            self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
+        else:
+            raise ValueError("Type de transaction inconnue: routing: %s, message: %s" % (routing_key, evenement))
 
 if __name__ == '__main__':
     DeployeurDaemon().main()

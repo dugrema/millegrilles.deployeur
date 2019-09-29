@@ -231,17 +231,17 @@ class DeployeurDockerMilleGrille:
         os.symlink(fichier_cle, shortname_cle)
 
     def generer_certificats_initiaux(self):
-        etat_filename = self.constantes.fichier_etc_mg('certificats.etat.json')
+        etat_filename = self.constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
         try:
             with open(etat_filename, 'r') as fichier:
                 fichier_str = fichier.read()
                 etat = json.loads(fichier_str)
-                certificats_expiration = etat.get('expiration')
+                certificats_expiration = etat.get(ConstantesEnvironnementMilleGrilles.CHAMP_EXPIRATION)
         except FileNotFoundError as fnf:
             # Fichier n'existe pas, on continue
             etat = dict()
             certificats_expiration = dict()
-            etat['expiration'] = certificats_expiration
+            etat[ConstantesEnvironnementMilleGrilles.CHAMP_EXPIRATION] = certificats_expiration
 
         if etat.get('certificats_ok') is None:
             self.__logger.info("Generer certificat root, millegrille, mongo, mq et deployeur")

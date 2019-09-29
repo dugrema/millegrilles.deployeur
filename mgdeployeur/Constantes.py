@@ -19,6 +19,12 @@ class ConstantesEnvironnementMilleGrilles:
     REPERTOIRE_MILLEGRILLE_MQ_ACCOUNTS = '%s/mq/accounts' % REPERTOIRE_MILLEGRILLE_MOUNTS
     REPERTOIRE_MILLEGRILLE_MONGO_SCRIPTS = '%s/mongo/scripts' % REPERTOIRE_MILLEGRILLE_MOUNTS
 
+    # Fichiers
+    FICHIER_CONFIG_ETAT_CERTIFICATS = 'certificats.etat.json'
+
+    # CHAMPS_CONFIG
+    CHAMP_EXPIRATION = 'expiration'
+
     # Applications et comptes
     MONGO_INITDB_ROOT_USERNAME = 'root'
     MONGO_RSINIT_SCRIPT='mongo_rsinit.js'
@@ -27,6 +33,7 @@ class ConstantesEnvironnementMilleGrilles:
     MQ_NEW_USERS_FILE='new_users.txt'
 
     ROUTING_RENOUVELLEMENT_CERT = 'deployeur.renouvellementCert'
+    ROUTING_RENOUVELLEMENT_REPONSE = 'deployeur.reponseRenouvellement'
 
     LOGGING_FORMAT = '%(asctime)s %(threadName)s %(levelname)s: %(message)s'
 
