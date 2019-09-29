@@ -356,6 +356,7 @@ class GestionnaireComptesRabbitMQ:
             elif 'Error:' not in str(output):
                 return  # Ok, le vhost est pret
 
+        self.__logger.error("Erreur ajout vhost. Output:\n%s" % str(output))
         raise Exception("Erreur ajout vhost")
 
 
