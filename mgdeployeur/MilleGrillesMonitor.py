@@ -109,15 +109,14 @@ class DeployeurMonitor:
         if signum in [signal.SIGKILL, signal.SIGTERM, signal.SIGINT]:
             try:
                 self.arreter()
-            except Exception:
-                self.__logger.warning("Erreur fermeture RabbitMQ")
+            except Exception as e:
+                self.__logger.warning("Erreur fermeture RabbitMQ: %s" % str(e))
 
     def arreter(self):
         if not self.__stop_event.is_set():
             self.__stop_event.set()  # Va liberer toutes les millegrilles
-            self.__contexte.message_dao.deconnecter()
 
-            for monitor in self.__millegrilles_monitors:
+            for monitor in self.__millegrilles_monitors.values():
                 monitor.arreter()
 
     def __demarrer_monitoring(self, nom_millegrille, config):
@@ -211,6 +210,10 @@ class MonitorMilleGrille:
 
     def arreter(self):
         self.__stop_event.set()
+        try:
+            self.__contexte.message_dao.deconnecter()
+        except Exception as e:
+            self.__logger.info("Erreur fermeture MQ: %s" % str(e))
 
     def executer(self):
         self.__logger.info("Debut execution thread %s" % self.__nom_millegrille)
