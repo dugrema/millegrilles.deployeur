@@ -215,6 +215,7 @@ class MonitorMilleGrille:
 
         routing_keys = [
             ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_CERT,
+            ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE,
         ]
 
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
