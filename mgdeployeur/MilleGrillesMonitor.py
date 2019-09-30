@@ -157,6 +157,10 @@ class DeployeurMonitor:
         self.__logger.info("Fin execution monitoring")
         self.arreter()
 
+    @property
+    def node_name(self):
+        return self.__args.node
+
 
 class MonitorMilleGrille:
 
@@ -262,6 +266,19 @@ class MonitorMilleGrille:
     def generateur_transactions(self):
         return self.__contexte.generateur_transaction
 
+    @property
+    def node_name(self):
+        return self.__node_name
+
+    def verifier_cedule_deploiement(self):
+        if self.__cedule_redemarrage is not None:
+            date_now = datetime.datetime.utcnow()
+            if date_now > self.__cedule_redemarrage:
+                self.__cedule_redemarrage = None
+                # Redemarrer service pour utiliser le nouveau certificat
+                self.__deployeur.deployer_services()  # Pour l'instant on redeploie tous les services
+
+
 
 class RenouvellementCertificats:
 
@@ -291,9 +308,11 @@ class RenouvellementCertificats:
             if date_courante > date_comparaison:
                 self.__logger.info("Certificat role %s du pour renouvellement (expiration: %s)" % (role, str(date_exp)))
 
-    def transmettre_demande_renouvellement(self, role, node):
+                self.transmettre_demande_renouvellement(role)
+
+    def transmettre_demande_renouvellement(self, role):
         generateur_csr = GenerateurCertificat(self.__nom_millegrille)
-        clecert = generateur_csr.preparer_key_request(role, node)
+        clecert = generateur_csr.preparer_key_request(role, self.__monitor.node_name)
 
         demande = {
             'csr': clecert.csr_bytes.decode('utf-8'),
@@ -341,18 +360,32 @@ class RenouvellementCertificats:
             combiner_clecert = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
             self.__deployeur.deployer_clecert(id_secret, clecert, combiner_cle_cert=combiner_clecert)
 
-            # Redemarrer service pour utiliser le nouveau certificat
-            self.__deployeur.deployer_services()  # Pour l'instant on redeploie tous les services
+            self.update_cert_time(role, clecert)
+
+            self.__monitor.ceduler_redemarrage(120, role)
+
         else:
             self.__logger.warning("Recu reponse de renouvellement non sollicitee, role: %s" % role)
             raise Exception("Recu reponse de renouvellement non sollicitee, role: %s" % role)
 
+    def update_cert_time(self, role, clecert):
+        with open(self.__fichier_etat_certificats, 'r') as fichier:
+            fichier_etat = json.load(fichier)
+
+        date_expiration = clecert.not_valid_after
+        expirations = fichier_etat[ConstantesEnvironnementMilleGrilles.CHAMP_EXPIRATION]
+        expirations[role] = int(date_expiration.timestamp())
+
+        with open(self.__fichier_etat_certificats, 'w') as fichier:
+            json.dump(fichier_etat, fichier)
+
 
 class MonitorMessageHandler(BaseCallback):
 
-    def __init__(self, contexte, renouvelleur: RenouvellementCertificats):
+    def __init__(self, contexte, renouvelleur: RenouvellementCertificats, monitor: MonitorMilleGrille):
         super().__init__(contexte)
         self.__renouvelleur = renouvelleur
+        self.__monitor = monitor
 
     def traiter_message(self, ch, method, properties, body):
         routing_key = method.routing_key
@@ -361,7 +394,10 @@ class MonitorMessageHandler(BaseCallback):
         evenement = message_dict.get(Constantes.EVENEMENT_MESSAGE_EVENEMENT)
 
         if evenement == Constantes.EVENEMENT_CEDULEUR:
-            pass
+            self.__monitor.verifier_cedule_deploiement()
+
+            if 'heure' in message_dict['indicateurs']:
+                self.__renouvelleur.trouver_certs_a_renouveller()
         elif evenement == ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         else:

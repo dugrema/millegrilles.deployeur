@@ -23,9 +23,16 @@ class MonitorStub:
     def __init__(self):
         self.logger = logging.getLogger('__main__.MonitorStub')
 
+    def ceduler_redemarrage(self, delai, service):
+        self.logger.info("Ceduler redemarrage: %d secondes, %s" % (delai, service))
+
     @property
     def generateur_transactions(self):
         return GenerateurTransactionStub()
+
+    @property
+    def node_name(self):
+        return 'mg-dev3'
 
 
 class DeployeurStub:
@@ -60,7 +67,7 @@ class RenouvellerCertifcatTestStruct:
         self.renouvellement.trouver_certs_a_renouveller()
 
     def transmettre_demande_renouvellement(self):
-        return self.renouvellement.transmettre_demande_renouvellement(self.role, self.node)
+        return self.renouvellement.transmettre_demande_renouvellement(self.role)
 
     def traiter_reponse_renouvellement(self, reponse):
         self.renouvellement.traiter_reponse_renouvellement(reponse, self.role)
