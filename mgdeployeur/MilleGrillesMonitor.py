@@ -248,13 +248,16 @@ class MonitorMilleGrille:
         self.__logger.info("Debut execution thread %s" % self.__nom_millegrille)
         self._initialiser_contexte()
 
+        # Verification initiale pour renouveller les certificats
+        self.__renouvellement_certificats.trouver_certs_a_renouveller()
+
         while not self.__stop_event.is_set():
             try:
                 self.verifier_cedule_deploiement()
             except Exception as e:
                 self.__logger.error("Erreur traitement cedule: %s" % str(e))
 
-            self.__stop_event.wait(120)
+            self.__stop_event.wait(30)
 
         self.__logger.info("Fin execution thread %s" % self.__nom_millegrille)
 
@@ -303,7 +306,7 @@ class RenouvellementCertificats:
             ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
 
         # Detecter expiration a moins de 31 jours
-        self.__delta_expiration = datetime.timedelta(days=720)
+        self.__delta_expiration = datetime.timedelta(days=31)
 
     def trouver_certs_a_renouveller(self):
         with open(self.__fichier_etat_certificats, 'r') as fichier:
@@ -371,7 +374,7 @@ class RenouvellementCertificats:
 
             self.update_cert_time(role, clecert)
 
-            self.__monitor.ceduler_redemarrage(120, role)
+            self.__monitor.ceduler_redemarrage(60, role)
 
         else:
             self.__logger.warning("Recu reponse de renouvellement non sollicitee, role: %s" % role)
@@ -403,8 +406,14 @@ class MonitorMessageHandler(BaseCallback):
         evenement = message_dict.get(Constantes.EVENEMENT_MESSAGE_EVENEMENT)
 
         if evenement == Constantes.EVENEMENT_CEDULEUR:
-            # if 'heure' in message_dict['indicateurs']:
-            self.__renouvelleur.trouver_certs_a_renouveller()
+            timestamp_dict = message_dict['timestamp']
+            indicateurs_partz = timestamp_dict.get('indicateurs_partz')
+            if indicateurs_partz is not None:
+                eastern_indicateur = indicateurs_partz.get('Canada/Eastern')
+                if eastern_indicateur is not None:
+                    if 'jour' in eastern_indicateur:
+                        self.__renouvelleur.trouver_certs_a_renouveller()
+
         elif evenement == ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         elif evenement == Constantes.EVENEMENT_TRANSACTION_PERSISTEE:
