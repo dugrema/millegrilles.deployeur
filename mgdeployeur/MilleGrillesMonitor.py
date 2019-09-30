@@ -219,12 +219,12 @@ class MonitorMilleGrille:
         ]
 
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
-        exchange_middleware = self.__contexte.configuration.exchange_middleware
         for routing in routing_keys:
             self.__channel.queue_bind(queue=nom_queue, exchange=exchange_noeuds, routing_key=routing, callback=None)
-            self.__channel.queue_bind(queue=nom_queue, exchange=exchange_middleware, routing_key=routing, callback=None)
 
-        self.__channel.queue_bind(queue=nom_queue, exchange=exchange_middleware, routing_key='ceduleur.#', callback=None)
+        self.__channel.queue_bind(
+            queue=nom_queue, exchange=self.__contexte.configuration.exchange_middleware,
+            routing_key='ceduleur.#', callback=None)
 
         self.__channel.basic_consume(self.__message_handler.callbackAvecAck, queue=nom_queue, no_ack=False)
 
@@ -262,7 +262,7 @@ class MonitorMilleGrille:
         delta = datetime.timedelta(seconds=delai)
         temps_courant = datetime.datetime.utcnow()
         redemarrage = temps_courant + delta
-        if self.__cedule_redemarrage is not None:
+        if self.__cedule_redemarrage is None:
             self.__cedule_redemarrage = redemarrage
         elif self.__cedule_redemarrage < redemarrage:
             self.__cedule_redemarrage = redemarrage  # on pousse le redemarrage a plus tard
@@ -274,6 +274,10 @@ class MonitorMilleGrille:
     @property
     def node_name(self):
         return self.__node_name
+
+    @property
+    def queue_reponse(self):
+        return self.__queue_reponse
 
     def verifier_cedule_deploiement(self):
         if self.__cedule_redemarrage is not None:
@@ -334,7 +338,8 @@ class RenouvellementCertificats:
 
         domaine = ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT
         generateur_transactions = self.__monitor.generateur_transactions
-        generateur_transactions.soumettre_transaction(demande, domaine, correlation_id=role, reply_to=None)
+        generateur_transactions.soumettre_transaction(
+            demande, domaine, correlation_id=role, reply_to=self.__monitor.queue_reponse)
 
         return persistance_memoire
 
@@ -400,7 +405,11 @@ class MonitorMessageHandler(BaseCallback):
         if evenement == Constantes.EVENEMENT_CEDULEUR:
             # if 'heure' in message_dict['indicateurs']:
             self.__renouvelleur.trouver_certs_a_renouveller()
-        elif evenement == ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE:
+        elif evenement == ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT:
+            self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
+        elif evenement == Constantes.EVENEMENT_TRANSACTION_PERSISTEE:
+            self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
+        elif evenement == ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         else:
             raise ValueError("Type de transaction inconnue: routing: %s, message: %s" % (routing_key, evenement))
