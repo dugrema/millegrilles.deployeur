@@ -197,17 +197,17 @@ class MonitorMilleGrille:
         self.__contexte = ContexteRessourcesMilleGrilles()
         self.__contexte.initialiser(init_document=False, connecter=True)
 
+        # Configurer le deployeur de MilleGrilles
+        self.__deployeur = DeployeurDockerMilleGrille(self.__nom_millegrille, self.__node_name, self.__docker, dict())
+        self.__renouvellement_certificats = RenouvellementCertificats(self.__nom_millegrille, self, self.__deployeur)
+
         # Message handler et Q pour monitor
-        self.__message_handler = MonitorMessageHandler(self.__contexte, self.__renouvellement_certificats)
+        self.__message_handler = MonitorMessageHandler(self.__contexte, self.__renouvellement_certificats, self)
         self.__contexte.message_dao.register_channel_listener(self)
 
         # Message handler et Q pour certificat
         self.__certificat_event_handler = GestionnaireEvenementsCertificat(self.__contexte)
         self.__certificat_event_handler.initialiser()
-
-        # Configurer le deployeur de MilleGrilles
-        self.__deployeur = DeployeurDockerMilleGrille(self.__nom_millegrille, self.__node_name, self.__docker, dict())
-        self.__renouvellement_certificats = RenouvellementCertificats(self.__nom_millegrille, self, self.__deployeur)
 
     def register_mq_handler(self, queue):
         nom_queue = queue.method.queue
@@ -248,8 +248,12 @@ class MonitorMilleGrille:
         self._initialiser_contexte()
 
         while not self.__stop_event.is_set():
+            try:
+                self.verifier_cedule_deploiement()
+            except Exception as e:
+                self.__logger.error("Erreur traitement cedule: %s" % str(e))
 
-            self.__stop_event.wait(30)
+            self.__stop_event.wait(120)
 
         self.__logger.info("Fin execution thread %s" % self.__nom_millegrille)
 
@@ -264,7 +268,7 @@ class MonitorMilleGrille:
 
     @property
     def generateur_transactions(self):
-        return self.__contexte.generateur_transaction
+        return self.__contexte.generateur_transactions
 
     @property
     def node_name(self):
@@ -277,7 +281,6 @@ class MonitorMilleGrille:
                 self.__cedule_redemarrage = None
                 # Redemarrer service pour utiliser le nouveau certificat
                 self.__deployeur.deployer_services()  # Pour l'instant on redeploie tous les services
-
 
 
 class RenouvellementCertificats:
@@ -295,7 +298,7 @@ class RenouvellementCertificats:
             ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
 
         # Detecter expiration a moins de 31 jours
-        self.__delta_expiration = datetime.timedelta(days=31)
+        self.__delta_expiration = datetime.timedelta(days=720)
 
     def trouver_certs_a_renouveller(self):
         with open(self.__fichier_etat_certificats, 'r') as fichier:
@@ -394,10 +397,8 @@ class MonitorMessageHandler(BaseCallback):
         evenement = message_dict.get(Constantes.EVENEMENT_MESSAGE_EVENEMENT)
 
         if evenement == Constantes.EVENEMENT_CEDULEUR:
-            self.__monitor.verifier_cedule_deploiement()
-
-            if 'heure' in message_dict['indicateurs']:
-                self.__renouvelleur.trouver_certs_a_renouveller()
+            # if 'heure' in message_dict['indicateurs']:
+            self.__renouvelleur.trouver_certs_a_renouveller()
         elif evenement == ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         else:
