@@ -215,7 +215,7 @@ class DeployeurDockerMilleGrille:
             self.__logger.info("Suppression service: %s" % service['Spec']['Name'])
             self.__docker.supprimer_service(id_service)
 
-    def sauvegarder_clecert_deployeur(self, clecert):
+    def sauvegarder_clecert_deployeur(self, clecert, millegrille_clecert=None):
         os.makedirs(self.constantes.rep_secrets_deployeur, exist_ok=True)
         fichier_cert = '%s/deployeur_%s.cert.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag)
         fichier_cle = '%s/deployeur_%s.key.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag)
@@ -227,8 +227,23 @@ class DeployeurDockerMilleGrille:
         # Creer symlinks pour trouver rapidement le cert / cle plus recent
         shortname_cert = '%s/deployeur.cert.pem' % self.constantes.rep_secrets_deployeur
         shortname_cle = '%s/deployeur.key.pem' % self.constantes.rep_secrets_deployeur
-        os.symlink(fichier_cert, shortname_cert)
-        os.symlink(fichier_cle, shortname_cle)
+
+        try:
+            os.symlink(fichier_cert, shortname_cert)
+        except FileExistsError:
+            os.unlink(shortname_cert)
+            os.symlink(fichier_cert, shortname_cert)
+
+        try:
+            os.symlink(fichier_cle, shortname_cle)
+        except FileExistsError:
+            os.unlink(shortname_cle)
+            os.symlink(fichier_cle, shortname_cle)
+
+        if millegrille_clecert is not None:
+            chaine_ca = '%s/pki.ca.fullchain.pem' % self.constantes.rep_secrets_deployeur
+            with open(chaine_ca, 'w') as fichier:
+                fichier.write(millegrille_clecert.chaine)
 
     def generer_certificats_initiaux(self):
         etat_filename = self.constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
@@ -243,6 +258,8 @@ class DeployeurDockerMilleGrille:
             certificats_expiration = dict()
             etat[ConstantesEnvironnementMilleGrilles.CHAMP_EXPIRATION] = certificats_expiration
 
+        datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+
         if etat.get('certificats_ok') is None:
             self.__logger.info("Generer certificat root, millegrille, mongo, mq et deployeur")
             generateur_mg_initial = GenerateurInitial(self.__nom_millegrille)
@@ -256,7 +273,10 @@ class DeployeurDockerMilleGrille:
             renouvelleur = RenouvelleurCertificat(self.__nom_millegrille, dict_ca, millegrille_clecert, autorite_clecert)
 
             deployeur_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_DEPLOYEUR, self.__node_name)
-            self.sauvegarder_clecert_deployeur(deployeur_clecert)
+            self.sauvegarder_clecert_deployeur(deployeur_clecert, millegrille_clecert)
+            certificats_expiration['deployeur'] = int(deployeur_clecert.not_valid_after.timestamp())
+            # Ajouter compte pour le role deployeur a MQ
+            self.ajouter_cert_ssl(deployeur_clecert.cert_bytes.decode('utf-8'))
 
             mongo_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_MONGO, self.__node_name)
             mq_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_MQ, self.__node_name)
@@ -266,10 +286,10 @@ class DeployeurDockerMilleGrille:
             certificats_expiration['mq'] = int(mongo_clecert.not_valid_after.timestamp())
 
             # Conserver les nouveaux certificats et cles dans docker
-            self.deployer_clecert('pki.ca.root', autorite_clecert)
-            self.deployer_clecert('pki.ca.millegrille', millegrille_clecert)
-            self.deployer_clecert('pki.mongo', mongo_clecert, combiner_cle_cert=True)
-            self.deployer_clecert('pki.mq', mq_clecert)
+            self.deployer_clecert('pki.ca.root', autorite_clecert, datetag=datetag)
+            self.deployer_clecert('pki.ca.millegrille', millegrille_clecert, datetag=datetag)
+            self.deployer_clecert('pki.mongo', mongo_clecert, combiner_cle_cert=True, datetag=datetag)
+            self.deployer_clecert('pki.mq', mq_clecert, datetag=datetag)
             # Passer les mots de passe au maitre des cles via docker secrets
             contenu = {
                 'pki.ca.root': autorite_clecert.password.decode('utf-8'),
@@ -278,6 +298,9 @@ class DeployeurDockerMilleGrille:
             contenu = base64.encodebytes(json.dumps(contenu).encode('utf-8')).decode('utf-8')
             message_cert = {
                 "Name": '%s.pki.ca.passwords.%s' % (self.__nom_millegrille, self.__datetag),
+                "Labels": {
+                    "password": "init",
+                },
                 "Data": contenu
             }
             resultat = self.__docker.post('secrets/create', message_cert)
@@ -300,7 +323,7 @@ class DeployeurDockerMilleGrille:
             for role in roles:
                 combiner = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
                 clecert = renouvelleur.renouveller_par_role(role, self.__node_name)
-                self.deployer_clecert('pki.%s' % role, clecert, combiner_cle_cert=combiner)
+                self.deployer_clecert('pki.%s' % role, clecert, combiner_cle_cert=combiner, datetag=datetag)
 
                 # Ajouter compte pour le role a MQ
                 self.ajouter_cert_ssl(clecert.cert_bytes.decode('utf-8'))
@@ -502,8 +525,9 @@ class DeployeurDockerMilleGrille:
         """
         pass
 
-    def deployer_clecert(self, id_secret: str, clecert: EnveloppeCleCert, combiner_cle_cert=False):
-        datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+    def deployer_clecert(self, id_secret: str, clecert: EnveloppeCleCert, combiner_cle_cert=False, datetag=None):
+        if datetag is None:
+            datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
         contenu_cle = base64.encodebytes(clecert.private_key_bytes).decode('utf-8')
         contenu_cert = base64.encodebytes(clecert.cert_bytes).decode('utf-8')
@@ -511,6 +535,9 @@ class DeployeurDockerMilleGrille:
         id_secret_key_formatte = '%s.%s.key.%s' % (self.__nom_millegrille, id_secret, datetag)
         message_key = {
             "Name": id_secret_key_formatte,
+            "Labels": {
+                "pki": "individuel",
+            },
             "Data": contenu_cle
         }
         resultat = self.__docker.post('secrets/create', message_key)
@@ -522,7 +549,7 @@ class DeployeurDockerMilleGrille:
         message_cert = {
             "Name": id_secret_cert_formatte,
             "Labels": {
-                "certificat": "true"
+                "pki": "individuel",
             },
             "Data": contenu_cert
         }
@@ -537,7 +564,7 @@ class DeployeurDockerMilleGrille:
             message_fullchain = {
                 "Name": id_secret_fullchain_formatte,
                 "Labels": {
-                    "certificat": "true"
+                    "pki": "individuel",
                 },
                 "Data": contenu_fullchain
             }
@@ -555,6 +582,9 @@ class DeployeurDockerMilleGrille:
             id_secret_cle_cert_formatte = '%s.%s.key_cert.%s' % (self.__nom_millegrille, id_secret, datetag)
             message_cert = {
                 "Name": id_secret_cle_cert_formatte,
+                "Labels": {
+                    "pki": "individuel",
+                },
                 "Data": cle_cert_combine
             }
             resultat = self.__docker.post('secrets/create', message_cert)
@@ -751,6 +781,16 @@ class DeployeurDockerMilleGrille:
 
         else:
             self.__logger.debug("Mongo deja init, on skip")
+
+    def nettoyer_pki(self):
+        """
+        Faire le menage dans les secrets et configs. Les noms qui commencent pas NOM_MILLEGRILLE.pki vont etre
+        listes et toutes les valeurs avec une date anterieure au plus recent cert vont etre supprimees.
+
+        Format recherche: test1.pki.vitrine.cert.20190930140405
+        :return:
+        """
+        liste_configs = self.__docker
 
 
 if __name__ == '__main__':

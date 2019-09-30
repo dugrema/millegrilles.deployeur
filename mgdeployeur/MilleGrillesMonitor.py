@@ -306,7 +306,7 @@ class RenouvellementCertificats:
             ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
 
         # Detecter expiration a moins de 31 jours
-        self.__delta_expiration = datetime.timedelta(days=31)
+        self.__delta_expiration = datetime.timedelta(days=367)
 
     def trouver_certs_a_renouveller(self):
         with open(self.__fichier_etat_certificats, 'r') as fichier:
@@ -370,7 +370,11 @@ class RenouvellementCertificats:
             # docker puis redeployer le service pour l'utiliser.
             id_secret = 'pki.%s' % role
             combiner_clecert = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
-            self.__deployeur.deployer_clecert(id_secret, clecert, combiner_cle_cert=combiner_clecert)
+
+            if role == 'deployeur':
+                self.__deployeur.sauvegarder_clecert_deployeur(clecert)
+            else:
+                self.__deployeur.deployer_clecert(id_secret, clecert, combiner_cle_cert=combiner_clecert)
 
             self.update_cert_time(role, clecert)
 

@@ -132,21 +132,39 @@ class GestionnaireComptesMongo:
         messages = [
             {
                 "Name": '%s.passwd.mongo.root.%s' % (nom_millegrille, datetag),
+                "Labels": {
+                    "password": "individuel",
+                },
                 "Data": base64.encodebytes(mot_passe_root_mongo.encode('utf-8')).decode('utf-8')
             }, {
                 "Name": '%s.passwd.mongo.scriptinit.%s' % (nom_millegrille, datetag),
+                "Labels": {
+                    "password": "individuel",
+                },
                 "Data": base64.encodebytes(script_js.encode('utf-8')).decode('utf-8')
             }, {
                 "Name": '%s.passwd.python.domaines.json.%s' % (nom_millegrille, datetag),
+                "Labels": {
+                    "password": "individuel",
+                },
                 "Data": base64.encodebytes(compte_domaines.encode('utf-8')).decode('utf-8')
             }, {
                 "Name": '%s.passwd.python.transactions.json.%s' % (nom_millegrille, datetag),
+                "Labels": {
+                    "password": "individuel",
+                },
                 "Data": base64.encodebytes(compte_transaction.encode('utf-8')).decode('utf-8')
             }, {
                 "Name": '%s.passwd.python.maitredescles.json.%s' % (nom_millegrille, datetag),
+                "Labels": {
+                    "password": "individuel",
+                },
                 "Data": base64.encodebytes(compte_maitredescles.encode('utf-8')).decode('utf-8')
             }, {
                 "Name": '%s.passwd.mongoexpress.web.%s' % (nom_millegrille, datetag),
+                "Labels": {
+                    "password": "individuel",
+                },
                 "Data": base64.encodebytes(mot_passe_web_mongoexpress.encode('utf-8')).decode('utf-8')
             },
         ]
