@@ -52,12 +52,13 @@ installer_deployeur() {
 }
 
 preparer_comptes() {
-  set -e  # Arreter execution sur erreur
+  # set -e  # Arreter execution sur erreur
   echo "[INFO] Preparer comptes millegrilles"
-  sudo groupadd $MILLEGRILLES_GROUP
+  sudo groupadd -g $MILLEGRILLES_GROUP_GID $MILLEGRILLES_GROUP
   sudo useradd -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_DEPLOYEUR
   sudo adduser $MILLEGRILLES_USER_DEPLOYEUR docker
   sudo useradd -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_MAITREDESCLES
+  sudo useradd -u $MILLEGRILLES_USER_PUBLICATEUR_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_DEPLOYEUR
   echo "[OK] Comptes millegrilles prets"
 }
 
