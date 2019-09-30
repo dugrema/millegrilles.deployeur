@@ -37,6 +37,7 @@ class DeployeurStub:
         self.logger.info("Deployer clecert id: %s, combiner: %s" % (id_secret, combiner_cle_cert))
         self.logger.info('\n%s' % clecert.cert_bytes.decode('utf-8'))
         self.logger.info('\n%s' % clecert.private_key_bytes.decode('utf-8'))
+        self.logger.info('\n%s' % ''.join(clecert.chaine))
 
     def deployer_services(self):
         self.logger.info("Deployer tous les services")
@@ -92,7 +93,7 @@ class RenouvellerCertifcatTestStruct:
         clecert = EnveloppeCleCert()
         clecert.cert = certificat
 
-        fullchain = []
+        fullchain = ['cert1', 'cert2']
 
         reponse = {
             'cert': clecert.cert_bytes.decode('utf-8'),

@@ -327,6 +327,8 @@ class RenouvellementCertificats:
             clecert = demande['clecert']
             cert_pem = message['cert']
             clecert.cert_from_pem_bytes(cert_pem.encode('utf-8'))
+            fullchain = message['fullchain']
+            clecert.chaine = fullchain
 
             # Verifier que la cle et le nouveau cert correspondent
             correspondance = clecert.cle_correspondent()
