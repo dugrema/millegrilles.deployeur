@@ -305,8 +305,8 @@ class RenouvellementCertificats:
         self.__fichier_etat_certificats = self.__constantes.fichier_etc_mg(
             ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
 
-        # Detecter expiration a moins de 31 jours
-        self.__delta_expiration = datetime.timedelta(days=367)
+        # Detecter expiration a moins de 60 jours
+        self.__delta_expiration = datetime.timedelta(days=60)
 
     def trouver_certs_a_renouveller(self):
         with open(self.__fichier_etat_certificats, 'r') as fichier:
@@ -329,6 +329,7 @@ class RenouvellementCertificats:
             'csr': clecert.csr_bytes.decode('utf-8'),
             'datedemande': int(datetime.datetime.utcnow().timestamp()),
             'role': role,
+            'node': self.__monitor.node_name,
         }
 
         persistance_memoire = {

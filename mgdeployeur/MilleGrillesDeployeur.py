@@ -243,7 +243,7 @@ class DeployeurDockerMilleGrille:
         if millegrille_clecert is not None:
             chaine_ca = '%s/pki.ca.fullchain.pem' % self.constantes.rep_secrets_deployeur
             with open(chaine_ca, 'w') as fichier:
-                fichier.write(millegrille_clecert.chaine)
+                fichier.write(''.join(millegrille_clecert.chaine))
 
     def generer_certificats_initiaux(self):
         etat_filename = self.constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
