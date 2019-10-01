@@ -1,6 +1,7 @@
 # Deployeur de MilleGrille
 # Responsable de l'installation, mise a jour et health check
 
+from millegrilles import Constantes
 from millegrilles.SecuritePKI import EnveloppeCertificat
 from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurInitial, \
@@ -215,6 +216,30 @@ class DeployeurDockerMilleGrille:
             self.__logger.info("Suppression service: %s" % service['Spec']['Name'])
             self.__docker.supprimer_service(id_service)
 
+    def creer_config_monitor_json(self):
+        """
+        Genere un fichier json pour demarrer le monitor et se connecter avec les certs.
+        :return:
+        """
+        fichier_cert = '%s/deployeur_%s.cert.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag)
+        fichier_cle = '%s/deployeur_%s.key.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag)
+        chaine_ca = '%s/pki.ca.fullchain.pem' % self.constantes.rep_secrets_deployeur
+
+        config = {
+            Constantes.CONFIG_NOM_MILLEGRILLE: self.__nom_millegrille,
+            Constantes.CONFIG_MQ_HOST: self.__node_name,
+            Constantes.CONFIG_MQ_PORT: '5673',
+            Constantes.CONFIG_MQ_SSL: 'on',
+            Constantes.CONFIG_MQ_AUTH_CERT: 'on',
+            Constantes.CONFIG_MQ_KEYFILE: fichier_cle,
+            Constantes.CONFIG_MQ_CERTFILE: fichier_cert,
+            Constantes.CONFIG_MQ_CA_CERTS: chaine_ca,
+        }
+
+        fichier_monitor_config = self.constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.MONITOR_CONFIG_JSON)
+        with open(fichier_monitor_config, 'w') as fichier:
+            json.dump(config, fichier)
+
     def sauvegarder_clecert_deployeur(self, clecert, millegrille_clecert=None):
         os.makedirs(self.constantes.rep_secrets_deployeur, exist_ok=True)
         fichier_cert = '%s/deployeur_%s.cert.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag)
@@ -329,6 +354,9 @@ class DeployeurDockerMilleGrille:
                 self.ajouter_cert_ssl(clecert.cert_bytes.decode('utf-8'))
 
                 certificats_expiration[role] = int(clecert.not_valid_after.timestamp())
+
+            # Generer fichier de configuration pour monitor
+            self.creer_config_monitor_json()
 
             # Enregistrer_fichier maj
             etat['certificats_ok'] = True

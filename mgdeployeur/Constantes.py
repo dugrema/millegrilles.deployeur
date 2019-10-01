@@ -27,10 +27,11 @@ class ConstantesEnvironnementMilleGrilles:
 
     # Applications et comptes
     MONGO_INITDB_ROOT_USERNAME = 'root'
-    MONGO_RSINIT_SCRIPT='mongo_rsinit.js'
-    MONGO_RUN_ADMIN='mongo_run_script_admin.sh'
-    MONGO_RUN_MG='mongo_run_script_mg.sh'
-    MQ_NEW_USERS_FILE='new_users.txt'
+    MONGO_RSINIT_SCRIPT = 'mongo_rsinit.js'
+    MONGO_RUN_ADMIN = 'mongo_run_script_admin.sh'
+    MONGO_RUN_MG = 'mongo_run_script_mg.sh'
+    MQ_NEW_USERS_FILE = 'new_users.txt'
+    MONITOR_CONFIG_JSON = 'monitor.config.json'
 
     ROUTING_RENOUVELLEMENT_CERT = 'deployeur.renouvellementCert'
     ROUTING_RENOUVELLEMENT_REPONSE = 'deployeur.reponseRenouvellement'

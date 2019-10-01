@@ -6,10 +6,14 @@ CURRENT_USER=`whoami`
 
 source /opt/millegrilles/etc/paths.env
 
+sudo adduser $CURRENT_USER millegrilles || true
+
 REP_MILLEGRILLE=$MILLEGRILLES_PATH/$NOM_MILLEGRILLE
 sudo mkdir -p $MILLEGRILLES_PATH/dist/secure/maitredescles
 sudo mkdir -p $MILLEGRILLES_PATH/dist/secure/pki
-sudo chown $CURRENT_USER:millegrilles $MILLEGRILLES_PATH/dist
+sudo chown -R $CURRENT_USER:millegrilles $MILLEGRILLES_PATH/dist
+sudo chmod -R 775 $MILLEGRILLES_PATH/dist
+
 sudo chmod g+rwx $MILLEGRILLES_PATH/etc
 sudo chmod -R g+rw $MILLEGRILLES_PATH/etc
 sudo chmod -R 775 $REP_MILLEGRILLE/mounts
