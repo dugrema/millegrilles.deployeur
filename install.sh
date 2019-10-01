@@ -22,6 +22,11 @@ installer_avahi() {
   sudo apt install -y avahi-daemon
 }
 
+installer_autres_deps() {
+  # Random number gens hardware
+  sudo apt install rng-tools
+}
+
 installer_deployeur() {
   echo "[INFO] Installer deployeur Python et dependances"
   MG_CONSIGNATION=MilleGrilles.consignation.python
@@ -90,6 +95,7 @@ installer() {
   installer_docker
   installer_deployeur
   installer_avahi
+  installer_autres_deps
 
   # preparer_comptes
   preparer_opt
