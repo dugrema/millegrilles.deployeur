@@ -55,7 +55,8 @@ installer_deployeur() {
   sudo python3 setup.py install
 
   # Installer script demarrage
-
+  sudo cp etc/millegrilles.service /etc/systemd/system/millegrilles.service
+  sudo chmod 644 /etc/systemd/system/millegrilles.service
 
   echo "[OK] Deployeur Python et dependances installes"
 }
@@ -98,6 +99,10 @@ preparer_var() {
   sudo mkdir -p $MILLEGRILLES_LOGS
   sudo chown $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $MILLEGRILLES_LOGS
   sudo chmod 2755 $MILLEGRILLES_LOGS
+
+  sudo mkdir -p $MILLEGRILLES_PID_PATH
+  sudo chown $MILLEGRILLES_USER_PYTHON:$MILLEGRILLES_GROUP $MILLEGRILLES_PID_PATH
+  sudo chmod 2755 $MILLEGRILLES_PID_PATH
 }
 
 # Execution de l'installation

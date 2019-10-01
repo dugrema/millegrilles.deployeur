@@ -46,4 +46,11 @@ echo "[INFO] Creer la millegrille $NOM_MILLEGRILLE"
 creer_repertoires
 # sudo -u $MILLEGRILLES_USER_MAITREDESCLES NOM_MILLEGRILLE=$NOM_MILLEGRILLE $MILLEGRILLES_BIN/creer_certificats.sh
 ajuster_access_rights
+
+echo
+echo
+echo "*************"
 echo "[OK] La millegrille $NOM_MILLEGRILLE est prete pour le deploiement"
+echo "*************"
+echo
+echo

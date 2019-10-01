@@ -22,9 +22,9 @@ import datetime
 class DeployeurDaemon(Daemon):
 
     def __init__(self):
-        self.__pidfile = '/var/run/millegrilles/mg-deployeur.pid'
-        self.__stdout = '/var/log/millegrilles/mg-manager.log'
-        self.__stderr = '/var/log/millegrilles/mg-manager.err'
+        self.__pidfile = '/var/run/millegrilles/monitor.pid'
+        self.__stdout = '/var/log/millegrilles/monitor.log'
+        self.__stderr = '/var/log/millegrilles/monitor.err'
 
         super().__init__(self.__pidfile, stdout=self.__stdout, stderr=self.__stderr)
 

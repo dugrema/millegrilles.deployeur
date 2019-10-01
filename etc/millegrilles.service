@@ -1,0 +1,13 @@
+[Unit]
+Description=Service monitor de MilleGrilles.
+
+[Service]
+Type=simple
+PIDFile=/var/run/millegrilles/monitor.pid
+ExecStart=/usr/bin/python3 /opt/millegrilles/bin/monitor.py start
+ExecStop=/usr/bin/python3 /opt/millegrilles/bin/monitor.py stop
+User=mg_deployeur
+Group=millegrilles
+
+[Install]
+WantedBy=multi-user.target
