@@ -221,24 +221,24 @@ class DeployeurDockerMilleGrille:
         Genere un fichier json pour demarrer le monitor et se connecter avec les certs.
         :return:
         """
-        fichier_cert = '%s/deployeur_%s.cert.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag)
-        fichier_cle = '%s/deployeur_%s.key.pem' % (self.constantes.rep_secrets_deployeur, self.__datetag)
+        fichier_cert = '%s/deployeur.cert.pem' % self.constantes.rep_secrets_deployeur
+        fichier_cle = '%s/deployeur.key.pem' % self.constantes.rep_secrets_deployeur
         chaine_ca = '%s/pki.ca.fullchain.pem' % self.constantes.rep_secrets_deployeur
 
         config = {
-            Constantes.CONFIG_NOM_MILLEGRILLE: self.__nom_millegrille,
-            Constantes.CONFIG_MQ_HOST: self.__node_name,
-            Constantes.CONFIG_MQ_PORT: '5673',
-            Constantes.CONFIG_MQ_SSL: 'on',
-            Constantes.CONFIG_MQ_AUTH_CERT: 'on',
-            Constantes.CONFIG_MQ_KEYFILE: fichier_cle,
-            Constantes.CONFIG_MQ_CERTFILE: fichier_cert,
-            Constantes.CONFIG_MQ_CA_CERTS: chaine_ca,
+            ('MG_%s' % Constantes.CONFIG_NOM_MILLEGRILLE).upper(): self.__nom_millegrille,
+            ('MG_%s' % Constantes.CONFIG_MQ_HOST).upper(): self.__node_name,
+            ('MG_%s' % Constantes.CONFIG_MQ_PORT).upper(): '5673',
+            ('MG_%s' % Constantes.CONFIG_MQ_SSL).upper(): 'on',
+            ('MG_%s' % Constantes.CONFIG_MQ_AUTH_CERT).upper(): 'on',
+            ('MG_%s' % Constantes.CONFIG_MQ_KEYFILE).upper(): fichier_cle,
+            ('MG_%s' % Constantes.CONFIG_MQ_CERTFILE).upper(): fichier_cert,
+            ('MG_%s' % Constantes.CONFIG_MQ_CA_CERTS).upper(): chaine_ca,
         }
 
         fichier_monitor_config = self.constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.MONITOR_CONFIG_JSON)
         with open(fichier_monitor_config, 'w') as fichier:
-            json.dump(config, fichier)
+            json.dump(config, fichier, indent=2)
 
     def sauvegarder_clecert_deployeur(self, clecert, millegrille_clecert=None):
         os.makedirs(self.constantes.rep_secrets_deployeur, exist_ok=True)

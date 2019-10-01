@@ -13,6 +13,7 @@ sudo mkdir -p $MILLEGRILLES_PATH/dist/secure/maitredescles
 sudo mkdir -p $MILLEGRILLES_PATH/dist/secure/pki
 sudo chown -R $CURRENT_USER:millegrilles $MILLEGRILLES_PATH/dist
 sudo chmod -R 775 $MILLEGRILLES_PATH/dist
+sudo chmod  775 $MILLEGRILLES_PATH/etc
 
 sudo chmod g+rwx $MILLEGRILLES_PATH/etc
 sudo chmod -R g+rw $MILLEGRILLES_PATH/etc
