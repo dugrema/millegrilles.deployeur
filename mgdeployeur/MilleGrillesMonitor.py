@@ -397,6 +397,74 @@ class RenouvellementCertificats:
             json.dump(fichier_etat, fichier)
 
 
+class GestionnairePublique:
+    """
+    S'occupe de la partie publique de la millegrille: certificats, routeurs, dns, etc.
+    """
+
+    def __init__(self):
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
+        self.__miniupnp = None
+        self.__document_parametres = None
+        self.__etat_upnp = None
+
+    def setup(self):
+        import miniupnpc
+        self.__miniupnp = miniupnpc.UPnP()
+        self.__miniupnp.discoverdelay = 10
+
+    def get_etat_upnp(self):
+        self.__miniupnp.discover()
+        self.__miniupnp.selectigd()
+        externalipaddress = self.__miniupnp.externalipaddress()
+        status_info = self.__miniupnp.statusinfo()
+        # connection_type = self.__miniupnp.connectiontype()
+        existing_mappings = list()
+        i = 0
+        while True:
+            p = self.__miniupnp.getgenericportmapping(i)
+            if p is None:
+                break
+
+            mapping = {
+                'port_ext': p[0],
+                'protocol': p[1],
+                'ip_int': p[2][0],
+                'port_int': p[2][1],
+                'nom': p[3],
+            }
+            existing_mappings.append(mapping)
+            i = i + 1
+
+        etat = {
+            'external_ip': externalipaddress,
+            'mappings_ipv4': existing_mappings,
+            'status_info': status_info,
+        }
+
+        return etat
+
+    def add_port_mapping(self, port_int, port_ext, protocol, description):
+        # upnp.addportmapping(port, 'TCP', upnp.lanaddr, port, 'testing', '')
+        self.__miniupnp.addportmapping(port_ext, protocol, self.__miniupnp.lanaddr, port_int, description, '')
+
+    def verifier_ip_dns(self):
+        self.__etat_upnp = self.get_etat_upnp()
+        if self.__etat_upnp is None:
+            # Verifier avec adresse externe, e.g.: http://checkip.dyn.com/
+            external_ip = ''
+        else:
+            external_ip = self.__etat_upnp['external_ip']
+
+        # Verifier l'adresse url fourni pour s'assurer que l'adresse IP correspond
+        url = 'www.maple.millegrilles.mdugre.info'
+        adresse = socket.gethostbyname(url)
+
+        if adresse != external_ip:
+            self.__logger.info("Mismatch adresse ip externe (%s) et url dns (%s)" % (external_ip, adresse))
+
+
 class MonitorMessageHandler(BaseCallback):
 
     def __init__(self, contexte, renouvelleur: RenouvellementCertificats, monitor: MonitorMilleGrille):
