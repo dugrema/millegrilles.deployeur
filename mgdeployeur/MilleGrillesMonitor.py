@@ -8,6 +8,7 @@ from millegrilles.SecuritePKI import GestionnaireEvenementsCertificat
 from millegrilles import Constantes
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurCertificat
 from millegrilles.domaines.MaitreDesCles import ConstantesMaitreDesCles
+from millegrilles.domaines.Parametres import ConstantesParametres
 
 from threading import Thread, Event
 
@@ -78,7 +79,6 @@ class DeployeurDaemon(Daemon):
 class DeployeurMonitor:
 
     def __init__(self, args):
-        self.__contexte = None
         self.__args = args
 
         signal.signal(signal.SIGINT, self.exit_gracefully)
@@ -130,8 +130,17 @@ class DeployeurMonitor:
     def __demarrer_monitoring(self, nom_millegrille, config):
         self.__logger.info("Demarrage monitoring des MilleGrilles")
 
-        millegrille_monitor = MonitorMilleGrille(nom_millegrille, self.__args.node, config, self.__docker)
+        millegrille_monitor = MonitorMilleGrille(self, nom_millegrille, self.__args.node, config, self.__docker)
         self.__millegrilles_monitors[nom_millegrille] = millegrille_monitor
+
+        try:
+            self.__gestionnaire_publique = GestionnairePublique()
+            self.__gestionnaire_publique.setup()
+        except Exception as e:
+            self.__logger.exception(
+                "Erreur demarrage gestionnaire publique, fonctionnalite non disponible\n%s" % str(e))
+            self.__gestionnaire_publique = None
+
         millegrille_monitor.start()
 
     def __charger_liste_millegrilles(self):
@@ -157,6 +166,16 @@ class DeployeurMonitor:
         self.__logger.info("Fin execution monitoring")
         self.arreter()
 
+    def transmettre_etat_upnp(self, generateur_transactions):
+        if self.__gestionnaire_publique is not None:
+            etat = self.__gestionnaire_publique.get_etat_upnp()
+            self.__logger.debug("Transmettre etat uPnP:\n%s" % json.dumps(etat, indent=2))
+            self.__etat_upnp = etat
+            generateur_transactions.soumettre_transaction(
+                etat,
+                ConstantesParametres.TRANSACTION_ETAT_ROUTEUR
+            )
+
     @property
     def node_name(self):
         return self.__args.node
@@ -164,7 +183,8 @@ class DeployeurMonitor:
 
 class MonitorMilleGrille:
 
-    def __init__(self, nom_millegrille: str, node_name: str, config: dict, docker: DockerFacade):
+    def __init__(self, monitor: DeployeurMonitor, nom_millegrille: str, node_name: str, config: dict, docker: DockerFacade):
+        self.__monitor = monitor
         self.__nom_millegrille = nom_millegrille
         self.__node_name = node_name
         self.__config = config
@@ -186,6 +206,7 @@ class MonitorMilleGrille:
         self.__channel = None
 
         self.__cedule_redemarrage = None
+        self.__transmettre_etat_upnp = True
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
@@ -254,8 +275,13 @@ class MonitorMilleGrille:
         while not self.__stop_event.is_set():
             try:
                 self.verifier_cedule_deploiement()
+
+                if self.__transmettre_etat_upnp:
+                    self.__monitor.transmettre_etat_upnp(self.generateur_transactions)
+                    self.__transmettre_etat_upnp = False
+
             except Exception as e:
-                self.__logger.error("Erreur traitement cedule: %s" % str(e))
+                self.__logger.exception("Erreur traitement cedule: %s" % str(e))
 
             self.__stop_event.wait(30)
 
@@ -281,6 +307,9 @@ class MonitorMilleGrille:
     @property
     def queue_reponse(self):
         return self.__queue_reponse
+
+    def toggle_transmettre_etat_upnp(self):
+        self.__transmettre_etat_upnp = True
 
     def verifier_cedule_deploiement(self):
         if self.__cedule_redemarrage is not None:
@@ -428,19 +457,19 @@ class GestionnairePublique:
                 break
 
             mapping = {
-                'port_ext': p[0],
-                'protocol': p[1],
-                'ip_int': p[2][0],
-                'port_int': p[2][1],
-                'nom': p[3],
+                ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_EXTERIEUR: p[0],
+                ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL: p[1],
+                ConstantesParametres.DOCUMENT_PUBLIQUE_IPV4_INTERNE: p[2][0],
+                ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_INTERNE: p[2][1],
+                ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM: p[3],
             }
             existing_mappings.append(mapping)
             i = i + 1
 
         etat = {
-            'external_ip': externalipaddress,
-            'mappings_ipv4': existing_mappings,
-            'status_info': status_info,
+            ConstantesParametres.DOCUMENT_PUBLIQUE_IPV4_EXTERNE: externalipaddress,
+            ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4: existing_mappings,
+            ConstantesParametres.DOCUMENT_PUBLIQUE_ROUTEUR_STATUS: status_info,
         }
 
         return etat
@@ -487,6 +516,10 @@ class MonitorMessageHandler(BaseCallback):
                     if 'jour' in eastern_indicateur:
                         self.__renouvelleur.trouver_certs_a_renouveller()
 
+                # Lire etat uPnP a toutes les 10 minutes
+                if timestamp_dict['UTC'][5] % 10 == 0:
+                    self.__monitor.toggle_transmettre_etat_upnp()
+
         elif evenement == ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         elif evenement == Constantes.EVENEMENT_TRANSACTION_PERSISTEE:
@@ -495,6 +528,7 @@ class MonitorMessageHandler(BaseCallback):
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         else:
             raise ValueError("Type de transaction inconnue: routing: %s, message: %s" % (routing_key, evenement))
+
 
 if __name__ == '__main__':
     DeployeurDaemon().main()
