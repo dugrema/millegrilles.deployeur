@@ -513,12 +513,10 @@ class MonitorMessageHandler(BaseCallback):
             if indicateurs_partz is not None:
                 eastern_indicateur = indicateurs_partz.get('Canada/Eastern')
                 if eastern_indicateur is not None:
+                    if 'heure' in eastern_indicateur:
+                        self.__monitor.toggle_transmettre_etat_upnp()
                     if 'jour' in eastern_indicateur:
                         self.__renouvelleur.trouver_certs_a_renouveller()
-
-                # Lire etat uPnP a toutes les 10 minutes
-                if timestamp_dict['UTC'][5] % 10 == 0:
-                    self.__monitor.toggle_transmettre_etat_upnp()
 
         elif evenement == ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
