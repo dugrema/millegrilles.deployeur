@@ -26,8 +26,9 @@ class ConstantesMonitor:
     REQUETE_DOCKER_SERVICES_NOEUDS = 'requete.monitor.services.noeuds'
 
     COMMANDE_EXPOSER_PORTS = 'commande.monitor.exposerPorts'
-    COMMANDE_RETIRER_PORTS = 'commande.monitor.exposerPorts'
+    COMMANDE_RETIRER_PORTS = 'commande.monitor.retirerPorts'
     COMMANDE_PUBLIER_NOEUD_DOCKER = 'commande.monitor.publierNoeudDocker'
+    COMMANDE_PRIVATISER_NOEUD_DOCKER = 'commande.monitor.privatiserNoeudDocker'
 
 
 class DeployeurDaemon(Daemon):
@@ -226,6 +227,7 @@ class MonitorMilleGrille:
 
         self.__cedule_redemarrage = None
         self.__transmettre_etat_upnp = True
+        self.__emettre_etat_noeuds_docker = True
 
         self.__commandes_routeur = list()
 
@@ -264,6 +266,7 @@ class MonitorMilleGrille:
             ConstantesMonitor.COMMANDE_EXPOSER_PORTS,
             ConstantesMonitor.COMMANDE_RETIRER_PORTS,
             ConstantesMonitor.COMMANDE_PUBLIER_NOEUD_DOCKER,
+            ConstantesMonitor.COMMANDE_PRIVATISER_NOEUD_DOCKER,
         ]
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
         for routing in routing_keys_noeuds:
@@ -315,6 +318,9 @@ class MonitorMilleGrille:
                     self.__monitor.transmettre_etat_upnp(self.generateur_transactions)
                     self.__transmettre_etat_upnp = False
 
+                if self.__emettre_etat_noeuds_docker:
+                    self.emetre_etat_noeuds_docker()
+
             except Exception as e:
                 self.__logger.exception("Erreur traitement cedule: %s" % str(e))
 
@@ -347,6 +353,10 @@ class MonitorMilleGrille:
         self.__transmettre_etat_upnp = True
         self.__action_event.set()
 
+    def toggle_emettre_etat_noeuds_docker(self):
+        self.__emettre_etat_noeuds_docker = True
+        self.__action_event.set()
+
     def verifier_cedule_deploiement(self):
         if self.__cedule_redemarrage is not None:
             date_now = datetime.datetime.utcnow()
@@ -376,6 +386,8 @@ class MonitorMilleGrille:
                 self.retirer_ports(commande['commande'])
             elif routing == ConstantesMonitor.COMMANDE_PUBLIER_NOEUD_DOCKER:
                 self.deployer_noeud_public(commande['commande'])
+            elif routing == ConstantesMonitor.COMMANDE_PRIVATISER_NOEUD_DOCKER:
+                self.privatiser_noeud(commande['commande'])
             else:
                 self.__logger.error("Commande inconnue, routing: %s" % routing)
 
@@ -440,10 +452,21 @@ class MonitorMilleGrille:
             if mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM].startswith('mg_%s' % self.__contexte.configuration.nom_millegrille):
                 gestionnaire_publique.remove_port_mapping(int(port_externe), mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL])
 
+        self.toggle_transmettre_etat_upnp()  # Va forcer le renvoi de l'ete
+
     def deployer_noeud_public(self, commande):
         docker = self.__docker
         noeud_hostname = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_NOEUD_DOCKER]
         docker.ajouter_nodelabels(noeud_hostname, {'netzone.public': 'true'})
+
+        self.toggle_emettre_etat_noeuds_docker()
+
+    def privatiser_noeud(self, commande):
+        docker = self.__docker
+        noeud_hostname = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_NOEUD_DOCKER]
+        docker.retirer_nodelabels(noeud_hostname, ['netzone.public'])
+
+        self.toggle_emettre_etat_noeuds_docker()
 
     def ajouter_commande(self, routing, commande):
         self.__logger.info("Comande recue, routing: %s\n%s" % (routing, json.dumps(commande, indent=2)))
@@ -453,6 +476,11 @@ class MonitorMilleGrille:
         # Ajouter commande a la liste
         self.__commandes_routeur.append({'routing': routing, 'commande': commande})
         self.__action_event.set()  # Declenche execution immediatement
+
+    def emetre_etat_noeuds_docker(self):
+        liste = self.get_liste_nodes()
+        domaine = 'noeuds.monitor.docker.nodes'
+        self.generateur_transactions.emettre_message({'noeuds': liste}, domaine)
 
 
 class RenouvellementCertificats:
