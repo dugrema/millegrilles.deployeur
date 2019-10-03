@@ -1,6 +1,6 @@
 from millegrilles.util.Daemon import Daemon
 from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
-from millegrilles.dao.MessageDAO import BaseCallback
+from millegrilles.dao.MessageDAO import BaseCallback, RoutingKeyInconnue
 from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
 from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
 from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
@@ -24,6 +24,9 @@ class ConstantesMonitor:
 
     REQUETE_DOCKER_SERVICES_LISTE = 'requete.monitor.services.liste'
     REQUETE_DOCKER_SERVICES_NOEUDS = 'requete.monitor.services.noeuds'
+
+    COMMANDE_EXPOSER_PORTS = 'commande.exposerPorts'
+    COMMANDE_RETIRER_PORTS = 'commande.exposerPorts'
 
 
 class DeployeurDaemon(Daemon):
@@ -183,6 +186,10 @@ class DeployeurMonitor:
             )
 
     @property
+    def gestionnaire_publique(self):
+        return self.__gestionnaire_publique
+
+    @property
     def node_name(self):
         return self.__args.node
 
@@ -210,6 +217,7 @@ class MonitorMilleGrille:
         self.__renouvellement_certificats = None
 
         self.__thread = None
+        self.__action_event = Event()  # Set lors d'une action, declenche execution immediate
         self.__contexte = None
 
         self.__queue_reponse = None
@@ -217,6 +225,8 @@ class MonitorMilleGrille:
 
         self.__cedule_redemarrage = None
         self.__transmettre_etat_upnp = True
+
+        self.__commandes_routeur = list()
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
@@ -244,20 +254,26 @@ class MonitorMilleGrille:
         nom_queue = queue.method.queue
         self.__queue_reponse = nom_queue
 
-        routing_keys = [
+        # Connecter sur noeuds (moins secure que middleware)
+        routing_keys_noeuds = [
             ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_CERT,
             ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE,
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_LISTE,
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_NOEUDS,
         ]
-
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
-        for routing in routing_keys:
+        for routing in routing_keys_noeuds:
             self.__channel.queue_bind(queue=nom_queue, exchange=exchange_noeuds, routing_key=routing, callback=None)
 
-        self.__channel.queue_bind(
-            queue=nom_queue, exchange=self.__contexte.configuration.exchange_middleware,
-            routing_key='ceduleur.#', callback=None)
+        # Connecter a middleware (plus securitaire pour les commandes)
+        routing_keys_middleware = [
+            ConstantesMonitor.COMMANDE_EXPOSER_PORTS,
+            ConstantesMonitor.COMMANDE_RETIRER_PORTS,
+            'ceduleur.#',
+        ]
+        exchange_middleware = self.__contexte.configuration.exchange_middleware
+        for routing in routing_keys_middleware:
+            self.__channel.queue_bind(queue=nom_queue, exchange=exchange_middleware, routing_key=routing, callback=None)
 
         self.__channel.basic_consume(self.__message_handler.callbackAvecAck, queue=nom_queue, no_ack=False)
 
@@ -272,6 +288,7 @@ class MonitorMilleGrille:
 
     def arreter(self):
         self.__stop_event.set()
+        self.__action_event.set()
         try:
             self.__contexte.message_dao.deconnecter()
         except Exception as e:
@@ -286,6 +303,8 @@ class MonitorMilleGrille:
 
         while not self.__stop_event.is_set():
             try:
+                self.__action_event.clear()  # Reset action event
+
                 self.verifier_cedule_deploiement()
 
                 if self.__transmettre_etat_upnp:
@@ -295,7 +314,7 @@ class MonitorMilleGrille:
             except Exception as e:
                 self.__logger.exception("Erreur traitement cedule: %s" % str(e))
 
-            self.__stop_event.wait(30)
+            self.__action_event.wait(60)
 
         self.__logger.info("Fin execution thread %s" % self.__nom_millegrille)
 
@@ -322,6 +341,7 @@ class MonitorMilleGrille:
 
     def toggle_transmettre_etat_upnp(self):
         self.__transmettre_etat_upnp = True
+        self.__action_event.set()
 
     def verifier_cedule_deploiement(self):
         if self.__cedule_redemarrage is not None:
@@ -340,6 +360,64 @@ class MonitorMilleGrille:
         docker = self.__monitor.docker
         liste = docker.liste_nodes()
         return liste
+
+    def executer_commandes_routeur(self):
+        while len(self.__commandes_routeur) > 0:
+            commande = self.__commandes_routeur.pop(0)
+            routing = commande['routing']
+
+            if routing == ConstantesMonitor.COMMANDE_EXPOSER_PORTS:
+                self.exposer_ports(commande['commande'])
+            elif routing == ConstantesMonitor.COMMANDE_RETIRER_PORTS:
+                self.exposer_ports(commande['commande'])
+            else:
+                self.__logger.error("Commande inconnue, routing: %s" % routing)
+
+    def exposer_ports(self, commande):
+        """
+
+        :param commande: Liste de mappings (dict): cle = port_externe, valeur = {port_interne, ipv4_interne]
+        :return:
+        """
+        self.__logger.info("Exposer pors: %s" % str(commande))
+
+        # Commencer par faire la liste des ports existants
+        gestionnaire_publique = self.__monitor.gestionnaire_publique
+        # etat_upnp = gestionnaire_publique.get_etat_upnp()
+        # mappings_courants = etat_upnp[ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4]
+        mappings_demandes = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4_DEMANDES]
+
+        resultat_ports = dict()
+        for port_externe in mappings_demandes:
+            # mapping_existant = mappings_courants.get(port_externe)
+            mapping_demande = mappings_demandes.get(port_externe)
+
+            # Ajouter mapping - peut ecraser un mapping existant
+            port_int = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_INTERNE]
+            ip_interne = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_IPV4_INTERNE]
+            protocole = 'TCP'
+            description = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM]
+
+            port_mappe = gestionnaire_publique.add_port_mapping(
+                port_int, ip_interne, port_externe, protocole, description)
+
+            resultat_ports[port_externe] = port_mappe
+
+        self.__contexte.generateur_transactions(
+            {
+                ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4_DEMANDES: mappings_demandes,
+                'resultat_mapping': resultat_ports,
+                'token_resumer': commande.get('token_resumer'),
+            },
+            ConstantesParametres.TRANSACTION_CONFIRMATION_ROUTEUR,
+        )
+
+    def retirer_ports(self, commande):
+        pass
+
+    def ajouter_commande(self, routing, commande):
+        self.__commandes_routeur.append({'routing': routing, 'commande': commande})
+        self.__action_event.set()  # Declenche execution immediatement
 
 
 class RenouvellementCertificats:
@@ -496,9 +574,36 @@ class GestionnairePublique:
 
         return etat
 
-    def add_port_mapping(self, port_int, port_ext, protocol, description):
-        # upnp.addportmapping(port, 'TCP', upnp.lanaddr, port, 'testing', '')
-        self.__miniupnp.addportmapping(port_ext, protocol, self.__miniupnp.lanaddr, port_int, description, '')
+    def add_port_mapping(self, port_int, ip_interne, port_ext, protocol, description):
+        """
+        Ajoute un mapping via uPnP
+        :param port_int:
+        :param ip_interne:
+        :param port_ext:
+        :param protocol:
+        :param description:
+        :return: True si ok.
+        """
+        try:
+            return self.__miniupnp.addportmapping(port_ext, protocol, ip_interne, port_int, description, '')
+        except Exception as e:
+            self.__logger.exception("Erreur ajout port: %s" % str(e))
+            return False
+
+    def remove_port_mapping(self, port_ext, protocol):
+        """
+        Enleve un mapping via uPnP
+        :param port_int:
+        :param port_ext:
+        :param protocol:
+        :param description:
+        :return: True si ok.
+        """
+        try:
+            return self.__miniupnp.deleteportmapping(port_ext, protocol)   # NoSuchEntryInArray
+        except Exception as e:
+            self.__logger.exception("Erreur retrait port: %s" % str(e))
+            return False
 
     def verifier_ip_dns(self):
         self.__etat_upnp = self.get_etat_upnp()
@@ -532,16 +637,7 @@ class MonitorMessageHandler(BaseCallback):
         evenement = message_dict.get(Constantes.EVENEMENT_MESSAGE_EVENEMENT)
 
         if evenement == Constantes.EVENEMENT_CEDULEUR:
-            timestamp_dict = message_dict['timestamp']
-            indicateurs_partz = timestamp_dict.get('indicateurs_partz')
-            if indicateurs_partz is not None:
-                eastern_indicateur = indicateurs_partz.get('Canada/Eastern')
-                if eastern_indicateur is not None:
-                    if 'heure' in eastern_indicateur:
-                        self.__monitor.toggle_transmettre_etat_upnp()
-                    if 'jour' in eastern_indicateur:
-                        self.__renouvelleur.trouver_certs_a_renouveller()
-
+            self.traiter_cedule(message_dict)
         elif evenement == ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         elif evenement == Constantes.EVENEMENT_TRANSACTION_PERSISTEE:
@@ -550,8 +646,21 @@ class MonitorMessageHandler(BaseCallback):
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         elif routing_key.startswith('requete'):
             self.traiter_requete(routing_key, properties, message_dict)
+        elif routing_key.startswith('commande'):
+            self.__monitor.ajouter_commande(routing_key, message_dict)
         else:
             raise ValueError("Type de transaction inconnue: routing: %s, message: %s" % (routing_key, evenement))
+
+    def traiter_cedule(self, message_dict):
+        timestamp_dict = message_dict['timestamp']
+        indicateurs_partz = timestamp_dict.get('indicateurs_partz')
+        if indicateurs_partz is not None:
+            eastern_indicateur = indicateurs_partz.get('Canada/Eastern')
+            if eastern_indicateur is not None:
+                if 'heure' in eastern_indicateur:
+                    self.__monitor.toggle_transmettre_etat_upnp()
+                if 'jour' in eastern_indicateur:
+                    self.__renouvelleur.trouver_certs_a_renouveller()
 
     def traiter_requete(self, routing_key, properties, message_dict):
         if routing_key == ConstantesMonitor.REQUETE_DOCKER_SERVICES_LISTE:
