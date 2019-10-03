@@ -25,8 +25,9 @@ class ConstantesMonitor:
     REQUETE_DOCKER_SERVICES_LISTE = 'requete.monitor.services.liste'
     REQUETE_DOCKER_SERVICES_NOEUDS = 'requete.monitor.services.noeuds'
 
-    COMMANDE_EXPOSER_PORTS = 'commande.exposerPorts'
-    COMMANDE_RETIRER_PORTS = 'commande.exposerPorts'
+    COMMANDE_EXPOSER_PORTS = 'commande.monitor.exposerPorts'
+    COMMANDE_RETIRER_PORTS = 'commande.monitor.exposerPorts'
+    COMMANDE_PUBLIER_NOEUD_DOCKER = 'commande.monitor.publierNoeudDocker'
 
 
 class DeployeurDaemon(Daemon):
@@ -260,6 +261,8 @@ class MonitorMilleGrille:
             ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE,
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_LISTE,
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_NOEUDS,
+            ConstantesMonitor.COMMANDE_EXPOSER_PORTS,
+            ConstantesMonitor.COMMANDE_RETIRER_PORTS,
         ]
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
         for routing in routing_keys_noeuds:
@@ -267,8 +270,6 @@ class MonitorMilleGrille:
 
         # Connecter a middleware (plus securitaire pour les commandes)
         routing_keys_middleware = [
-            ConstantesMonitor.COMMANDE_EXPOSER_PORTS,
-            ConstantesMonitor.COMMANDE_RETIRER_PORTS,
             'ceduleur.#',
         ]
         exchange_middleware = self.__contexte.configuration.exchange_middleware
@@ -304,6 +305,8 @@ class MonitorMilleGrille:
         while not self.__stop_event.is_set():
             try:
                 self.__action_event.clear()  # Reset action event
+
+                self.executer_commandes_routeur()
 
                 self.verifier_cedule_deploiement()
 
@@ -369,7 +372,7 @@ class MonitorMilleGrille:
             if routing == ConstantesMonitor.COMMANDE_EXPOSER_PORTS:
                 self.exposer_ports(commande['commande'])
             elif routing == ConstantesMonitor.COMMANDE_RETIRER_PORTS:
-                self.exposer_ports(commande['commande'])
+                self.retirer_ports(commande['commande'])
             else:
                 self.__logger.error("Commande inconnue, routing: %s" % routing)
 
@@ -383,7 +386,15 @@ class MonitorMilleGrille:
 
         # Commencer par faire la liste des ports existants
         gestionnaire_publique = self.__monitor.gestionnaire_publique
-        # etat_upnp = gestionnaire_publique.get_etat_upnp()
+
+        # Cleanup des mappings qui ont ete remplaces
+        etat_upnp = gestionnaire_publique.get_etat_upnp()
+        mappings_existants = etat_upnp.get(ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4)
+        for mapping in mappings_existants:
+            port_externe = mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_EXTERIEUR]
+            if mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM].startswith('mg_%s' % self.__contexte.configuration.nom_millegrille):
+                gestionnaire_publique.remove_port_mapping(int(port_externe), mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL])
+
         # mappings_courants = etat_upnp[ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4]
         mappings_demandes = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4_DEMANDES]
 
@@ -393,17 +404,19 @@ class MonitorMilleGrille:
             mapping_demande = mappings_demandes.get(port_externe)
 
             # Ajouter mapping - peut ecraser un mapping existant
-            port_int = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_INTERNE]
+            port_int = int(mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_INTERNE])
             ip_interne = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_IPV4_INTERNE]
             protocole = 'TCP'
             description = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM]
 
             port_mappe = gestionnaire_publique.add_port_mapping(
-                port_int, ip_interne, port_externe, protocole, description)
+                port_int, ip_interne, int(port_externe), protocole, description)
 
             resultat_ports[port_externe] = port_mappe
 
-        self.__contexte.generateur_transactions(
+
+
+        self.__contexte.generateur_transactions.soumettre_transaction(
             {
                 ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4_DEMANDES: mappings_demandes,
                 'resultat_mapping': resultat_ports,
@@ -412,10 +425,17 @@ class MonitorMilleGrille:
             ConstantesParametres.TRANSACTION_CONFIRMATION_ROUTEUR,
         )
 
+        self.toggle_transmettre_etat_upnp()  # Va forcer le renvoi de l'ete
+
     def retirer_ports(self, commande):
         pass
 
     def ajouter_commande(self, routing, commande):
+        self.__logger.info("Comande recue, routing: %s\n%s" % (routing, json.dumps(commande, indent=2)))
+        # Verifier que la commande provient d'un noeud autorise (middleware python)
+        # A FAIRE
+
+        # Ajouter commande a la liste
         self.__commandes_routeur.append({'routing': routing, 'commande': commande})
         self.__action_event.set()  # Declenche execution immediatement
 
@@ -585,7 +605,8 @@ class GestionnairePublique:
         :return: True si ok.
         """
         try:
-            return self.__miniupnp.addportmapping(port_ext, protocol, ip_interne, port_int, description, '')
+            resultat = self.__miniupnp.addportmapping(port_ext, protocol, ip_interne, port_int, description, '')
+            return resultat
         except Exception as e:
             self.__logger.exception("Erreur ajout port: %s" % str(e))
             return False
@@ -600,7 +621,8 @@ class GestionnairePublique:
         :return: True si ok.
         """
         try:
-            return self.__miniupnp.deleteportmapping(port_ext, protocol)   # NoSuchEntryInArray
+            resultat = self.__miniupnp.deleteportmapping(int(port_ext), protocol)   # NoSuchEntryInArray
+            return resultat
         except Exception as e:
             self.__logger.exception("Erreur retrait port: %s" % str(e))
             return False
