@@ -119,6 +119,31 @@ class DockerFacade:
         exec_result = self.post('exec/%s/start' % id_exec, {"Detach": False})
         return exec_result
 
+    def ajouter_nodelabels(self, hostname: str, labels: dict):
+        noeud_reponse = self.get('nodes?filters={"name": ["%s"]}' % hostname)
+        resultat = None
+        if noeud_reponse.status_code == 200:
+            noeuds = noeud_reponse.json()
+
+            noeud = noeuds[0]
+            noeud_id = noeud['ID']
+            role = noeud['Spec']['Role']
+            availability = noeud['Spec']['Availability']
+            version = noeud['Version']['Index']
+            nodelabels = noeud['Spec']['Labels']
+            nodelabels.update(labels)
+            contenu = {
+                'Name': hostname,
+                'Labels': nodelabels,
+                'Role': role,
+                'Availability': availability,
+            }
+            resultat = self.post('nodes/%s/update?version=%s' % (noeud_id, version), contenu)
+        else:
+            raise Exception("Erreur acces docker: %s" % noeud_reponse.status_code)
+
+        return resultat
+
 
 class ServiceDockerConfiguration:
 

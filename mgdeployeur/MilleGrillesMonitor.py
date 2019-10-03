@@ -263,6 +263,7 @@ class MonitorMilleGrille:
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_NOEUDS,
             ConstantesMonitor.COMMANDE_EXPOSER_PORTS,
             ConstantesMonitor.COMMANDE_RETIRER_PORTS,
+            ConstantesMonitor.COMMANDE_PUBLIER_NOEUD_DOCKER,
         ]
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
         for routing in routing_keys_noeuds:
@@ -373,6 +374,8 @@ class MonitorMilleGrille:
                 self.exposer_ports(commande['commande'])
             elif routing == ConstantesMonitor.COMMANDE_RETIRER_PORTS:
                 self.retirer_ports(commande['commande'])
+            elif routing == ConstantesMonitor.COMMANDE_PUBLIER_NOEUD_DOCKER:
+                self.deployer_noeud_public(commande['commande'])
             else:
                 self.__logger.error("Commande inconnue, routing: %s" % routing)
 
@@ -414,8 +417,6 @@ class MonitorMilleGrille:
 
             resultat_ports[port_externe] = port_mappe
 
-
-
         self.__contexte.generateur_transactions.soumettre_transaction(
             {
                 ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4_DEMANDES: mappings_demandes,
@@ -428,7 +429,21 @@ class MonitorMilleGrille:
         self.toggle_transmettre_etat_upnp()  # Va forcer le renvoi de l'ete
 
     def retirer_ports(self, commande):
-        pass
+        # Commencer par faire la liste des ports existants
+        gestionnaire_publique = self.__monitor.gestionnaire_publique
+
+        # Cleanup de tous les mappings de la millegrille
+        etat_upnp = gestionnaire_publique.get_etat_upnp()
+        mappings_existants = etat_upnp.get(ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4)
+        for mapping in mappings_existants:
+            port_externe = mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_EXTERIEUR]
+            if mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM].startswith('mg_%s' % self.__contexte.configuration.nom_millegrille):
+                gestionnaire_publique.remove_port_mapping(int(port_externe), mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL])
+
+    def deployer_noeud_public(self, commande):
+        docker = self.__docker
+        noeud_hostname = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_NOEUD_DOCKER]
+        docker.ajouter_nodelabels(noeud_hostname, {'netzone.public': 'true'})
 
     def ajouter_commande(self, routing, commande):
         self.__logger.info("Comande recue, routing: %s\n%s" % (routing, json.dumps(commande, indent=2)))
