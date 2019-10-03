@@ -20,6 +20,12 @@ import json
 import datetime
 
 
+class ConstantesMonitor:
+
+    REQUETE_DOCKER_SERVICES_LISTE = 'requete.monitor.services.liste'
+    REQUETE_DOCKER_SERVICES_NOEUDS = 'requete.monitor.services.noeuds'
+
+
 class DeployeurDaemon(Daemon):
 
     def __init__(self):
@@ -180,6 +186,10 @@ class DeployeurMonitor:
     def node_name(self):
         return self.__args.node
 
+    @property
+    def docker(self):
+        return self.__docker
+
 
 class MonitorMilleGrille:
 
@@ -237,6 +247,8 @@ class MonitorMilleGrille:
         routing_keys = [
             ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_CERT,
             ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE,
+            ConstantesMonitor.REQUETE_DOCKER_SERVICES_LISTE,
+            ConstantesMonitor.REQUETE_DOCKER_SERVICES_NOEUDS,
         ]
 
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
@@ -318,6 +330,16 @@ class MonitorMilleGrille:
                 self.__cedule_redemarrage = None
                 # Redemarrer service pour utiliser le nouveau certificat
                 self.__deployeur.deployer_services()  # Pour l'instant on redeploie tous les services
+
+    def get_liste_service(self):
+        docker = self.__monitor.docker
+        liste = docker.liste_services_millegrille(nom_millegrille=self.__nom_millegrille)
+        return liste
+
+    def get_liste_nodes(self):
+        docker = self.__monitor.docker
+        liste = docker.liste_nodes()
+        return liste
 
 
 class RenouvellementCertificats:
@@ -501,6 +523,8 @@ class MonitorMessageHandler(BaseCallback):
         self.__renouvelleur = renouvelleur
         self.__monitor = monitor
 
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
     def traiter_message(self, ch, method, properties, body):
         routing_key = method.routing_key
         correlation_id = properties.correlation_id
@@ -524,8 +548,23 @@ class MonitorMessageHandler(BaseCallback):
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         elif evenement == ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
+        elif routing_key.startswith('requete'):
+            self.traiter_requete(routing_key, properties, message_dict)
         else:
             raise ValueError("Type de transaction inconnue: routing: %s, message: %s" % (routing_key, evenement))
+
+    def traiter_requete(self, routing_key, properties, message_dict):
+        if routing_key == ConstantesMonitor.REQUETE_DOCKER_SERVICES_LISTE:
+            liste = self.__monitor.get_liste_service()
+            self._repondre({'resultats': liste}, properties)
+        elif routing_key == ConstantesMonitor.REQUETE_DOCKER_SERVICES_NOEUDS:
+            liste = self.__monitor.get_liste_nodes()
+            self._repondre({'resultats': liste}, properties)
+
+    def _repondre(self, reponse, properties):
+        self.__logger.debug("Reponse: %s" % json.dumps(reponse, indent=2))
+        self.contexte.generateur_transactions.transmettre_reponse(
+            reponse, properties.reply_to, properties.correlation_id)
 
 
 if __name__ == '__main__':

@@ -84,6 +84,14 @@ class DockerFacade:
 
         return liste_services.json()
 
+    def liste_nodes(self):
+        liste = self.get('nodes')
+        if liste.status_code != 200:
+            self.__logger.info("Liste noeuds, code:%s, message:\n%s" % (
+            liste.status_code, json.dumps(liste.json(), indent=4)))
+            raise Exception("Liste noeuds non disponible (erreur: %d)" % liste.status_code)
+        return liste.json()
+
     def info_service(self, nom_service):
         liste = self.get('services?filters={"name": ["%s"]}' % nom_service)
         return liste
