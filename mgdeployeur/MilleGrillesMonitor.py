@@ -613,12 +613,12 @@ class RenouvellementCertificats:
         if len(self.__maj_certwebs_dict) == 2:
             self.__monitor.toggle_renouveller_certs_web()
 
-        self.__logger.error("Document cleweb recu: %s" % json.dumps(self.__maj_certwebs_dict, indent=2))
+        self.__logger.debug("Document cleweb recu: %s" % json.dumps(self.__maj_certwebs_dict, indent=2))
 
     def maj_certificats_web_requetes(self, commande):
 
         # Aller chercher document certificat dans Pki
-        domaine_requete = 'requete.%s.%s' % (ConstantesPki.DOMAINE_NOM, ConstantesPki.LIBVAL_PKI_WEB)
+        domaine_requete = '%s.%s' % (ConstantesPki.DOMAINE_NOM, ConstantesPki.LIBVAL_PKI_WEB)
         requetes = {
             'requetes': [{
                 'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesPki.LIBVAL_PKI_WEB}
@@ -642,8 +642,18 @@ class RenouvellementCertificats:
 
     def renouveller_certs_web(self):
         self.__logger.info("Appliquer les nouveaux certificats web")
+
+        self.__logger.error("Document: %s" % json.dumps(self.__maj_certwebs_dict, indent=2))
+
         # Decrypter cle
-        # clesSecreteCryptee = self.__web
+        cle_info = self.__maj_certwebs_dict['cleweb']['resultats'][0]
+        cle_iv = cle_info['iv']
+        cle_secrete_cryptee = cle_info['cle']
+
+        document_resultats = self.__maj_certwebs_dict['document']['resultats'][0]
+        document_crypte = document_resultats[0][ConstantesPki.LIBELLE_CLE_CRYPTEE]
+
+        self.__logger.error("Documents cle web: \niv: %s, cle_secret_cryptee: %s\ndocument_crypte: %s" % (cle_iv, cle_secrete_cryptee, document_crypte))
 
         # Demander deploiement du clecert
 
