@@ -9,6 +9,8 @@ from millegrilles import Constantes
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurCertificat
 from millegrilles.domaines.MaitreDesCles import ConstantesMaitreDesCles
 from millegrilles.domaines.Parametres import ConstantesParametres
+from millegrilles.util.X509Certificate import EnveloppeCleCert
+from millegrilles.domaines.Pki import ConstantesPki
 
 from threading import Thread, Event
 
@@ -30,6 +32,9 @@ class ConstantesMonitor:
     COMMANDE_PUBLIER_NOEUD_DOCKER = 'commande.monitor.publierNoeudDocker'
     COMMANDE_PRIVATISER_NOEUD_DOCKER = 'commande.monitor.privatiserNoeudDocker'
     COMMANDE_MAJ_CERTIFICATS_WEB = 'commande.monitor.maj.cerificatsWeb'
+
+    REPONSE_DOCUMENT_CLEWEB = 'reponse.document.clesWeb'
+    REPONSE_CLE_CLEWEB = 'reponse.cle.clesWeb'
 
 
 class DeployeurDaemon(Daemon):
@@ -229,6 +234,7 @@ class MonitorMilleGrille:
         self.__cedule_redemarrage = None
         self.__transmettre_etat_upnp = True
         self.__emettre_etat_noeuds_docker = True
+        self.__renouveller_certs_web = False
 
         self.__commandes_routeur = list()
 
@@ -264,10 +270,7 @@ class MonitorMilleGrille:
             ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE,
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_LISTE,
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_NOEUDS,
-            ConstantesMonitor.COMMANDE_EXPOSER_PORTS,
-            ConstantesMonitor.COMMANDE_RETIRER_PORTS,
-            ConstantesMonitor.COMMANDE_PUBLIER_NOEUD_DOCKER,
-            ConstantesMonitor.COMMANDE_PRIVATISER_NOEUD_DOCKER,
+            'commande.monitor.#',
         ]
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
         for routing in routing_keys_noeuds:
@@ -322,6 +325,10 @@ class MonitorMilleGrille:
                 if self.__emettre_etat_noeuds_docker:
                     self.emetre_etat_noeuds_docker()
 
+                if self.__renouveller_certs_web:
+                    self.__renouvellement_certificats.renouveller_certs_web()
+                    self.__renouveller_certs_web = False
+
             except Exception as e:
                 self.__logger.exception("Erreur traitement cedule: %s" % str(e))
 
@@ -358,6 +365,10 @@ class MonitorMilleGrille:
         self.__emettre_etat_noeuds_docker = True
         self.__action_event.set()
 
+    def toggle_renouveller_certs_web(self):
+        self.__renouveller_certs_web = True
+        self.__action_event.set()
+
     def verifier_cedule_deploiement(self):
         if self.__cedule_redemarrage is not None:
             date_now = datetime.datetime.utcnow()
@@ -389,6 +400,8 @@ class MonitorMilleGrille:
                 self.deployer_noeud_public(commande['commande'])
             elif routing == ConstantesMonitor.COMMANDE_PRIVATISER_NOEUD_DOCKER:
                 self.privatiser_noeud(commande['commande'])
+            elif routing == ConstantesMonitor.COMMANDE_MAJ_CERTIFICATS_WEB:
+                self.__renouvellement_certificats.maj_certificats_web_requetes(commande['commande'])
             else:
                 self.__logger.error("Commande inconnue, routing: %s" % routing)
 
@@ -498,6 +511,8 @@ class RenouvellementCertificats:
         self.__fichier_etat_certificats = self.__constantes.fichier_etc_mg(
             ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
 
+        self.__maj_certwebs_dict = None  # Placeholder pour conserver documents certs en attendant cle
+
         # Detecter expiration a moins de 60 jours
         self.__delta_expiration = datetime.timedelta(days=60)
 
@@ -589,6 +604,53 @@ class RenouvellementCertificats:
         with open(self.__fichier_etat_certificats, 'w') as fichier:
             json.dump(fichier_etat, fichier)
 
+    def recevoir_document_cleweb(self, type, reponse):
+        if self.__maj_certwebs_dict is None:
+            self.__maj_certwebs_dict = dict()
+
+        self.__maj_certwebs_dict[type] = reponse
+
+        if len(self.__maj_certwebs_dict) == 2:
+            self.__monitor.toggle_renouveller_certs_web()
+
+        self.__logger.error("Document cleweb recu: %s" % json.dumps(self.__maj_certwebs_dict, indent=2))
+
+    def maj_certificats_web_requetes(self, commande):
+
+        # Aller chercher document certificat dans Pki
+        domaine_requete = 'requete.%s.%s' % (ConstantesPki.DOMAINE_NOM, ConstantesPki.LIBVAL_PKI_WEB)
+        requetes = {
+            'requetes': [{
+                'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesPki.LIBVAL_PKI_WEB}
+            }]
+        }
+        generateur_transactions = self.__monitor.generateur_transactions
+        generateur_transactions.transmettre_requete(
+            requetes, domaine_requete, ConstantesMonitor.REPONSE_DOCUMENT_CLEWEB, self.__monitor.queue_reponse)
+
+        # Demander cle decryptage a maitredescles
+        domaine_cle_maitredescles = '%s.%s' % (ConstantesMaitreDesCles.DOMAINE_NOM, ConstantesMaitreDesCles.REQUETE_DECRYPTAGE_DOCUMENT)
+        requetes = {
+            'requetes': [{
+                'filtre': {
+                    Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesPki.LIBVAL_PKI_WEB,
+                }
+            }]
+        }
+        generateur_transactions.transmettre_requete(
+            requetes, domaine_cle_maitredescles, ConstantesMonitor.REPONSE_CLE_CLEWEB, self.__monitor.queue_reponse)
+
+    def renouveller_certs_web(self):
+        self.__logger.info("Appliquer les nouveaux certificats web")
+        # Decrypter cle
+        # clesSecreteCryptee = self.__web
+
+        # Demander deploiement du clecert
+
+        # Ceduler redemarrage de nginx pour utiliser le nouveau certificat
+
+        # self.__monitor.ceduler_redemarrage(nom_service=ConstantesEnvironnementMilleGrilles.SERVICE_NGINX)
+        self.__maj_certwebs_dict = None
 
 class GestionnairePublique:
     """
@@ -714,6 +776,12 @@ class MonitorMessageHandler(BaseCallback):
             self.traiter_requete(routing_key, properties, message_dict)
         elif routing_key.startswith('commande'):
             self.__monitor.ajouter_commande(routing_key, message_dict)
+        elif correlation_id == ConstantesMonitor.REPONSE_CLE_CLEWEB:
+            self.__logger.debug("Reception cle decryptage cle")
+            self.__renouvelleur.recevoir_document_cleweb('cleweb', message_dict)
+        elif correlation_id == ConstantesMonitor.REPONSE_DOCUMENT_CLEWEB:
+            self.__logger.debug("Reception docuement  cleweb")
+            self.__renouvelleur.recevoir_document_cleweb('document', message_dict)
         else:
             raise ValueError("Type de transaction inconnue: routing: %s, message: %s" % (routing_key, evenement))
 

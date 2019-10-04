@@ -25,6 +25,9 @@ class ConstantesEnvironnementMilleGrilles:
     # CHAMPS_CONFIG
     CHAMP_EXPIRATION = 'expiration'
 
+    # Services
+    SERVICE_NGINX = 'nginx'
+
     # Applications et comptes
     MONGO_INITDB_ROOT_USERNAME = 'root'
     MONGO_RSINIT_SCRIPT = 'mongo_rsinit.js'
