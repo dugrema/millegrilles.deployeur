@@ -4,12 +4,12 @@ from millegrilles.dao.MessageDAO import BaseCallback, RoutingKeyInconnue
 from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
 from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
 from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
-from millegrilles.SecuritePKI import GestionnaireEvenementsCertificat
+from millegrilles.SecuritePKI import GestionnaireEvenementsCertificat, EnveloppeCertificat
 from millegrilles import Constantes
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurCertificat
 from millegrilles.domaines.MaitreDesCles import ConstantesMaitreDesCles
 from millegrilles.domaines.Parametres import ConstantesParametres
-from millegrilles.util.X509Certificate import EnveloppeCleCert
+from millegrilles.util.X509Certificate import EnveloppeCleCert, DecryptionHelper
 from millegrilles.domaines.Pki import ConstantesPki
 
 from threading import Thread, Event
@@ -20,6 +20,8 @@ import socket
 import signal
 import json
 import datetime
+import base64
+import binascii
 
 
 class ConstantesMonitor:
@@ -124,6 +126,7 @@ class DeployeurMonitor:
         loggers = [
             'millegrilles',
             'mgdeployeur',
+            '__main__'
         ]
 
         for logger in loggers:
@@ -348,6 +351,10 @@ class MonitorMilleGrille:
     @property
     def generateur_transactions(self):
         return self.__contexte.generateur_transactions
+
+    @property
+    def configuration(self):
+        return self.__contexte.configuration
 
     @property
     def node_name(self):
@@ -610,10 +617,10 @@ class RenouvellementCertificats:
 
         self.__maj_certwebs_dict[type] = reponse
 
-        if len(self.__maj_certwebs_dict) == 2:
+        if len(self.__maj_certwebs_dict) > 1:
             self.__monitor.toggle_renouveller_certs_web()
 
-        self.__logger.debug("Document cleweb recu: %s" % json.dumps(self.__maj_certwebs_dict, indent=2))
+        self.__logger.debug("Document cleweb recu (type=%s): %s" % (type, json.dumps(self.__maj_certwebs_dict, indent=2)))
 
     def maj_certificats_web_requetes(self, commande):
 
@@ -643,24 +650,52 @@ class RenouvellementCertificats:
     def renouveller_certs_web(self):
         self.__logger.info("Appliquer les nouveaux certificats web")
 
-        self.__logger.error("Document: %s" % json.dumps(self.__maj_certwebs_dict, indent=2))
+        self.__logger.debug("Document: %s" % json.dumps(self.__maj_certwebs_dict, indent=2))
+
+        copie_docs = self.__maj_certwebs_dict
+        self.__maj_certwebs_dict = None
 
         # Decrypter cle
-        cle_info = self.__maj_certwebs_dict['cleweb']['resultats'][0]
-        cle_iv = cle_info['iv']
+        cle_info = copie_docs['cleweb']['resultats'][0]
+        cle_iv = base64.b64decode(cle_info['iv'].encode('utf-8'))
         cle_secrete_cryptee = cle_info['cle']
 
-        document_resultats = self.__maj_certwebs_dict['document']['resultats'][0]
-        document_crypte = document_resultats[0][ConstantesPki.LIBELLE_CLE_CRYPTEE]
+        fichier_cle = self.__monitor.configuration.mq_keyfile
+        with open(fichier_cle, 'rb') as fichier:
+            fichier_cle_bytes = fichier.read()
+        clecert = EnveloppeCleCert()
+        clecert.key_from_pem_bytes(fichier_cle_bytes)
+        helper = DecryptionHelper(clecert)
+        cle_secrete = helper.decrypter_asymmetrique(cle_secrete_cryptee)
 
-        self.__logger.error("Documents cle web: \niv: %s, cle_secret_cryptee: %s\ndocument_crypte: %s" % (cle_iv, cle_secrete_cryptee, document_crypte))
+        document_resultats = copie_docs['document']['resultats'][0][0]
+        document_crypte = document_resultats[ConstantesPki.LIBELLE_CLE_CRYPTEE]
+        document_crypte = document_crypte.encode('utf-8')
+        document_crypte = base64.b64decode(document_crypte)
+
+        document_decrypte = helper.decrypter_symmetrique(cle_secrete, cle_iv, document_crypte)
+        document_str = document_decrypte.decode('utf-8')
+        dict_pem = json.loads(document_str)
+
+        cle_certbot_pem = dict_pem['pem']
+        cert_certbot_pem = document_resultats[ConstantesPki.LIBELLE_CERTIFICAT_PEM]
+        fullchain = document_resultats[ConstantesPki.LIBELLE_CHAINES]['fullchain']['pem']
+
+        clecert_certbot = EnveloppeCleCert()
+        clecert_certbot.from_pem_bytes(
+            private_key_bytes=cle_certbot_pem.encode('utf-8'),
+            cert_bytes=cert_certbot_pem.encode('utf-8'),
+        )
+        clecert_certbot.set_chaine_str(fullchain)
 
         # Demander deploiement du clecert
+        date_debut = clecert_certbot.not_valid_before
+        datetag = date_debut.strftime('%Y%m%d%H%M%S')
+        self.__deployeur.deployer_clecert('pki.millegrilles.web', clecert_certbot, datetag=datetag)
 
         # Ceduler redemarrage de nginx pour utiliser le nouveau certificat
 
         # self.__monitor.ceduler_redemarrage(nom_service=ConstantesEnvironnementMilleGrilles.SERVICE_NGINX)
-        self.__maj_certwebs_dict = None
 
 class GestionnairePublique:
     """
@@ -730,10 +765,8 @@ class GestionnairePublique:
     def remove_port_mapping(self, port_ext, protocol):
         """
         Enleve un mapping via uPnP
-        :param port_int:
         :param port_ext:
         :param protocol:
-        :param description:
         :return: True si ok.
         """
         try:
@@ -790,7 +823,7 @@ class MonitorMessageHandler(BaseCallback):
             self.__logger.debug("Reception cle decryptage cle")
             self.__renouvelleur.recevoir_document_cleweb('cleweb', message_dict)
         elif correlation_id == ConstantesMonitor.REPONSE_DOCUMENT_CLEWEB:
-            self.__logger.debug("Reception docuement  cleweb")
+            self.__logger.debug("Reception docuement cleweb")
             self.__renouvelleur.recevoir_document_cleweb('document', message_dict)
         else:
             raise ValueError("Type de transaction inconnue: routing: %s, message: %s" % (routing_key, evenement))
