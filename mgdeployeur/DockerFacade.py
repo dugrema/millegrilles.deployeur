@@ -190,8 +190,7 @@ class ServiceDockerConfiguration:
 
         config_json_filename = '/opt/millegrilles/etc/docker.%s.json' % nom_service
         with open(config_json_filename, 'r') as fichier:
-            config_str = fichier.read()
-        self.__configuration_json = json.loads(config_str)
+            self.__configuration_json = json.load(fichier)
 
         self.__versions_images = ServiceDockerConfiguration.charger_versions()
 
@@ -316,13 +315,18 @@ class ServiceDockerConfiguration:
         return '%s_%s' % (self.__nom_millegrille, self.__nom_service)
 
     def trouver_secret(self, nom_secret):
-        prefixe_secret = '%s.%s' % (self.__nom_millegrille, nom_secret)
         secrets = {}  # Date, {key,cert,key_cert: Id)
-        for secret_name, secret_id in self.__secrets_par_nom.items():
-            if secret_name.startswith(prefixe_secret):
-                secret_name_list = secret_name.split('.')
-                secret_date = secret_name_list[-1]
-                secrets[secret_date] = {'Name': secret_name, 'Id': secret_id}
+        for nom_secret_opt in nom_secret.split(';'):
+            prefixe_secret = '%s.%s' % (self.__nom_millegrille, nom_secret_opt)
+            for secret_name, secret_id in self.__secrets_par_nom.items():
+
+                # Le nom du secret peut fournir plusieurs options, separees par un ';'
+                if secret_name.startswith(prefixe_secret):
+                    secret_name_list = secret_name.split('.')
+                    secret_date = secret_name_list[-1]
+                    secrets[secret_date] = {'Name': secret_name, 'Id': secret_id}
+            if len(secrets) > 0:
+                break
 
         # Trier liste de dates en ordre decroissant - trouver plus recent groupe complet (cle et cert presents)
         dates = sorted(secrets.keys(), reverse=True)
@@ -336,13 +340,17 @@ class ServiceDockerConfiguration:
         return None
 
     def trouver_config(self, nom_config):
-        prefixe_config = '%s.%s' % (self.__nom_millegrille, nom_config)
         configs = {}  # Date, {key,cert,key_cert: Id)
-        for config_name, config_id in self.__configs_par_nom.items():
-            if config_name.startswith(prefixe_config):
-                config_name_list = config_name.split('.')
-                config_date = config_name_list[-1]
-                configs[config_date] = {'Name': config_name, 'Id': config_id}
+        for nom_config_opt in nom_config.split(';'):
+            prefixe_config = '%s.%s' % (self.__nom_millegrille, nom_config_opt)
+            for config_name, config_id in self.__configs_par_nom.items():
+                if config_name.startswith(prefixe_config):
+                    config_name_list = config_name.split('.')
+                    config_date = config_name_list[-1]
+                    configs[config_date] = {'Name': config_name, 'Id': config_id}
+
+            if len(configs) > 0:
+                break
 
         # Trier liste de dates en ordre decroissant - trouver plus recent groupe complet (cle et cert presents)
         dates = sorted(configs.keys(), reverse=True)

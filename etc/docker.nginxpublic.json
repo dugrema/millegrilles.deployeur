@@ -7,30 +7,33 @@
       "Env": [
         "NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
         "NGINX_CONFIG_FILE=local.conf",
-        "WEB_CERT=pki.millegrilles.ssl.fullchain",
-        "WEB_KEY=pki.millegrilles.ssl.key",
+        "WEB_CERT=pki.millegrilles.web.fullchain",
+        "WEB_KEY=pki.millegrilles.web.key",
         "URL_DOMAIN=${DOMAIN_PUBLIC}"
       ],
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/public",
+          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx",
           "Target": "/usr/share/nginx/html"
         }
       ],
       "Secrets": [
         {
-          "SecretName": "pki.millegrilles.web.fullchain",
+          "SecretName": "pki.millegrilles.web.key;pki.nginx.key",
           "File": {
-            "Name": "pki.millegrilles.web.fullchain",
+            "Name": "pki.millegrilles.web.key",
             "UID": "0",
             "GID": "0",
             "Mode": 292
           }
-        }, {
-          "SecretName": "pki.millegrilles.web.key",
+        }
+      ],
+      "Configs": [
+        {
+          "ConfigName": "pki.millegrilles.web.fullchain;pki.nginx.fullchain",
           "File": {
-            "Name": "pki.millegrilles.web.key",
+            "Name": "/run/secrets/pki.millegrilles.web.fullchain",
             "UID": "0",
             "GID": "0",
             "Mode": 292

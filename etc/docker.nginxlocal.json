@@ -14,7 +14,7 @@
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx/local",
+          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx",
           "Target": "/usr/share/nginx/html"
         }
       ],

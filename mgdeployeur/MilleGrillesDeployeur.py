@@ -409,10 +409,7 @@ class DeployeurDockerMilleGrille:
         self.activer_vitrine()
         self.activer_nginx_local()
         self.activer_publicateur_local()
-
-        # Section public -- pas disponible au demarrage
-        # self.activer_nginx_public()
-        # self.activer_publicateur_public()
+        self.activer_nginx_public()
 
     def configurer_mongo(self):
         etat_filename = self.constantes.fichier_etc_mg('mongo.etat.json')
@@ -687,11 +684,8 @@ class DeployeurDockerMilleGrille:
 
     def activer_nginx_public(self):
         self.preparer_service('nginxpublic')
-        labels = {'netzone.public': 'true', 'millegrilles.nginx': 'true'}
+        labels = {}
         self.deployer_labels(self.__node_name, labels)
-
-    def activer_publicateur_public(self):
-        self.preparer_service('publicateurpublic')
 
     def deployer_labels(self, node_name, labels):
         nodes_list = self.__docker.get('nodes').json()
