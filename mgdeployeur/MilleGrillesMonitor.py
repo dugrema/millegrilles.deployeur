@@ -694,8 +694,7 @@ class RenouvellementCertificats:
         self.__deployeur.deployer_clecert('pki.millegrilles.web', clecert_certbot, datetag=datetag)
 
         # Ceduler redemarrage de nginx pour utiliser le nouveau certificat
-
-        # self.__monitor.ceduler_redemarrage(nom_service=ConstantesEnvironnementMilleGrilles.SERVICE_NGINX)
+        self.__monitor.ceduler_redemarrage(nom_service=ConstantesEnvironnementMilleGrilles.SERVICE_NGINX)
 
 class GestionnairePublique:
     """
