@@ -29,6 +29,7 @@ class ConstantesMonitor:
     COMMANDE_RETIRER_PORTS = 'commande.monitor.retirerPorts'
     COMMANDE_PUBLIER_NOEUD_DOCKER = 'commande.monitor.publierNoeudDocker'
     COMMANDE_PRIVATISER_NOEUD_DOCKER = 'commande.monitor.privatiserNoeudDocker'
+    COMMANDE_MAJ_CERTIFICATS_WEB = 'commande.monitor.maj.cerificatsWeb'
 
 
 class DeployeurDaemon(Daemon):
