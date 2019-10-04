@@ -144,11 +144,22 @@ class CertbotCertificateUploader:
                 pems[nom_fichier] = pem
 
         certs = dict()
+        cert_certbot = pems[CertbotConstantes.FICHIER_CERT]
         for filename, cert in pems.items():
-            certs[filename.replace('.pem', '')] = cert
+            if filename != CertbotConstantes.FICHIER_CERT:
+                certs[filename.replace('.pem', '')] = cert
+
+        # Charger certificat certbot pour charger contenu.
+        # Necessaire pour le document du domaine Pki (fingerprint, sujet)
+        enveloppe_certbot = EnveloppeCertificat(certificat_pem=cert_certbot['pem'])
+        fingerprint = enveloppe_certbot.fingerprint_ascii
+        subject = enveloppe_certbot.formatter_subject()
 
         transaction = {
+            ConstantesPki.LIBELLE_CERTIFICAT_PEM: cert_certbot,
             'certs': certs,
+            ConstantesPki.LIBELLE_FINGERPRINT: fingerprint,
+            ConstantesPki.LIBELLE_SUBJECT: subject,
         }
 
         return transaction
