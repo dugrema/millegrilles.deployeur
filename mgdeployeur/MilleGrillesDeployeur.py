@@ -3,7 +3,6 @@
 
 from millegrilles import Constantes
 from millegrilles.SecuritePKI import EnveloppeCertificat
-from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
 from millegrilles.domaines.Parametres import ConstantesParametres
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurInitial, \
     EnveloppeCleCert, RenouvelleurCertificat
@@ -11,7 +10,7 @@ from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
 from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
 from mgdeployeur.ComptesCertificats import GestionnaireComptesRabbitMQ, GestionnaireComptesMongo
 
-from threading import Event, Thread
+from threading import Event
 
 import json
 import logging
@@ -688,15 +687,15 @@ class DeployeurDockerMilleGrille:
     def activer_nginx_public(self):
         # Charger configuration de nginx
         fichier_configuration_url = self.constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_URL_PUBLIC)
-        with open(fichier_configuration_url, 'r') as fichier:
-            try:
+        try:
+            with open(fichier_configuration_url, 'r') as fichier:
                 configuration_url = json.load(fichier)
-            except FileNotFoundError:
-                # Configuraiton initiale, on met des valeurs dummy
-                configuration_url = {
-                    ConstantesParametres.DOCUMENT_PUBLIQUE_URL_WEB: 'mg_public',
-                    ConstantesParametres.DOCUMENT_PUBLIQUE_URL_COUPDOEIL: 'coupdoeil_public',
-                }
+        except FileNotFoundError:
+            # Configuraiton initiale, on met des valeurs dummy
+            configuration_url = {
+                ConstantesParametres.DOCUMENT_PUBLIQUE_URL_WEB: 'mg_public',
+                ConstantesParametres.DOCUMENT_PUBLIQUE_URL_COUPDOEIL: 'coupdoeil_public',
+            }
 
         self.preparer_service('nginxpublic', mappings=configuration_url)
         labels = {}
