@@ -407,7 +407,7 @@ class DeployeurDockerMilleGrille:
         self.activer_consignationfichiers()
         self.activer_coupdoeilreact()
         self.activer_vitrine()
-        self.activer_nginx_local()
+        # self.activer_nginx_local()
         self.activer_publicateur_local()
         self.activer_nginx_public()
         self.activer_certbot()

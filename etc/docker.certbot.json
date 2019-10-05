@@ -7,7 +7,7 @@
         "sleep",
         "10000"
       ],
-      "Hostname": "www.${DOMAIN_PUBLIC}",
+      "Hostname": "${DOMAIN_PUBLIC}",
       "Env": [
         "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
         "DEPLOYTEUR_CONFIG_FILE=local.conf",
@@ -86,7 +86,7 @@
     "Networks": [
         {
           "Target": "mg_${NOM_MILLEGRILLE}_net",
-          "Aliases": ["www", "www.${DOMAIN_PUBLIC}"]
+          "Aliases": ["www", "${DOMAIN_PUBLIC}"]
         }
     ]
   },
