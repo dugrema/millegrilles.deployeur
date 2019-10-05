@@ -98,6 +98,7 @@ class CertbotCertificateUploader:
         channel.add_on_close_callback(self.__on_channel_close)
         self.__channel = channel
         self.__channel.queue_declare(queue='', exclusive=True, callback=self.register_mq_handler)
+        self.__certificat_event_handler.initialiser()
 
     def __on_channel_close(self, channel=None, code=None, reason=None):
         self.__channel = None
