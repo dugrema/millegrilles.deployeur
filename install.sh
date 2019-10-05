@@ -18,13 +18,9 @@ installer_docker() {
   sudo systemctl enable docker
 }
 
-installer_avahi() {
-  sudo apt install -y avahi-daemon
-}
-
 installer_autres_deps() {
-  # Random number gens hardware
-  sudo apt install rng-tools pip3
+  # Random number gens hardware, pip3, avahi-daemon
+  sudo apt install -y rng-tools python3-pip avahi-daemon
 }
 
 installer_deployeur() {
