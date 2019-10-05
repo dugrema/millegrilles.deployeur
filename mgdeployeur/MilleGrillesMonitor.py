@@ -322,15 +322,15 @@ class MonitorMilleGrille:
                 self.verifier_cedule_deploiement()
 
                 if self.__transmettre_etat_upnp:
-                    self.__monitor.transmettre_etat_upnp(self.generateur_transactions)
                     self.__transmettre_etat_upnp = False
+                    self.__monitor.transmettre_etat_upnp(self.generateur_transactions)
 
                 if self.__emettre_etat_noeuds_docker:
                     self.emetre_etat_noeuds_docker()
 
                 if self.__renouveller_certs_web:
-                    self.__renouvellement_certificats.renouveller_certs_web()
                     self.__renouveller_certs_web = False
+                    self.__renouvellement_certificats.renouveller_certs_web()
 
             except Exception as e:
                 self.__logger.exception("Erreur traitement cedule: %s" % str(e))

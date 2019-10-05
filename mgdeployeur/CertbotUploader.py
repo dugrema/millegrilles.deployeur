@@ -8,13 +8,13 @@ from millegrilles import Constantes
 
 import logging
 import base64
+import os
 from threading import Event
 
 
 class CertbotConstantes:
 
-    REPERTOIRE_MILLEGRILLES = '/opt/millegrilles'
-    REPERTOIRE_CERTBOT = 'pki/certbot'
+    REPERTOIRE_CERTBOT = '/etc/letsencrypt/live'
 
     FICHIER_CERT = 'cert.pem'
     FICHIER_CHAIN = 'chain.pem'
@@ -96,10 +96,24 @@ class CertbotCertificateUploader:
     def __on_channel_close(self, channel=None, code=None, reason=None):
         self.__channel = None
 
+    def trouver_repertoire_domaine(self):
+        rep_letsencrypt = CertbotConstantes.REPERTOIRE_CERTBOT
+        domaine = os.getenv('URL_DOMAINE')
+
+        rep_domaine = None
+        if domaine is not None:
+            rep_domaine = os.path.join(rep_letsencrypt, domaine)
+        else:
+            # Tenter de trouver le repertoire du domaine - fonctionne s'il y en a juste un
+            repertoires = [r for r in os.listdir(rep_letsencrypt) if os.path.isdir(os.path.join(rep_letsencrypt, r))]
+            if len(repertoires) == 1:
+                rep_domaine = os.path.join(rep_letsencrypt, repertoires[0])
+
+        return rep_domaine
+
     def encrypter_cle(self):
-        nom_millegrille = self.__contexte.configuration.nom_millegrille
-        repertoire = '%s/%s/%s' % (CertbotConstantes.REPERTOIRE_MILLEGRILLES, nom_millegrille, CertbotConstantes.REPERTOIRE_CERTBOT)
-        full_path = '%s/%s' % (repertoire, CertbotConstantes.FICHIER_KEY)
+        repertoire = self.trouver_repertoire_domaine()
+        full_path = os.path.join(repertoire, CertbotConstantes.FICHIER_KEY)
         with open(full_path, 'r') as fichier:
             pem = {
                 'nom': CertbotConstantes.FICHIER_KEY,
@@ -126,7 +140,7 @@ class CertbotCertificateUploader:
         """
 
         nom_millegrille = self.__contexte.configuration.nom_millegrille
-        repertoire = '%s/%s/%s' % (CertbotConstantes.REPERTOIRE_MILLEGRILLES, nom_millegrille, CertbotConstantes.REPERTOIRE_CERTBOT)
+        repertoire = self.trouver_repertoire_domaine()
         fichiers = [
             CertbotConstantes.FICHIER_CERT,
             CertbotConstantes.FICHIER_CHAIN,
@@ -135,7 +149,7 @@ class CertbotCertificateUploader:
 
         pems = dict()
         for nom_fichier in fichiers:
-            full_path = '%s/%s' % (repertoire, nom_fichier)
+            full_path = os.path.join(repertoire, nom_fichier)
             with open(full_path, 'r') as fichier:
                 pem = {
                     'nom': nom_fichier,

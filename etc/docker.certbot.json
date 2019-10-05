@@ -4,27 +4,12 @@
     "ContainerSpec": {
       "Image": "${certbot}",
       "Args": [
-        "certbot",
-        "certonly",
-        "-n",
-        "-m",
-        "mail@mdugre.info",
-        "--agree-tos",
-        "--webroot",
-        "-w",
-        "/var/lib/letsencrypt",
-        "-d",
-        "dev3.millegrilles.mdugre.info",
-        "-d",
-        "coupdoeil.dev3.millegrilles.mdugre.info",
-        "-d",
-        "www.dev3.millegrilles.mdugre.info",
-        "--work-dir",
-        "/opt/certbot"
+        "sleep",
+        "10000"
       ],
       "Hostname": "www.${DOMAIN_PUBLIC}",
       "Env": [
-        "NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
+        "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
         "DEPLOYTEUR_CONFIG_FILE=local.conf",
         "MG_MQ_HOST=mq",
         "MG_MQ_PORT=5673",
