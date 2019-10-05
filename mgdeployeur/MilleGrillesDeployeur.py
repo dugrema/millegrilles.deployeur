@@ -698,7 +698,7 @@ class DeployeurDockerMilleGrille:
             }
 
         self.preparer_service('nginxpublic', mappings=configuration_url)
-        labels = {}
+        labels = {'millegrilles.nginx': 'true'}
         self.deployer_labels(self.__node_name, labels)
 
     def activer_certbot(self):
