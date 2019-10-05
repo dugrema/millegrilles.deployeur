@@ -410,6 +410,7 @@ class DeployeurDockerMilleGrille:
         self.activer_nginx_local()
         self.activer_publicateur_local()
         self.activer_nginx_public()
+        self.activer_certbot()
 
     def configurer_mongo(self):
         etat_filename = self.constantes.fichier_etc_mg('mongo.etat.json')
@@ -686,6 +687,9 @@ class DeployeurDockerMilleGrille:
         self.preparer_service('nginxpublic')
         labels = {}
         self.deployer_labels(self.__node_name, labels)
+
+    def activer_certbot(self):
+        self.preparer_service('certbot')
 
     def deployer_labels(self, node_name, labels):
         nodes_list = self.__docker.get('nodes').json()

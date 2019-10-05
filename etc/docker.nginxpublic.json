@@ -78,6 +78,11 @@
         "PublishedPort": 443,
         "TargetPort": 443,
         "PublishMode": "host"
+      },{
+        "Protocol": "tcp",
+        "PublishedPort": 80,
+        "TargetPort": 80,
+        "PublishMode": "host"
       }
     ]
   },

@@ -1,0 +1,111 @@
+{
+  "Name": "certbot",
+  "TaskTemplate": {
+    "ContainerSpec": {
+      "Image": "${certbot}",
+      "Args": [
+        "certbot",
+        "certonly",
+        "-n",
+        "-m",
+        "mail@mdugre.info",
+        "--agree-tos",
+        "--webroot",
+        "-w",
+        "/var/lib/letsencrypt",
+        "-d",
+        "dev3.millegrilles.mdugre.info",
+        "-d",
+        "coupdoeil.dev3.millegrilles.mdugre.info",
+        "-d",
+        "www.dev3.millegrilles.mdugre.info",
+        "--work-dir",
+        "/opt/certbot"
+      ],
+      "Hostname": "www.${DOMAIN_PUBLIC}",
+      "Env": [
+        "NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
+        "DEPLOYTEUR_CONFIG_FILE=local.conf",
+        "MG_MQ_HOST=mq",
+        "MG_MQ_PORT=5673",
+        "MG_MQ_SSL=on",
+        "MG_MQ_AUTH_CERT=on",
+        "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
+        "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
+        "MG_MQ_CA_CERTS=/run/secrets/pki.millegrilles.ssl.CAchain"
+      ],
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx",
+          "Target": "/var/lib/letsencrypt"
+        },{
+          "Type": "volume",
+          "Source": "letsencrypt",
+          "Target": "/etc/letsencrypt"
+        }
+      ],
+      "Secrets": [
+        {
+          "SecretName": "pki.nginx.key",
+          "File": {
+            "Name": "pki.millegrilles.ssl.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }
+      ],
+      "Configs": [
+        {
+          "ConfigName": "pki.nginx.fullchain",
+          "File": {
+            "Name": "/run/secrets/pki.millegrilles.ssl.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "ConfigName": "pki.ca.millegrille.fullchain",
+          "File": {
+            "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }
+      ]
+    },
+    "Placement": {
+      "Constraints": [
+        "node.labels.millegrilles.nginx == true",
+        "node.labels.netzone.public == true"
+      ]
+    },
+    "Resources": {
+      "Limits": {
+        "NanoCPUs": 500000000,
+        "MemoryBytes": 52428800
+      }
+    },
+    "RestartPolicy": {
+      "Condition": "any",
+      "Delay": 30000000000,
+      "MaxAttempts": 1
+    },
+    "Mode": {
+      "Replicated": {
+        "Replicas": 1
+      }
+    },
+    "Networks": [
+        {
+          "Target": "mg_${NOM_MILLEGRILLE}_net",
+          "Aliases": ["www", "www.${DOMAIN_PUBLIC}"]
+        }
+    ]
+  },
+  "Labels": {
+    "millegrille": "${NOM_MILLEGRILLE}"
+  }
+}
