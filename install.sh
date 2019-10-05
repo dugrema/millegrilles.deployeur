@@ -105,7 +105,6 @@ preparer_var() {
 installer() {
   installer_docker
   installer_deployeur
-  installer_avahi
   installer_autres_deps
 
   preparer_comptes
