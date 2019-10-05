@@ -26,8 +26,9 @@ creer_repertoires() {
   sudo -u $MILLEGRILLES_USER_DEPLOYEUR mkdir -p \
   $REP_NGINX $REP_CONSIGNATION_LOCAL $REP_PKI \
   $REP_MONGO_SCRIPTS $REP_MONGO_DATA $REP_MQ_ACCOUNTS
+
   sudo -u $MILLEGRILLES_USER_DEPLOYEUR chmod 2755 $REP_MILLEGRILLE
-  sudo chown -R $MILLEGRILLES_USER_PYTHON $REP_NGINX
+  sudo chown -R $MILLEGRILLES_USER_PYTHON:$MILLEGRILLES_GROUP $REP_NGINX
   sudo chown -R $MILLEGRILLES_USER_MONGO:root $REP_MONGO_DATA
 
   sudo chown $MILLEGRILLES_USER_MAITREDESCLES:$MILLEGRILLES_GROUP $REP_PKI
@@ -43,12 +44,12 @@ ajuster_access_rights() {
 }
 
 setup_fichier_config() {
-  echo "NOM_MILLEGRILLE=$NOM_MILLEGRILLE" | sudo -u mg_deployeur /opt/millegrilles/etc/variables.env
+  echo "NOM_MILLEGRILLE=$NOM_MILLEGRILLE" | sudo -u mg_deployeur tee /opt/millegrilles/etc/variables.env
 }
 
 echo "[INFO] Creer la millegrille $NOM_MILLEGRILLE"
-setup_fichier_config
 creer_repertoires
+setup_fichier_config
 # sudo -u $MILLEGRILLES_USER_MAITREDESCLES NOM_MILLEGRILLE=$NOM_MILLEGRILLE $MILLEGRILLES_BIN/creer_certificats.sh
 ajuster_access_rights
 
