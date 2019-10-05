@@ -24,7 +24,7 @@ installer_avahi() {
 
 installer_autres_deps() {
   # Random number gens hardware
-  sudo apt install rng-tools
+  sudo apt install rng-tools pip3
 }
 
 installer_deployeur() {
