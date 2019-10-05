@@ -2,7 +2,7 @@ from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
 from millegrilles.dao.MessageDAO import BaseCallback
 from millegrilles.domaines.Pki import ConstantesPki
 from millegrilles.domaines.MaitreDesCles import ConstantesMaitreDesCles
-from millegrilles.SecuritePKI import EnveloppeCertificat, EncryptionHelper
+from millegrilles.SecuritePKI import EnveloppeCertificat, EncryptionHelper, GestionnaireEvenementsCertificat
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat
 from millegrilles import Constantes
 
@@ -42,6 +42,7 @@ class CertbotCertificateUploader:
         self.__transaction = None
         self.__transaction_maitredescles = None
         self.__message_handler = None
+        self.__certificat_event_handler = None
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
@@ -52,6 +53,7 @@ class CertbotCertificateUploader:
         try:
             self.__contexte.message_dao.register_channel_listener(self)  # Callback pour recevoir cert maitredescles
             self.__message_handler = ReceptionMessage(self.__contexte, self)
+            self.__certificat_event_handler = GestionnaireEvenementsCertificat(self.__contexte)
             self.__generateur = self.__contexte.generateur_transactions
 
             self.__transaction = self.preparer_certificats()
