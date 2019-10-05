@@ -173,13 +173,22 @@ class DockerFacade:
 
 class ServiceDockerConfiguration:
 
-    def __init__(self, nom_millegrille, nom_service, docker_secrets, docker_configs):
+    def __init__(self, nom_millegrille, nom_service, docker_secrets, docker_configs, mappings: dict = None):
+        """
+
+        :param nom_millegrille:
+        :param nom_service:
+        :param docker_secrets:
+        :param docker_configs:
+        :param mappings: Mappings dynamiques, combines a constantes.mappingd
+        """
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
         self.__nom_millegrille = nom_millegrille
         self.__nom_service = nom_service
         self.__secrets = docker_secrets
         self.__configs = docker_configs
+        self.__mappings = mappings
         self.__secrets_par_nom = dict()
         self.__configs_par_nom = dict()
         self.__versions_images = dict()
@@ -308,6 +317,11 @@ class ServiceDockerConfiguration:
         for cle in self.constantes.mapping:
             valeur_mappee = self.constantes.mapping[cle]
             valeur = valeur.replace('${%s}' % cle, valeur_mappee)
+
+        if self.__mappings is not None:
+            for cle, valeur_mappee in self.__mappings.items():
+                cle = cle.upper()
+                valeur = valeur.replace('${%s}' % cle, valeur_mappee)
 
         return valeur
 

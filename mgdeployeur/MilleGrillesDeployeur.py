@@ -4,6 +4,7 @@
 from millegrilles import Constantes
 from millegrilles.SecuritePKI import EnveloppeCertificat
 from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
+from millegrilles.domaines.Parametres import ConstantesParametres
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurInitial, \
     EnveloppeCleCert, RenouvelleurCertificat
 from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
@@ -401,6 +402,7 @@ class DeployeurDockerMilleGrille:
         # Activer les scripts python
         self.activer_ceduleur()
         self.activer_domaines()
+        self.__wait_event.wait(2)
 
         # Activer composants web
         self.activer_mongoexpress()
@@ -500,7 +502,7 @@ class DeployeurDockerMilleGrille:
         nom_reseau = 'mg_%s_net' % self.__nom_millegrille
         self.__docker.configurer_reseau(nom_reseau)
 
-    def preparer_service(self, nom_service, force=True):
+    def preparer_service(self, nom_service, force=True, mappings: dict = None):
         # Verifier que le service MQ est en fonction - sinon le deployer
         nom_service_complet = '%s_%s' % (self.__nom_millegrille, nom_service)
         etat_service_resp = self.__docker.info_service(nom_service_complet)
@@ -523,7 +525,7 @@ class DeployeurDockerMilleGrille:
             docker_secrets = self.__docker.get('secrets').json()
             docker_configs = self.__docker.get('configs').json()
             configurateur = ServiceDockerConfiguration(
-                self.__nom_millegrille, nom_service, docker_secrets, docker_configs)
+                self.__nom_millegrille, nom_service, docker_secrets, docker_configs, mappings)
             service_json = configurateur.formatter_service()
             etat_service_resp = self.__docker.post('services/%s' % mode, service_json)
             status_code = etat_service_resp.status_code
@@ -684,7 +686,19 @@ class DeployeurDockerMilleGrille:
         self.preparer_service('publicateurlocal')
 
     def activer_nginx_public(self):
-        self.preparer_service('nginxpublic')
+        # Charger configuration de nginx
+        fichier_configuration_url = self.constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_URL_PUBLIC)
+        with open(fichier_configuration_url, 'r') as fichier:
+            try:
+                configuration_url = json.load(fichier)
+            except FileNotFoundError:
+                # Configuraiton initiale, on met des valeurs dummy
+                configuration_url = {
+                    ConstantesParametres.DOCUMENT_PUBLIQUE_URL_WEB: 'mg_public',
+                    ConstantesParametres.DOCUMENT_PUBLIQUE_URL_COUPDOEIL: 'coupdoeil_public',
+                }
+
+        self.preparer_service('nginxpublic', mappings=configuration_url)
         labels = {}
         self.deployer_labels(self.__node_name, labels)
 

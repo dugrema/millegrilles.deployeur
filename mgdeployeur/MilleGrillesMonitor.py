@@ -218,6 +218,8 @@ class MonitorMilleGrille:
         self.__config = config
         self.__docker = docker
 
+        self.__constantes = ConstantesEnvironnementMilleGrilles(self.__nom_millegrille)
+
         self.__stop_event = Event()
 
         self.__deployeur = None
@@ -461,6 +463,26 @@ class MonitorMilleGrille:
 
         self.toggle_transmettre_etat_upnp()  # Va forcer le renvoi de l'ete
 
+        url_web = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_URL_WEB]
+        url_coupdoeil = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_URL_COUPDOEIL]
+        self.maj_nginx(url_web, url_coupdoeil)
+
+    def maj_nginx(self, url_web, url_coupdoeil):
+        fichier_configuration_url = self.__constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_URL_PUBLIC)
+        try:
+            with open(fichier_configuration_url, 'r') as fichier:
+                configuration_url = json.load(fichier)
+        except FileNotFoundError:
+            configuration_url = dict()
+
+        configuration_url[ConstantesParametres.DOCUMENT_PUBLIQUE_URL_WEB] = url_web
+        configuration_url[ConstantesParametres.DOCUMENT_PUBLIQUE_URL_COUPDOEIL] = url_coupdoeil
+        with open(fichier_configuration_url, 'w') as fichier:
+            json.dump(configuration_url, fichier, indent=2)
+
+        # Mettre a jour service nginx
+        self.__deployeur.activer_nginx_public()  # Redeployer nginx avec nouvaux noms de domaines()
+
     def retirer_ports(self, commande):
         # Commencer par faire la liste des ports existants
         gestionnaire_publique = self.__monitor.gestionnaire_publique
@@ -479,7 +501,6 @@ class MonitorMilleGrille:
         docker = self.__docker
         noeud_hostname = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_NOEUD_DOCKER]
         docker.ajouter_nodelabels(noeud_hostname, {'netzone.public': 'true'})
-
         self.toggle_emettre_etat_noeuds_docker()
 
     def privatiser_noeud(self, commande):

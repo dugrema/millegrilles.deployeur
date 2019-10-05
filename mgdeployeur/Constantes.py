@@ -21,6 +21,7 @@ class ConstantesEnvironnementMilleGrilles:
 
     # Fichiers
     FICHIER_CONFIG_ETAT_CERTIFICATS = 'certificats.etat.json'
+    FICHIER_CONFIG_URL_PUBLIC = 'url.etat.json'
 
     # CHAMPS_CONFIG
     CHAMP_EXPIRATION = 'expiration'
