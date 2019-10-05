@@ -53,6 +53,7 @@ installer_deployeur() {
   # Installer script demarrage
   sudo cp etc/millegrilles.service /etc/systemd/system/millegrilles.service
   sudo chmod 644 /etc/systemd/system/millegrilles.service
+  sudo systemctl enable millegrilles
 
   echo "[OK] Deployeur Python et dependances installes"
 }
