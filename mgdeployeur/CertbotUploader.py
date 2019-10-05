@@ -67,6 +67,9 @@ class CertbotCertificateUploader:
                 else:
                     self.__logger.error("Timeout - certificat maitre des cles non recu ou invalide. Essai %d de 5" % essai)
                     self.demander_cert_maitredescles()  # Demander certificat a nouveau
+
+            self.__wait_event.wait(5)  # Attendre au cas ou le certificat courant est demande
+
         except Exception:
             self.__logger.exception("Erreur execution")
 
