@@ -450,7 +450,7 @@ class MonitorMilleGrille:
             description = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM]
 
             mapping_protocole = [m for m in mappings_existants if m[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_EXTERIEUR] == int(port_externe) and
-                                 m[ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL == 'TCP']]
+                                 m[ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL] == 'TCP']
             if len(mapping_protocole) > 0:
                 mapping_existant = mapping_protocole[0]
                 if mapping_existant[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_INTERNE] != port_int or \
