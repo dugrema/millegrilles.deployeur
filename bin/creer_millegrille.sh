@@ -47,10 +47,13 @@ creer_repertoires
 # sudo -u $MILLEGRILLES_USER_MAITREDESCLES NOM_MILLEGRILLE=$NOM_MILLEGRILLE $MILLEGRILLES_BIN/creer_certificats.sh
 ajuster_access_rights
 
+cd $MILLEGRILLES_BIN
+
 echo
 echo
 echo "*************"
 echo "[OK] La millegrille $NOM_MILLEGRILLE est prete pour le deploiement"
 echo "*************"
 echo
+echo "Utiliser: sudo -u mg_deployeur ./deployer.py --creer NOM_MILLEGRILLE"
 echo

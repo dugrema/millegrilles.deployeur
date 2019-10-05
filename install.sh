@@ -104,8 +104,8 @@ preparer_var() {
 # Execution de l'installation
 installer() {
   installer_docker
-  installer_deployeur
   installer_autres_deps
+  installer_deployeur
 
   preparer_comptes
   preparer_opt
