@@ -78,7 +78,7 @@
     },
     "Resources": {
       "Limits": {
-        "NanoCPUs": 2000000000,
+        "NanoCPUs": 1000000000,
         "MemoryBytes": 1073741824
       }
     },
