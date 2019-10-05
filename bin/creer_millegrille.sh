@@ -42,7 +42,12 @@ ajuster_access_rights() {
   sudo chown -R $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $DEPLOYEUR_KEYS
 }
 
+setup_fichier_config() {
+  echo "NOM_MILLEGRILLE=$NOM_MILLEGRILLE" | sudo -u mg_deployeur /opt/millegrilles/etc/variables.env
+}
+
 echo "[INFO] Creer la millegrille $NOM_MILLEGRILLE"
+setup_fichier_config
 creer_repertoires
 # sudo -u $MILLEGRILLES_USER_MAITREDESCLES NOM_MILLEGRILLE=$NOM_MILLEGRILLE $MILLEGRILLES_BIN/creer_certificats.sh
 ajuster_access_rights

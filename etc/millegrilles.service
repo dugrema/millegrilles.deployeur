@@ -4,8 +4,8 @@ Description=Service monitor de MilleGrilles.
 [Service]
 Type=simple
 PIDFile=/var/run/millegrilles/monitor.pid
-ExecStart=/usr/bin/python3 /opt/millegrilles/bin/monitor.py start
-ExecStop=/usr/bin/python3 /opt/millegrilles/bin/monitor.py stop
+ExecStart=/opt/millegrilles/bin/monitor.sh start
+ExecStop=/opt/millegrilles/bin/monitor.sh stop
 User=mg_deployeur
 Group=millegrilles
 
