@@ -28,7 +28,7 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.millegrilles.web.key",
+          "SecretName": "pki.millegrilles.web.key;pki.nginx.key",
           "File": {
             "Name": "pki.millegrilles.web.key",
             "UID": "0",
