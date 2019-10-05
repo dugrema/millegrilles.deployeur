@@ -687,10 +687,10 @@ class DeployeurDockerMilleGrille:
     def activer_nginx_public(self):
         # Charger configuration de nginx
         fichier_configuration_url = self.constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_URL_PUBLIC)
-        try:
+        if os.path.isfile(fichier_configuration_url):
             with open(fichier_configuration_url, 'r') as fichier:
                 configuration_url = json.load(fichier)
-        except FileNotFoundError:
+        else:
             # Configuraiton initiale, on met des valeurs dummy
             configuration_url = {
                 ConstantesParametres.DOCUMENT_PUBLIQUE_URL_WEB: 'mg_public',
