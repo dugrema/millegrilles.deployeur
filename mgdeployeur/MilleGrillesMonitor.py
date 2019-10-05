@@ -435,6 +435,8 @@ class MonitorMilleGrille:
 
         # mappings_courants = etat_upnp[ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4]
         mappings_demandes = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4_DEMANDES]
+        etat_actuel = gestionnaire_publique.get_etat_upnp()
+        mappings_existants = etat_actuel[ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4]
 
         resultat_ports = dict()
         for port_externe in mappings_demandes:
@@ -446,6 +448,15 @@ class MonitorMilleGrille:
             ip_interne = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_IPV4_INTERNE]
             protocole = 'TCP'
             description = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM]
+
+            mapping_protocole = [m for m in mappings_existants if m[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_EXTERIEUR] == int(port_externe) and
+                                 m[ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL == 'TCP']]
+            if len(mapping_protocole) > 0:
+                mapping_existant = mapping_protocole[0]
+                if mapping_existant[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_INTERNE] != port_int or \
+                        mapping_existant[ConstantesParametres.DOCUMENT_PUBLIQUE_IPV4_INTERNE] != ip_interne:
+                    self.__logger.warning("On doit enlever un mapping existant pour appliquer le nouveau sur port %s" % port_externe)
+                    gestionnaire_publique.remove_port_mapping(int(port_externe), protocole)
 
             port_mappe = gestionnaire_publique.add_port_mapping(
                 port_int, ip_interne, int(port_externe), protocole, description)

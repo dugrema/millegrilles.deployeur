@@ -4,8 +4,7 @@
     "ContainerSpec": {
       "Image": "${certbot}",
       "Args": [
-        "sleep",
-        "10000"
+        "./run.sh"
       ],
       "Hostname": "${DOMAIN_PUBLIC}",
       "Env": [
