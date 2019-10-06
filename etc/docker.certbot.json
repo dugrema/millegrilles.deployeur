@@ -24,7 +24,7 @@
         {
           "Type": "bind",
           "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx",
-          "Target": "/var/lib/letsencrypt"
+          "Target": "/opt/certbot/webroot"
         },{
           "Type": "volume",
           "Source": "letsencrypt",
