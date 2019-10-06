@@ -7,5 +7,5 @@
     "mg-python": "millegrilles_consignation_python_main.x86_64:1.14.28",
     "nginx": "mg_nginx:1.17_1",
     "vitrinereact": "vitrine_react:1.14.9",
-    "certbot": "mg_certbot_scripts.x86_64:0.39_0.1"
+    "certbot": "mg_certbot_scripts.x86_64:0.39_0.2"
 }
