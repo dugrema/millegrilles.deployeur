@@ -98,7 +98,7 @@ preparer_var() {
   sudo chmod 2755 $MILLEGRILLES_LOGS
 
   sudo mkdir -p $MILLEGRILLES_PID_PATH
-  sudo chown $MILLEGRILLES_USER_PYTHON:$MILLEGRILLES_GROUP $MILLEGRILLES_PID_PATH
+  sudo chown $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $MILLEGRILLES_PID_PATH
   sudo chmod 2755 $MILLEGRILLES_PID_PATH
 }
 
@@ -120,6 +120,8 @@ creer_millegrille() {
   fi
   if [ ! -z $NOM_MILLEGRILLE ]; then
     $MILLEGRILLES_BIN/creer_millegrille.sh $NOM_MILLEGRILLE
+
+    # sudo -u mg_deployeur /opt/millegrilles/bin/deployer --info --creer $NOM_MILLEGRILLE
   else
     echo
     echo "[INFO] Installation de la base millegrilles completee, il faut maintenant creer votre millegrilles"
