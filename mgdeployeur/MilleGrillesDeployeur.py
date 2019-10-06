@@ -762,7 +762,7 @@ class DeployeurDockerMilleGrille:
 
             container_mongo = None
             mongo_pret = False
-            nb_essais_attente = 10
+            nb_essais_attente = 30
             for essai in range(1, nb_essais_attente+1):
                 containers_resp = self.__docker.info_container(nom_container)
                 liste_containers = containers_resp.json()

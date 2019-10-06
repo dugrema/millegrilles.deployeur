@@ -24,7 +24,7 @@ class GestionnaireComptesRabbitMQ:
 
         return None
 
-    def attendre_mq(self, attente_sec=180):
+    def attendre_mq(self, attente_sec=300):
         """
         Attendre que le container et rabbitmq soit disponible. Effectue un ping a rabbitmq pour confirmer.
         :param attente_sec:

@@ -21,6 +21,7 @@ installer_docker() {
 installer_autres_deps() {
   # Random number gens hardware, pip3, avahi-daemon
   sudo apt install -y rng-tools python3-pip avahi-daemon
+
 }
 
 installer_deployeur() {
@@ -104,6 +105,9 @@ preparer_var() {
 
 # Execution de l'installation
 installer() {
+  # Au besoin, preparer l'environnement du RPi avant le reste. Ajoute swapfile et autres dependances
+  preparer_rpi
+
   installer_docker
   installer_autres_deps
   installer_deployeur
@@ -127,6 +131,26 @@ creer_millegrille() {
     echo "[INFO] Installation de la base millegrilles completee, il faut maintenant creer votre millegrilles"
     echo "[INFO] Utiliser le script: /opt/millegrilles/bin/creer_millegrille.sh NOM_NOUVELLE_MILLEGRILLE"
     echo
+  fi
+}
+
+preparer_rpi() {
+  ARCH=`uname -m`
+  if [ $ARCH == 'aarch64' ]; then
+    echo "Preparation speciale pour un RaspberryPi"
+
+    echo "[INFO] S'assurer que le swap est active - il faut au moins 1G de swap"
+    if [ ! -f /swapfile ]; then
+      sudo fallocate -l 1G /swapfile
+      sudo dd if=/dev/zero of=/swapfile bs=1024 count=1048576
+      sudo chmod 600 /swapfile
+      sudo mkswap /swapfile
+      sudo swapon /swapfile
+      echo "/swapfile  swap  swap  defaults  0 0" | sudo tee -a /etc/fstab
+    fi
+
+    # Pour RPi 64bit (pip requirement: lxml)
+    sudo apt install -y libxml2-dev libxmlsec1-dev python3-cffi
   fi
 }
 
