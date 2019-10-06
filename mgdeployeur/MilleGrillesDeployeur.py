@@ -686,23 +686,32 @@ class DeployeurDockerMilleGrille:
 
     def activer_nginx_public(self):
         # Charger configuration de nginx
-        fichier_configuration_url = self.constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_URL_PUBLIC)
+        configuration_url = self.charger_configuration_web()
+        self.preparer_service('nginxpublic', mappings=configuration_url)
+        labels = {'millegrilles.nginx': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def charger_configuration_web(self, default=True):
+        fichier_configuration_url = self.constantes.fichier_etc_mg(
+            ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_URL_PUBLIC)
+
+        configuration_url = None
         if os.path.isfile(fichier_configuration_url):
             with open(fichier_configuration_url, 'r') as fichier:
                 configuration_url = json.load(fichier)
-        else:
+        elif default:
             # Configuraiton initiale, on met des valeurs dummy
             configuration_url = {
                 ConstantesParametres.DOCUMENT_PUBLIQUE_URL_WEB: 'mg_public',
                 ConstantesParametres.DOCUMENT_PUBLIQUE_URL_COUPDOEIL: 'coupdoeil_public',
             }
 
-        self.preparer_service('nginxpublic', mappings=configuration_url)
-        labels = {'millegrilles.nginx': 'true'}
-        self.deployer_labels(self.__node_name, labels)
+        return configuration_url
 
     def activer_certbot(self):
-        self.preparer_service('certbot')
+        configuration_url = self.charger_configuration_web(default=False)
+        if configuration_url is not None:
+            self.preparer_service('certbot', mappings=configuration_url)
 
     def deployer_labels(self, node_name, labels):
         nodes_list = self.__docker.get('nodes').json()

@@ -17,7 +17,8 @@
         "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
         "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
         "MG_MQ_CA_CERTS=/run/secrets/pki.millegrilles.ssl.CAchain",
-        "EMAIL_ADDRESS=mail@mdugre.info"
+        "EMAIL_ADDRESS=mail@mdugre.info",
+        "LETSENCRYPT_SITES=${URL_WEB} ${URL_COUPDOEIL}"
       ],
       "Mounts": [
         {

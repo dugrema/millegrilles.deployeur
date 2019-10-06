@@ -493,6 +493,7 @@ class MonitorMilleGrille:
 
         # Mettre a jour service nginx
         self.__deployeur.activer_nginx_public()  # Redeployer nginx avec nouvaux noms de domaines()
+        self.__deployeur.activer_certbot()  # Redeployer nginx avec nouvaux noms de domaines()
 
     def retirer_ports(self, commande):
         # Commencer par faire la liste des ports existants
