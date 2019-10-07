@@ -6,6 +6,7 @@ Type=simple
 PIDFile=/var/run/millegrilles/monitor.pid
 ExecStart=/opt/millegrilles/bin/monitor.sh start
 ExecStop=/opt/millegrilles/bin/monitor.sh stop
+ExecStartPre=+/opt/millegrilles/bin/prestart_monitor.sh
 User=mg_deployeur
 Group=millegrilles
 

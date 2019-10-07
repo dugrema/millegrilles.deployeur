@@ -93,16 +93,6 @@ preparer_opt() {
   echo "[OK] $MILLEGRILLES_PATH pret"
 }
 
-preparer_var() {
-  sudo mkdir -p $MILLEGRILLES_LOGS
-  sudo chown $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $MILLEGRILLES_LOGS
-  sudo chmod 2755 $MILLEGRILLES_LOGS
-
-  sudo mkdir -p $MILLEGRILLES_PID_PATH
-  sudo chown $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $MILLEGRILLES_PID_PATH
-  sudo chmod 2755 $MILLEGRILLES_PID_PATH
-}
-
 # Execution de l'installation
 installer() {
   # Au besoin, preparer l'environnement du RPi avant le reste. Ajoute swapfile et autres dependances
@@ -114,7 +104,6 @@ installer() {
 
   preparer_comptes
   preparer_opt
-  preparer_var
 }
 
 creer_millegrille() {
