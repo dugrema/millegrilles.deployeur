@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 source /opt/millegrilles/etc/paths.env
 
 if [ -z $1 ]; then
