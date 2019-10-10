@@ -101,7 +101,7 @@ preparer_requete_csr() {
       break
     else
       # On attend, le fichier n'est pas rendu
-      echo "[INFO] Essai $essai de 20"
+      echo "[INFO] Essai $essai de 20 (code wget=$RESULTAT)"
       sleep 15
     fi
   done
