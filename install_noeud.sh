@@ -104,4 +104,3 @@ preparer_rpi() {
 }
 
 installer
-creer_millegrille $1
