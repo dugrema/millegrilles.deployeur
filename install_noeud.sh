@@ -99,6 +99,8 @@ preparer_requete_csr() {
 
   if [ $essai -eq 20 ]; then
     echo "[FAIL] Echec, le certificat doit etre installe manuellement dans le fichier $CERT_FOLDER/$CERT_NAME"
+  else
+    ln -s CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
   fi
 }
 
@@ -106,6 +108,13 @@ creer_configuration_json() {
   echo "[INFO] Creation du fichier de configuration /opt/millegrilles/etc/noeud_cle.json"
   cat etc/noeud_cle.json.template | sed s/\$\{NOM_MILLEGRILLE\}/dev3/g | sudo tee /opt/millegrilles/etc/noeud_cle.json
   echo "[OK] Fichier de configuration cree"
+}
+
+demarrer_service() {
+  echo "[INFO] Tout est pret, le service va etre demarre pour voir si tout fonctionne."
+  echo "[INFO] Les modules utilises peuvent etre configures avec /opt/millegrilles/noeud.json"
+  echo "[INFO] Voir /opt/millegrilles/noeud.json.exemple pour des exemples"
+  sudo systemctl start millegrilles.noeud
 }
 
 # Execution de l'installation
@@ -121,6 +130,8 @@ installer() {
   echo "[INFO] Installation des composantes terminee. On commence la configuration."
   creer_configuration_json
   preparer_requete_csr
+
+  demarrer_service
 }
 
 preparer_rpi() {
