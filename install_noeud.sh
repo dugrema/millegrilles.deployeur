@@ -89,6 +89,9 @@ preparer_requete_csr() {
   CERT_FOLDER=/opt/millegrilles/$NOM_MILLEGRILLE/pki/certs/
   WEB_CERT=mg-$NOM_MILLEGRILLE.local/certs/$CERT_NAME
 
+  echo "[INFO] Telechargement du CA Cert"
+  sudo wget -O $CERT_FOLDER/${NOM_MILLEGRILLE}.CA.cert.pem http://mg-$NOM_MILLEGRILLE.local/certs/${NOM_MILLEGRILLE}.CA.cert.pem
+
   set +e
   for essai in {1..20}; do
     echo "[INFO] Debut d'attente du certificat sur $WEB_CERT"
@@ -110,7 +113,7 @@ preparer_requete_csr() {
   if [ $essai -eq 20 ]; then
     echo "[FAIL] Echec, le certificat doit etre installe manuellement dans le fichier $CERT_FOLDER/$CERT_NAME"
   else
-    sudo ln -s CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
+    sudo ln -s $CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
   fi
 }
 

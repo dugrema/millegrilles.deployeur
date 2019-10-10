@@ -6,5 +6,5 @@
   "MG_MQ_AUTH_CERT": "on",
   "MG_MQ_KEYFILE": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki/keys/${NOM_MILLEGRILLE}_noeud.key.pem",
   "MG_MQ_CERTFILE": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki/certs/${NOM_MILLEGRILLE}_noeud.cert.pem",
-  "MG_MQ_CA_CERTS": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki/certs/pki.ca.fullchain.pem"
+  "MG_MQ_CA_CERTS": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki/certs/${NOM_MILLEGRILLE}.CA.cert.pem"
 }
