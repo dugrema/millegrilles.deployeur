@@ -34,6 +34,7 @@ class ConstantesMonitor:
     COMMANDE_PUBLIER_NOEUD_DOCKER = 'commande.monitor.publierNoeudDocker'
     COMMANDE_PRIVATISER_NOEUD_DOCKER = 'commande.monitor.privatiserNoeudDocker'
     COMMANDE_MAJ_CERTIFICATS_WEB = 'commande.monitor.maj.cerificatsWeb'
+    COMMANDE_AJOUTER_COMPTE_MQ = 'commande.monitor.ajouterCompteMq'
 
     REPONSE_DOCUMENT_CLEWEB = 'reponse.document.clesWeb'
     REPONSE_CLE_CLEWEB = 'reponse.cle.clesWeb'
@@ -269,25 +270,18 @@ class MonitorMilleGrille:
         nom_queue = queue.method.queue
         self.__queue_reponse = nom_queue
 
-        # Connecter sur noeuds (moins secure que middleware)
+        # Connecter sur exchange noeuds
         routing_keys_noeuds = [
             ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_CERT,
             ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE,
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_LISTE,
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_NOEUDS,
             'commande.monitor.#',
+            'ceduleur.#',
         ]
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
         for routing in routing_keys_noeuds:
             self.__channel.queue_bind(queue=nom_queue, exchange=exchange_noeuds, routing_key=routing, callback=None)
-
-        # Connecter a middleware (plus securitaire pour les commandes)
-        routing_keys_middleware = [
-            'ceduleur.#',
-        ]
-        exchange_middleware = self.__contexte.configuration.exchange_middleware
-        for routing in routing_keys_middleware:
-            self.__channel.queue_bind(queue=nom_queue, exchange=exchange_middleware, routing_key=routing, callback=None)
 
         self.__channel.basic_consume(self.__message_handler.callbackAvecAck, queue=nom_queue, no_ack=False)
 
