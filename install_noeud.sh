@@ -66,6 +66,11 @@ preparer_opt() {
   echo "[OK] $MILLEGRILLES_PATH pret"
 }
 
+preparer_service() {
+  sudo cp etc/millegrilles.noeud.service /etc/systemd/system
+  sudo systemctl enable millegrilles.noeud
+}
+
 preparer_requete_csr() {
   $MILLEGRILLES_BIN/creer_csr_noeud.sh $NOM_MILLEGRILLE
 }
