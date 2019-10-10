@@ -18,7 +18,9 @@ installer_autres_deps() {
 
 installer_dependances() {
   echo "[INFO] Installer deployeur Python et dependances"
-  MG_CONSIGNATION=MilleGrilles.consignation.python
+  REP_INSTALL=$PWD
+  MG_CONSIGNATION=$REP_INSTALL/tmp/MilleGrilles.consignation.python
+  MG_RASPBERRYPI=$REP_INSTALL/tmp/MilleGrilles.raspberrypi
 
   set -e
   mkdir -p tmp/
@@ -26,7 +28,7 @@ installer_dependances() {
 
   # Installer MilleGrilles.consignation.python
   if [ ! -d $MG_CONSIGNATION ]; then
-    git clone ssh://mathieu@repository.maple.mdugre.info/var/lib/git/$MG_CONSIGNATION
+    git clone ssh://mathieu@repository.maple.mdugre.info/var/lib/git/MilleGrilles.consignation.python
   else
     git -C $MG_CONSIGNATION pull
   fi
@@ -34,19 +36,26 @@ installer_dependances() {
   sudo pip3 install -r requirements.txt
   sudo python3 setup.py install
 
+  cd $REP_INSTALL/tmp
+
+  # Installer MilleGrilles.consignation.python
+  if [ ! -d $MG_RASPBERRYPI ]; then
+    git clone ssh://mathieu@repository.maple.mdugre.info/var/lib/git/MilleGrilles.raspberrypi
+  else
+    git -C $MG_RASPBERRYPI pull
+  fi
+  cd $MG_RASPBERRYPI/python
+  sudo pip3 install -r requirements.txt
+  sudo python3 setup.py install
+
   # Fix bug 'cannot find abc'
   sudo pip3 uninstall -y bson
   sudo pip3 uninstall -y pymongo
   sudo pip3 install pymongo
-  cd ../..
+  cd $REP_INSTALL
 
   sudo pip3 install -r requirements.txt
   sudo python3 setup.py install
-
-  # Installer script demarrage
-#  sudo cp etc/millegrilles.service /etc/systemd/system/millegrilles.service
-#  sudo chmod 644 /etc/systemd/system/millegrilles.service
-#  sudo systemctl enable millegrilles
 
   echo "[OK] Deployeur Python et dependances installes"
 }
@@ -106,7 +115,7 @@ preparer_requete_csr() {
 
 creer_configuration_json() {
   echo "[INFO] Creation du fichier de configuration /opt/millegrilles/etc/noeud_cle.json"
-  cat etc/noeud_cle.json.template | sed s/\$\{NOM_MILLEGRILLE\}/dev3/g | sudo tee /opt/millegrilles/etc/noeud_cle.json
+  cat etc/noeud_cle.json.template | sed s/\$\{NOM_MILLEGRILLE\}/dev3/g | sudo tee /opt/millegrilles/etc/noeud_cles.json
   echo "[OK] Fichier de configuration cree"
 }
 
