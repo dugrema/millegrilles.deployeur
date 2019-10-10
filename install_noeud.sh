@@ -85,7 +85,7 @@ installer() {
 
 preparer_rpi() {
   ARCH=`uname -m`
-  if [ $ARCH == 'aarch64' || $ARCH == 'armv6l' || $ARCH == 'armv7l' ]; then
+  if [ $ARCH == 'aarch64' ] || [ $ARCH == 'armv6l' ] || [ $ARCH == 'armv7l' ]; then
     echo "Preparation speciale pour un RaspberryPi"
 
     echo "[INFO] S'assurer que le swap est active - il faut au moins 1G de swap"
