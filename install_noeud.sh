@@ -110,7 +110,7 @@ preparer_requete_csr() {
   if [ $essai -eq 20 ]; then
     echo "[FAIL] Echec, le certificat doit etre installe manuellement dans le fichier $CERT_FOLDER/$CERT_NAME"
   else
-    ln -s CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
+    sudo ln -s CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
   fi
 }
 
@@ -133,7 +133,7 @@ installer() {
   preparer_rpi
 
   installer_autres_deps
-  installer_deployeur
+  installer_dependances
 
   preparer_opt
 
