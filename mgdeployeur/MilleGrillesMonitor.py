@@ -405,6 +405,8 @@ class MonitorMilleGrille:
                 self.privatiser_noeud(commande['commande'])
             elif routing == ConstantesMonitor.COMMANDE_MAJ_CERTIFICATS_WEB:
                 self.__renouvellement_certificats.maj_certificats_web_requetes(commande['commande'])
+            elif routing == ConstantesMonitor.COMMANDE_AJOUTER_COMPTE_MQ:
+                self.__renouvellement_certificats.ajouter_compte_mq(commande['commande'])
             else:
                 self.__logger.error("Commande inconnue, routing: %s" % routing)
 
@@ -722,6 +724,18 @@ class RenouvellementCertificats:
 
         # Ceduler redemarrage de nginx pour utiliser le nouveau certificat
         self.__monitor.ceduler_redemarrage(nom_service=ConstantesEnvironnementMilleGrilles.SERVICE_NGINX)
+
+    def ajouter_compte_mq(self, commande: dict):
+        """
+        Ajoute un compte MQ avec un certificat.
+        :param commande:
+        :return:
+        """
+        certificat_pem = commande[ConstantesPki.LIBELLE_CERTIFICAT_PEM]
+        enveloppe = EnveloppeCertificat(certificat_pem=certificat_pem)
+        if enveloppe.date_valide():
+            self.__deployeur.ajouter_compte_mq(enveloppe)
+
 
 class GestionnairePublique:
     """

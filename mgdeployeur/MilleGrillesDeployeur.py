@@ -481,7 +481,7 @@ class DeployeurDockerMilleGrille:
 
                 if initialser_comptes:
                     # Ajouter le compte usager (subject et role) a MQ
-                    self.__gestionnaire_rabbitmq.ajouter_compte(enveloppe)
+                    self.ajouter_compte_mq(enveloppe)
 
                 # Conserver plus recent cert pour le mapping de secrets
                 date_concat = enveloppe.date_valide_concat()
@@ -496,6 +496,16 @@ class DeployeurDockerMilleGrille:
         # Enregistrer_fichier maj
         with open(etat_filename, 'w') as fichier:
             fichier.write(json.dumps(etat_mq))
+
+    def ajouter_compte_mq(self, enveloppe, role: str = 'noeud'):
+        """
+        Ajouter le compte usager (subject et role) a MQ
+        :param enveloppe:
+        :param role:
+        :return:
+        """
+        self.__logger.debug("Creation compte MQ: %s" % enveloppe.subject_rfc4514_string_mq())
+        self.__gestionnaire_rabbitmq.ajouter_compte(enveloppe)
 
     def preparer_reseau(self):
         nom_reseau = 'mg_%s_net' % self.__nom_millegrille
