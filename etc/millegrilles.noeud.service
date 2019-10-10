@@ -1,0 +1,11 @@
+[Unit]
+Description=Service de noeud d'une MilleGrille.
+
+[Service]
+Type=simple
+PIDFile=/var/run/millegrilles/mg-noeud.pid
+ExecStart=/opt/millegrilles/bin/noeud.sh start
+ExecStop=/opt/millegrilles/bin/noeud.sh stop
+
+[Install]
+WantedBy=multi-user.target
