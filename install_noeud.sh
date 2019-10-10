@@ -72,7 +72,39 @@ preparer_service() {
 }
 
 preparer_requete_csr() {
-  $MILLEGRILLES_BIN/creer_csr_noeud.sh $NOM_MILLEGRILLE
+  echo "[INFO] Creation d'une requete de certificat"
+  sudo $MILLEGRILLES_BIN/creer_csr_noeud.sh $NOM_MILLEGRILLE
+
+  HOSTNAME=`hostname`
+  CERT_NAME=${HOSTNAME}.noeud.${NOM_MILLEGRILLE}.cert.pem
+  CERT_FOLDER=/opt/millegrilles/$NOM_MILLEGRILLE/pki/certs/
+  WEB_CERT=mg-$NOM_MILLEGRILLE.local/certs/$CERT_NAME
+
+  for essai in {1..20}; do
+    echo "[INFO] Debut d'attente du certificat sur $WEB_CERT"
+    wget $WEB_CERT -O $CERT_FOLDER/$CERT_NAME > /dev/null 2> /dev/null
+    RESULTAT=$?
+    if [ $RESULTAT -eq 4 ]; then
+      echo "[FAIL] Serveur web de la millegrille introuvable"
+      break
+    elif [ $RESULTAT -eq 0 ]; then
+      echo "[OK] Certificat recupere"
+    else
+      # On attend, le fichier n'est pas rendu
+      echo "[INFO] Essai $essai de 20"
+      sleep 15
+    fi
+  done
+
+  if [ $essai -eq 20 ]; then
+    echo "[FAIL] Echec, le certificat doit etre installe manuellement dans le fichier $CERT_FOLDER/$CERT_NAME"
+  fi
+}
+
+creer_configuration_json() {
+  echo "[INFO] Creation du fichier de configuration /opt/millegrilles/etc/noeud_cle.json"
+  cat etc/noeud_cle.json.template | sed s/\$\{NOM_MILLEGRILLE\}/dev3/g | sudo tee /opt/millegrilles/etc/noeud_cle.json
+  echo "[OK] Fichier de configuration cree"
 }
 
 # Execution de l'installation
@@ -85,6 +117,8 @@ installer() {
 
   preparer_opt
 
+  echo "[INFO] Installation des composantes terminee. On commence la configuration."
+  creer_configuration_json
   preparer_requete_csr
 }
 
