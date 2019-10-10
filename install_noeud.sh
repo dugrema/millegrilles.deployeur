@@ -82,7 +82,7 @@ preparer_requete_csr() {
 
   for essai in {1..20}; do
     echo "[INFO] Debut d'attente du certificat sur $WEB_CERT"
-    wget $WEB_CERT -O $CERT_FOLDER/$CERT_NAME > /dev/null 2> /dev/null
+    sudo wget -O $CERT_FOLDER/$CERT_NAME $WEB_CERT
     RESULTAT=$?
     if [ $RESULTAT -eq 4 ]; then
       echo "[FAIL] Serveur web de la millegrille introuvable"
