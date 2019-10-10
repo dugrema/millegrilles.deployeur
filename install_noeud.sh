@@ -89,6 +89,7 @@ preparer_requete_csr() {
       break
     elif [ $RESULTAT -eq 0 ]; then
       echo "[OK] Certificat recupere"
+      break
     else
       # On attend, le fichier n'est pas rendu
       echo "[INFO] Essai $essai de 20"
