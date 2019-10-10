@@ -4,6 +4,13 @@
 sudo echo "Installation d'un noeud de MilleGrilles"
 source etc/paths.env
 
+if [ -z $1 ]; then
+  echo "Il faut founir le nom punicode de la millegrille"
+  exit 1
+fi
+
+export NOM_MILLEGRILLE=$1
+
 installer_autres_deps() {
   # Random number gens hardware, pip3, avahi-daemon
   sudo apt install -y rng-tools python3-pip avahi-daemon
@@ -60,7 +67,7 @@ preparer_opt() {
 }
 
 preparer_requete_csr() {
-  $MILLEGRILLES_BIN/creer_csr_noeud.sh
+  $MILLEGRILLES_BIN/creer_csr_noeud.sh $NOM_MILLEGRILLE
 }
 
 # Execution de l'installation
@@ -72,11 +79,13 @@ installer() {
   installer_deployeur
 
   preparer_opt
+
+  preparer_requete_csr
 }
 
 preparer_rpi() {
   ARCH=`uname -m`
-  if [ $ARCH == 'aarch64' ]; then
+  if [ $ARCH == 'aarch64' || $ARCH == 'armv6l' || $ARCH == 'armv7l' ]; then
     echo "Preparation speciale pour un RaspberryPi"
 
     echo "[INFO] S'assurer que le swap est active - il faut au moins 1G de swap"
