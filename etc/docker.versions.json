@@ -5,7 +5,7 @@
     "mongoexpress": "mg_mongo_express:0.49_4",
     "mq": "mg_rabbitmq:3.7-management_10",
     "mg-python": "millegrilles_consignation_python_main:1.14.34",
-    "nginx": "mg_nginx:1.17_1",
+    "nginx": "mg_nginx:1.17_2",
     "vitrinereact": "vitrine_react:1.14.10",
     "certbot": "mg_certbot_scripts:0.39_0.2"
 }
