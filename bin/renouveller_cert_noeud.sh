@@ -3,6 +3,8 @@
 if [ -z $1 ]; then echo "Il faut fournir le nom de la MilleGrille en parametres"; fi
 
 export NOM_MILLEGRILLE=$1
+MILLEGRILLES_BIN=/opt/millegrilles/bin
+CERT_FOLDER=/opt/millegrilles/$NOM_MILLEGRILLE/pki/certs/
 
 preparer_requete_csr() {
   echo "[INFO] Creation d'une requete de certificat"
@@ -10,7 +12,6 @@ preparer_requete_csr() {
 
   HOSTNAME=`hostname`
   CERT_NAME=${HOSTNAME}.noeud.${NOM_MILLEGRILLE}.cert.pem
-  CERT_FOLDER=/opt/millegrilles/$NOM_MILLEGRILLE/pki/certs/
   WEB_CERT=mg-$NOM_MILLEGRILLE.local/certs/$CERT_NAME
 
   echo "[INFO] Telechargement du CA Cert"
