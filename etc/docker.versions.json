@@ -1,6 +1,6 @@
 {
     "consignationfichiers": "consignationfichiers:1.14.3",
-    "coupdoeilreact": "coupdoeil_react:1.14.11",
+    "coupdoeilreact": "coupdoeil_react:1.14.12",
     "mongo": "mg_mongo:4.0_4",
     "mongoexpress": "mg_mongo_express:0.49_4",
     "mq": "mg_rabbitmq:3.7-management_10",
