@@ -10,6 +10,7 @@ if [ -z $1 ]; then
 fi
 
 export NOM_MILLEGRILLE=$1
+export REP_INSTALL=$PWD
 
 installer_autres_deps() {
   # Random number gens hardware, pip3, avahi-daemon
@@ -18,7 +19,6 @@ installer_autres_deps() {
 
 installer_dependances() {
   echo "[INFO] Installer deployeur Python et dependances"
-  REP_INSTALL=$PWD
   MG_CONSIGNATION=$REP_INSTALL/tmp/MilleGrilles.consignation.python
   MG_RASPBERRYPI=$REP_INSTALL/tmp/MilleGrilles.raspberrypi
 
@@ -80,43 +80,6 @@ preparer_service() {
   sudo systemctl enable millegrilles.noeud
 }
 
-preparer_requete_csr() {
-  echo "[INFO] Creation d'une requete de certificat"
-  sudo $MILLEGRILLES_BIN/creer_csr_noeud.sh $NOM_MILLEGRILLE
-
-  HOSTNAME=`hostname`
-  CERT_NAME=${HOSTNAME}.noeud.${NOM_MILLEGRILLE}.cert.pem
-  CERT_FOLDER=/opt/millegrilles/$NOM_MILLEGRILLE/pki/certs/
-  WEB_CERT=mg-$NOM_MILLEGRILLE.local/certs/$CERT_NAME
-
-  echo "[INFO] Telechargement du CA Cert"
-  sudo wget -O $CERT_FOLDER/${NOM_MILLEGRILLE}.CA.cert.pem http://mg-$NOM_MILLEGRILLE.local/certs/${NOM_MILLEGRILLE}.CA.cert.pem
-
-  set +e
-  for essai in {1..20}; do
-    echo "[INFO] Debut d'attente du certificat sur $WEB_CERT"
-    sudo wget -O $CERT_FOLDER/$CERT_NAME $WEB_CERT > /dev/null 2> /dev/null
-    RESULTAT=$?
-    if [ $RESULTAT -eq 4 ]; then
-      echo "[FAIL] Serveur web de la millegrille introuvable"
-      break
-    elif [ $RESULTAT -eq 0 ]; then
-      echo "[OK] Certificat recupere"
-      break
-    else
-      # On attend, le fichier n'est pas rendu
-      echo "[INFO] Essai $essai de 20 (code wget=$RESULTAT)"
-      sleep 15
-    fi
-  done
-
-  if [ $essai -eq 20 ]; then
-    echo "[FAIL] Echec, le certificat doit etre installe manuellement dans le fichier $CERT_FOLDER/$CERT_NAME"
-  else
-    sudo ln -s $CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
-  fi
-}
-
 creer_configuration_json() {
   echo "[INFO] Creation du fichier de configuration /opt/millegrilles/etc/noeud_cle.json"
   cat etc/noeud_cle.json.template | sed s/\$\{NOM_MILLEGRILLE\}/dev3/g | sudo tee /opt/millegrilles/etc/noeud_cles.json
@@ -142,7 +105,7 @@ installer() {
 
   echo "[INFO] Installation des composantes terminee. On commence la configuration."
   creer_configuration_json
-  preparer_requete_csr
+  $REP_INSTALL/bin/renouveller_cert_noeud.sh
 
   demarrer_service
 }
