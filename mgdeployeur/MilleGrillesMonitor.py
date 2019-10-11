@@ -14,6 +14,7 @@ from millegrilles.domaines.Pki import ConstantesPki
 
 from threading import Thread, Event
 
+import subprocess
 import logging
 import argparse
 import socket
@@ -35,6 +36,7 @@ class ConstantesMonitor:
     COMMANDE_PRIVATISER_NOEUD_DOCKER = 'commande.monitor.privatiserNoeudDocker'
     COMMANDE_MAJ_CERTIFICATS_WEB = 'commande.monitor.maj.cerificatsWeb'
     COMMANDE_AJOUTER_COMPTE_MQ = 'commande.monitor.ajouterCompteMq'
+    COMMANDE_FERMER_MILLEGRILLES = 'commande.monitor.fermerMilleGrilles'
 
     REPONSE_DOCUMENT_CLEWEB = 'reponse.document.clesWeb'
     REPONSE_CLE_CLEWEB = 'reponse.cle.clesWeb'
@@ -407,6 +409,8 @@ class MonitorMilleGrille:
                 self.__renouvellement_certificats.maj_certificats_web_requetes(commande['commande'])
             elif routing == ConstantesMonitor.COMMANDE_AJOUTER_COMPTE_MQ:
                 self.__renouvellement_certificats.ajouter_compte_mq(commande['commande'])
+            elif routing == ConstantesMonitor.COMMANDE_FERMER_MILLEGRILLES:
+                self.fermer_millegrilles(commande['commande'])
             else:
                 self.__logger.error("Commande inconnue, routing: %s" % routing)
 
@@ -531,6 +535,10 @@ class MonitorMilleGrille:
         liste = self.get_liste_nodes()
         domaine = 'noeuds.monitor.docker.nodes'
         self.generateur_transactions.emettre_message({'noeuds': liste}, domaine)
+
+    def fermer_millegrilles(self, commande):
+        resultat = subprocess.call(['sudo', '/sbin/shutdown', '-h', 'now'])
+        self.__logger.warning("Shutdown millegrilles demande, resultat: %d" % resultat)
 
 
 class RenouvellementCertificats:
