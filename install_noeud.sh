@@ -111,6 +111,7 @@ installer() {
 }
 
 preparer_rpi() {
+  set -e
   ARCH=`uname -m`
   if [ $ARCH == 'aarch64' ] || [ $ARCH == 'armv6l' ] || [ $ARCH == 'armv7l' ]; then
     echo "Preparation speciale pour un RaspberryPi"
@@ -125,8 +126,36 @@ preparer_rpi() {
       echo "/swapfile  swap  swap  defaults  0 0" | sudo tee -a /etc/fstab
     fi
 
-    # Pour RPi 64bit (pip requirement: lxml)
-    sudo apt install -y libxml2-dev libxmlsec1-dev python3-cffi
+    # Pour RPi 64bit (pip requirement: lxml, RF24)
+    sudo apt install -y \
+             libxml2-dev libxmlsec1-dev python3-cffi \
+             python3-setuptools python3-rpi.gpio \
+             libboost-python1.62-dev
+
+    # Fix pour rendre lib disponible pour build RF24
+    sudo ln -s /usr/lib/arm-linux-gnueabihf/libboost_python-py36.so /usr/lib/arm-linux-gnueabihf/libboost_python3.so
+    
+    # Installer drivers RF24 pour Python3
+    git -C $REP_INSTALL/tmp clone https://github.com/nRF24/RF24.git
+    git -C $REP_INSTALL/tmp clone https://github.com/nRF24/RF24Network.git
+    git -C $REP_INSTALL/tmp clone https://github.com/nRF24/RF24Mesh.git
+    
+    cd $REP_INSTALL/tmp/RF24
+    sudo make install
+    cd pyRF24
+    sudo python3 setup.py install
+    
+    cd $REP_INSTALL/tmp/RF24Network
+    sudo make install
+    cd RPi/pyRF24Network
+    sudo python3 setup.py install
+
+    cd $REP_INSTALL/tmp/RF24Mesh
+    sudo make install
+    cd pyRF24Mesh/
+    sudo python3 setup.py install
+    
+    cd $REP_INSTALL
   fi
 }
 
