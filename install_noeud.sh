@@ -23,7 +23,6 @@ installer_dependances() {
   MG_RASPBERRYPI=$REP_INSTALL/tmp/MilleGrilles.raspberrypi
 
   set -e
-  mkdir -p tmp/
   cd tmp/
 
   # Installer MilleGrilles.consignation.python
@@ -76,8 +75,8 @@ preparer_opt() {
 }
 
 preparer_service() {
-  sudo cp etc/millegrilles.noeud.service /etc/systemd/system
-  sudo systemctl enable millegrilles.noeud
+  sudo cp etc/millegrilles.noeud.service /lib/systemd
+  sudo systemctl daemon-reload
 }
 
 creer_configuration_json() {
@@ -90,11 +89,14 @@ demarrer_service() {
   echo "[INFO] Tout est pret, le service va etre demarre pour voir si tout fonctionne."
   echo "[INFO] Les modules utilises peuvent etre configures avec /opt/millegrilles/noeud.json"
   echo "[INFO] Voir /opt/millegrilles/noeud.json.exemple pour des exemples"
+  sudo systemctl enable millegrilles.noeud
   sudo systemctl start millegrilles.noeud
 }
 
 # Execution de l'installation
 installer() {
+  mkdir -p tmp/
+
   # Au besoin, preparer l'environnement du RPi avant le reste. Ajoute swapfile et autres dependances
   preparer_rpi
 
@@ -105,9 +107,10 @@ installer() {
 
   echo "[INFO] Installation des composantes terminee. On commence la configuration."
   creer_configuration_json
-  $REP_INSTALL/bin/renouveller_cert_noeud.sh
+  $REP_INSTALL/bin/renouveller_cert_noeud.sh $NOM_MILLEGRILLE
 
-  demarrer_service
+  preparer_service
+  # demarrer_service
 }
 
 preparer_rpi() {
@@ -118,12 +121,14 @@ preparer_rpi() {
 
     echo "[INFO] S'assurer que le swap est active - il faut au moins 1G de swap"
     if [ ! -f /swapfile ]; then
+      echo "[INFO] Creation du swap file"
       sudo fallocate -l 1G /swapfile
       sudo dd if=/dev/zero of=/swapfile bs=1024 count=1048576
       sudo chmod 600 /swapfile
       sudo mkswap /swapfile
       sudo swapon /swapfile
       echo "/swapfile  swap  swap  defaults  0 0" | sudo tee -a /etc/fstab
+      echo "[OK] Swap file cree"
     fi
 
     # Pour RPi 64bit (pip requirement: lxml, RF24)
@@ -133,28 +138,40 @@ preparer_rpi() {
              libboost-python1.62-dev
 
     # Fix pour rendre lib disponible pour build RF24
-    sudo ln -s /usr/lib/arm-linux-gnueabihf/libboost_python-py36.so /usr/lib/arm-linux-gnueabihf/libboost_python3.so
+    if [ ! -f /usr/lib/arm-linux-gnueabihf/libboost_python3.so ]; then
+      sudo ln -s /usr/lib/arm-linux-gnueabihf/libboost_python-py36.so /usr/lib/arm-linux-gnueabihf/libboost_python3.so
+      echo "[OK] Creation lien /usr/lib/arm-linux-gnueabihf/libboost_python3.so"
+    fi
     
     # Installer drivers RF24 pour Python3
+    if [ ! -d $REP_INSTALL/tmp/RF24 ]; then
     git -C $REP_INSTALL/tmp clone https://github.com/nRF24/RF24.git
-    git -C $REP_INSTALL/tmp clone https://github.com/nRF24/RF24Network.git
-    git -C $REP_INSTALL/tmp clone https://github.com/nRF24/RF24Mesh.git
-    
+    fi
+    if [ ! -d $REP_INSTALL/tmp/RF24Network ]; then
+      git -C $REP_INSTALL/tmp clone https://github.com/nRF24/RF24Network.git
+    fi
+    if [ ! -d $REP_INSTALL/tmp/RF24Mesh ]; then
+      git -C $REP_INSTALL/tmp clone https://github.com/nRF24/RF24Mesh.git
+    fi
+
     cd $REP_INSTALL/tmp/RF24
     sudo make install
     cd pyRF24
     sudo python3 setup.py install
-    
+    echo "[OK] Librarie RF24 installee"
+
     cd $REP_INSTALL/tmp/RF24Network
     sudo make install
     cd RPi/pyRF24Network
     sudo python3 setup.py install
+    echo "[OK] Librarie RF24Network installee"
 
     cd $REP_INSTALL/tmp/RF24Mesh
     sudo make install
     cd pyRF24Mesh/
     sudo python3 setup.py install
-    
+    echo "[OK] Librarie RF24Mesh installee"
+
     cd $REP_INSTALL
   fi
 }
