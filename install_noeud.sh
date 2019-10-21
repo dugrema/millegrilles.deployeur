@@ -135,6 +135,7 @@ preparer_rpi() {
     sudo apt install -y \
              libxml2-dev libxmlsec1-dev python3-cffi \
              python3-setuptools python3-rpi.gpio \
+             python3-smbus python3-dev i2c-tools \
              libboost-python1.62-dev
 
     # Fix pour rendre lib disponible pour build RF24
