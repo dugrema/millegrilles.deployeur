@@ -14,7 +14,7 @@ CURDATE=`date +%Y%m%d%H%M%S`
 
 REP_CERTS=$REP_MILLEGRILLE/$MILLEGRILLES_CERTS
 REP_KEYS=$REP_MILLEGRILLE/$MILLEGRILLES_KEYS
-HOSTNAME=`cat /etc/hostname`
+HOSTNAME=`hostname`
 
 creer_cert_noeud() {
   # Params
