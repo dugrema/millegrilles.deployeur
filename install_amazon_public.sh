@@ -55,10 +55,10 @@ creer_millegrille() {
   if [ ! -z $NOM_MILLEGRILLE ]; then
     $MILLEGRILLES_BIN/creer_millegrille.sh $NOM_MILLEGRILLE
 
-    sudo -u mg_deployeur /opt/millegrilles/bin/deployer --info --creer $NOM_MILLEGRILLE
+    # sudo -u mg_deployeur /opt/millegrilles/bin/deployer --info --creer $NOM_MILLEGRILLE
 
     echo "[INFO] Creer certificat pour le noeud"
-    INSTALLATION_MANUELLE=1 $REP_INSTALL/bin/renouveller_cert_noeud.sh $NOM_MILLEGRILLE
+    sudo INSTALLATION_MANUELLE=1 $REP_INSTALL/bin/renouveller_cert_noeud.sh $NOM_MILLEGRILLE
 
   else
     echo

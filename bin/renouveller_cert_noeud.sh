@@ -36,6 +36,8 @@ preparer_requete_csr() {
       fi
     done
   else
+    echo "Copier la requete de certificat et coller dans coup d'oeil. Appuuyer sur enter pour coller le certificat."
+    read
     sudo vi $CERT_NAME
   fi
 
