@@ -38,11 +38,11 @@ preparer_requete_csr() {
   else
     echo "Copier la requete de certificat et coller dans coup d'oeil. Appuuyer sur enter pour coller le certificat."
     read
-    sudo vi $CERT_NAME
+    sudo vi $CERT_FOLDER/$CERT_NAME
   fi
 
-  if [ -f $CERT_NAME ]; then
-    sudo ln -s $CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
+  if [ -f $CERT_FOLDER/$CERT_NAME ]; then
+    sudo ln -s $CERT_FOLDER/$CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
   else
     echo "[FAIL] Echec, le certificat doit etre installe manuellement dans le fichier $CERT_FOLDER/$CERT_NAME"
   fi
