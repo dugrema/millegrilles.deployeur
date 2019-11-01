@@ -4,18 +4,13 @@
 sudo echo "Installation de MilleGrilles"
 source etc/paths.env
 
-installer_autres_deps() {
-  # Random number gens hardware, pip3, avahi-daemon
-  sudo apt install -y rng-tools python3-pip avahi-daemon
-
-}
-
 preparer_comptes() {
   # set -e  # Arreter execution sur erreur
   echo "[INFO] Preparer comptes millegrilles"
 
   # Comptes utilises par containers pour acceder au systeme de fichiers local
   sudo groupadd -g $MILLEGRILLES_GROUP_GID $MILLEGRILLES_GROUP || true
+  sudo useradd -u $MILLEGRILLES_USER_MAITREDESCLES_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_MAITREDESCLES || true
   sudo useradd -u $MILLEGRILLES_USER_PYTHON_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_PYTHON || true
   sudo useradd -u $MILLEGRILLES_USER_MONGO_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_MONGO || true
 
