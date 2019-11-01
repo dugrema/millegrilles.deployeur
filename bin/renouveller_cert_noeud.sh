@@ -14,31 +14,35 @@ preparer_requete_csr() {
   CERT_NAME=${HOSTNAME}.noeud.${NOM_MILLEGRILLE}.cert.pem
   WEB_CERT=mg-$NOM_MILLEGRILLE.local/certs/$CERT_NAME
 
-  echo "[INFO] Telechargement du CA Cert"
-  sudo wget -O $CERT_FOLDER/${NOM_MILLEGRILLE}.CA.cert.pem http://mg-$NOM_MILLEGRILLE.local/certs/${NOM_MILLEGRILLE}.CA.cert.pem
+  if [ -z $INSTALLATION_MANUELLE ]; then
+    echo "[INFO] Telechargement du CA Cert"
+    sudo wget -O $CERT_FOLDER/${NOM_MILLEGRILLE}.CA.cert.pem http://mg-$NOM_MILLEGRILLE.local/certs/${NOM_MILLEGRILLE}.CA.cert.pem
 
-  set +e
-  for essai in {1..20}; do
-    echo "[INFO] Debut d'attente du certificat sur $WEB_CERT"
-    sudo wget -O $CERT_FOLDER/$CERT_NAME $WEB_CERT > /dev/null 2> /dev/null
-    RESULTAT=$?
-    if [ $RESULTAT -eq 4 ]; then
-      echo "[FAIL] Serveur web de la millegrille introuvable"
-      break
-    elif [ $RESULTAT -eq 0 ]; then
-      echo "[OK] Certificat recupere"
-      break
-    else
-      # On attend, le fichier n'est pas rendu
-      echo "[INFO] Essai $essai de 20 (code wget=$RESULTAT)"
-      sleep 15
-    fi
-  done
-
-  if [ $essai -eq 20 ]; then
-    echo "[FAIL] Echec, le certificat doit etre installe manuellement dans le fichier $CERT_FOLDER/$CERT_NAME"
+    set +e
+    for essai in {1..20}; do
+      echo "[INFO] Debut d'attente du certificat sur $WEB_CERT"
+      sudo wget -O $CERT_FOLDER/$CERT_NAME $WEB_CERT > /dev/null 2> /dev/null
+      RESULTAT=$?
+      if [ $RESULTAT -eq 4 ]; then
+        echo "[FAIL] Serveur web de la millegrille introuvable"
+        break
+      elif [ $RESULTAT -eq 0 ]; then
+        echo "[OK] Certificat recupere"
+        break
+      else
+        # On attend, le fichier n'est pas rendu
+        echo "[INFO] Essai $essai de 20 (code wget=$RESULTAT)"
+        sleep 15
+      fi
+    done
   else
+    sudo vi $CERT_NAME
+  fi
+
+  if [ -f $CERT_NAME ]; then
     sudo ln -s $CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
+  else
+    echo "[FAIL] Echec, le certificat doit etre installe manuellement dans le fichier $CERT_FOLDER/$CERT_NAME"
   fi
 }
 
