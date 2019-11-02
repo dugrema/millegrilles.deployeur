@@ -15,6 +15,7 @@ CURDATE=`date +%Y%m%d%H%M%S`
 REP_CERTS=$REP_MILLEGRILLE/$MILLEGRILLES_CERTS
 REP_KEYS=$REP_MILLEGRILLE/$MILLEGRILLES_KEYS
 HOSTNAME=`hostname`
+if [ -z $URL_PUBLIC ]; then URL_PUBLIC=`hostname --fqdn`; fi
 
 creer_cert_noeud() {
   # Params
@@ -41,10 +42,12 @@ creer_cert_noeud() {
   REQ=$REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.req.pem
   SUBJECT="/O=$NOM_MILLEGRILLE/OU=$TYPE_NOEUD/CN=$HOSTNAME"
 
-  NOM_NOEUD= \
+  NOM_NOEUD=$HOSTNAME \
+  URL_PUBLIC=$URL_PUBLIC \
   openssl req -newkey rsa:2048 -sha512 -nodes \
               -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
               -out $REQ -outform PEM -keyout $KEY -keyform PEM \
+              -reqexts noeud_req_public_extensions \
               -subj $SUBJECT
 
   ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}.key.pem
