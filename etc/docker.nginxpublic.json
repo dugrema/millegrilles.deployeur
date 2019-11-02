@@ -10,12 +10,12 @@
       "Env": [
         "NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
         "NGINX_CONFIG_FILE=millegrilles.conf",
-        "WEB_CERT=pki.millegrilles.web.fullchain",
-        "WEB_KEY=pki.millegrilles.web.key",
+        "WEB_CERT=/run/secrets/pki.millegrilles.web.fullchain",
+        "WEB_KEY=/run/secrets/pki.millegrilles.web.key",
         "WEB_URL=${URL_WEB}",
         "WEB_COUPDOEIL=${URL_COUPDOEIL}",
-        "LOCAL_CERT=pki.millegrilles.ssl.fullchain",
-        "LOCAL_KEY=pki.millegrilles.ssl.key",
+        "LOCAL_CERT=/run/secrets/pki.millegrilles.ssl.fullchain",
+        "LOCAL_KEY=/run/secrets/pki.millegrilles.ssl.key",
         "LOCAL_URL=mg-${NOM_MILLEGRILLE}.local",
         "LOCAL_COUPDOEIL=coupdoeil-${NOM_MILLEGRILLE}.local"
       ],
