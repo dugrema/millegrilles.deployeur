@@ -3,7 +3,7 @@
     "coupdoeilreact": "coupdoeil_react:1.15.0",
     "mongo": "mg_mongo:4.0_4",
     "mongoexpress": "mg_mongo_express:0.49_4",
-    "mq": "mg_rabbitmq:3.7-management_10",
+    "mq": "mg_rabbitmq.x86_64:3.8-management_0",
     "mg-python": "millegrilles_consignation_python_main:1.15.6",
     "nginx": "mg_nginx:1.17_2",
     "vitrinereact": "vitrine_react:1.15.0",
