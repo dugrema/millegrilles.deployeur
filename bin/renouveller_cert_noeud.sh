@@ -42,7 +42,7 @@ preparer_requete_csr() {
   fi
 
   if [ -f $CERT_FOLDER/$CERT_NAME ]; then
-    sudo ln -s $CERT_FOLDER/$CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
+    sudo ln -sf $CERT_FOLDER/$CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
   else
     echo "[FAIL] Echec, le certificat doit etre installe manuellement dans le fichier $CERT_FOLDER/$CERT_NAME"
   fi

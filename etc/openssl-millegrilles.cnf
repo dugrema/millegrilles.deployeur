@@ -2,6 +2,7 @@ HOME            = ../etc
 RANDFILE        = $ENV::HOME/.rnd
 NOM_MILLEGRILLE = $ENV::NOM_MILLEGRILLE
 NOM_NOEUD       = $ENV::NOM_NOEUD
+URL_PUBLIC      = $ENV::URL_PUBLIC
 base_dir        = /opt/millegrilles/$NOM_MILLEGRILLE/pki
 CERTS           = $base_dir/certs
 KEYS            = $base_dir/keys
@@ -105,11 +106,19 @@ organizationalUnitName = supplied
 commonName = supplied
 
 [ noeud_req_extensions ]
-
 subjectKeyIdentifier   = hash
 authorityKeyIdentifier = keyid,issuer
 basicConstraints       = CA:FALSE
 keyUsage               = digitalSignature, nonRepudiation, keyEncipherment
+subjectAltName         = @noeud_alts
+
+[ noeud_req_public_extensions ]
+subjectAltName         = @noeud_alts
+
+[ noeud_alts ]
+# Section swarm docker (sans suffixe)
+DNS.1  = $NOM_NOEUD.local
+DNS.2  = $URL_PUBLIC
 
 ####################################################################
 [ middleware_req_extensions ]
