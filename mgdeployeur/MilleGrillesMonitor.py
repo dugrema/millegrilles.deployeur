@@ -589,20 +589,18 @@ class RenouvellementCertificats:
         :param ajouter_url_public: Si la millegrille a ete publiee, s'assurer de mettre les URLs publics dans alt names
         :return:
         """
-        if ajouter_url_public:
-            if role == 'mq':
-                # Ajouter le nom domaine public au besoin
-
-                # Aller chercher document certificat dans Pki
-                domaine_requete = '%s.%s' % (ConstantesParametres.DOMAINE_NOM, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL)
-                requetes = {
-                    'requetes': [{
-                        'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesParametres.LIBVAL_CONFIGURATION_PUBLIQUE}
-                    }]
-                }
-                generateur_transactions = self.__monitor.generateur_transactions
-                generateur_transactions.transmettre_requete(
-                    requetes, domaine_requete, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL, self.__monitor.queue_reponse)
+        if ajouter_url_public and role in ['mq']:
+            # Ajouter le nom domaine public au besoin
+            # Aller chercher document certificat dans Pki
+            domaine_requete = '%s.%s' % (ConstantesParametres.DOMAINE_NOM, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL)
+            requetes = {
+                'requetes': [{
+                    'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesParametres.LIBVAL_CONFIGURATION_PUBLIQUE}
+                }]
+            }
+            generateur_transactions = self.__monitor.generateur_transactions
+            generateur_transactions.transmettre_requete(
+                requetes, domaine_requete, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL, self.__monitor.queue_reponse)
 
         else:
             self.transmettre_demande_renouvellement(role, None)
