@@ -584,6 +584,7 @@ class RenouvellementCertificats:
             'node': self.__monitor.node_name,
         }
 
+        # Conserver la demande en memoire pour combiner avec le certificat, inclue la cle privee
         persistance_memoire = {
             'clecert': clecert,
         }
