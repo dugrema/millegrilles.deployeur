@@ -1,10 +1,10 @@
 {
     "consignationfichiers": "consignationfichiers:1.14.3",
-    "coupdoeilreact": "coupdoeil_react:1.15.0",
+    "coupdoeilreact": "coupdoeil_react:1.15.1",
     "mongo": "mg_mongo:4.0_4",
     "mongoexpress": "mg_mongo_express:0.49_4",
     "mq": "mg_rabbitmq.x86_64:3.8-management_0",
-    "mg-python": "millegrilles_consignation_python_main:1.15.6",
+    "mg-python": "millegrilles_consignation_python_main:1.15.7",
     "nginx": "mg_nginx:1.17_6",
     "vitrinereact": "vitrine_react:1.15.0",
     "certbot": "mg_certbot_scripts:0.39_0.2"
