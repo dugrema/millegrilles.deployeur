@@ -35,11 +35,13 @@ class ConstantesMonitor:
     COMMANDE_PUBLIER_NOEUD_DOCKER = 'commande.monitor.publierNoeudDocker'
     COMMANDE_PRIVATISER_NOEUD_DOCKER = 'commande.monitor.privatiserNoeudDocker'
     COMMANDE_MAJ_CERTIFICATS_WEB = 'commande.monitor.maj.cerificatsWeb'
+    COMMANDE_MAJ_CERTIFICATS_PAR_ROLE = 'commande.monitor.maj.certificatsParRole'
     COMMANDE_AJOUTER_COMPTE_MQ = 'commande.monitor.ajouterCompteMq'
     COMMANDE_FERMER_MILLEGRILLES = 'commande.monitor.fermerMilleGrilles'
 
     REPONSE_DOCUMENT_CLEWEB = 'reponse.document.clesWeb'
     REPONSE_CLE_CLEWEB = 'reponse.cle.clesWeb'
+    REPONSE_MQ_PUBLIC_URL = 'reponse.mq.public_url'
 
 
 class DeployeurDaemon(Daemon):
@@ -407,6 +409,8 @@ class MonitorMilleGrille:
                 self.privatiser_noeud(commande['commande'])
             elif routing == ConstantesMonitor.COMMANDE_MAJ_CERTIFICATS_WEB:
                 self.__renouvellement_certificats.maj_certificats_web_requetes(commande['commande'])
+            elif routing == ConstantesMonitor.COMMANDE_MAJ_CERTIFICATS_PAR_ROLE:
+                self.__renouvellement_certificats.executer_commande_renouvellement(commande['commande'])
             elif routing == ConstantesMonitor.COMMANDE_AJOUTER_COMPTE_MQ:
                 self.__renouvellement_certificats.ajouter_compte_mq(commande['commande'])
             elif routing == ConstantesMonitor.COMMANDE_FERMER_MILLEGRILLES:
@@ -571,11 +575,50 @@ class RenouvellementCertificats:
             if date_courante > date_comparaison:
                 self.__logger.info("Certificat role %s du pour renouvellement (expiration: %s)" % (role, str(date_exp)))
 
-                self.transmettre_demande_renouvellement(role)
+                self.preparer_demande_renouvellement(role)
 
-    def transmettre_demande_renouvellement(self, role):
+    def executer_commande_renouvellement(self, commande):
+        roles = commande['roles']
+        for role in roles:
+            self.preparer_demande_renouvellement(role, ajouter_url_public=True)
+
+    def preparer_demande_renouvellement(self, role, ajouter_url_public=False):
+        """
+        Demande un renouvellement pour le certificat.
+        :param role: Module pour lequel le certificat doit etre genere
+        :param ajouter_url_public: Si la millegrille a ete publiee, s'assurer de mettre les URLs publics dans alt names
+        :return:
+        """
+        if ajouter_url_public:
+            if role == 'mq':
+                # Ajouter le nom domaine public au besoin
+
+                # Aller chercher document certificat dans Pki
+                domaine_requete = '%s.%s' % (ConstantesParametres.DOMAINE_NOM, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL)
+                requetes = {
+                    'requetes': [{
+                        'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesParametres.LIBVAL_CONFIGURATION_PUBLIQUE}
+                    }]
+                }
+                generateur_transactions = self.__monitor.generateur_transactions
+                generateur_transactions.transmettre_requete(
+                    requetes, domaine_requete, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL, self.__monitor.queue_reponse)
+
+        else:
+            self.transmettre_demande_renouvellement(role, None)
+
+    def transmettre_demande_renouvellement_urlpublics(self, role, resultats: dict):
+        resultat = resultats['resultats'][0][0]
+        mq_url_public = resultat.get(ConstantesParametres.DOCUMENT_PUBLIQUE_URL_MQ)
+        urls = None
+        if mq_url_public is not None:
+            urls = [mq_url_public]
+        self.transmettre_demande_renouvellement(role, urls_publics=urls)
+
+    def transmettre_demande_renouvellement(self, role, urls_publics: list = None):
         generateur_csr = GenerateurCertificat(self.__nom_millegrille)
-        clecert = generateur_csr.preparer_key_request(role, self.__monitor.node_name)
+
+        clecert = generateur_csr.preparer_key_request(role, self.__monitor.node_name, alt_names=urls_publics)
 
         demande = {
             'csr': clecert.csr_bytes.decode('utf-8'),
@@ -584,6 +627,7 @@ class RenouvellementCertificats:
             'node': self.__monitor.node_name,
         }
 
+        # Conserver la demande en memoire pour combiner avec le certificat, inclue la cle privee
         persistance_memoire = {
             'clecert': clecert,
         }
@@ -871,8 +915,11 @@ class MonitorMessageHandler(BaseCallback):
             self.__logger.debug("Reception cle decryptage cle")
             self.__renouvelleur.recevoir_document_cleweb('cleweb', message_dict)
         elif correlation_id == ConstantesMonitor.REPONSE_DOCUMENT_CLEWEB:
-            self.__logger.debug("Reception docuement cleweb")
+            self.__logger.debug("Reception document cleweb")
             self.__renouvelleur.recevoir_document_cleweb('document', message_dict)
+        elif correlation_id == ConstantesMonitor.REPONSE_MQ_PUBLIC_URL:
+            self.__logger.debug("Reception MQ public URL")
+            self.__renouvelleur.transmettre_demande_renouvellement_urlpublics('mq', message_dict)
         else:
             raise ValueError("Type de transaction inconnue: routing: %s, message: %s" % (routing_key, evenement))
 

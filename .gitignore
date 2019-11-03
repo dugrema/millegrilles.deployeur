@@ -4,3 +4,4 @@
 *.egg
 /MilleGrilles.deployeur.egg-info/
 /dist/
+/build/

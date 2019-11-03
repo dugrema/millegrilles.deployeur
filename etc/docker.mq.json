@@ -4,6 +4,10 @@
     "ContainerSpec": {
       "Image": "${mq}",
       "Hostname": "mq.local",
+      "Env": [
+        "MG_KEY=/run/secrets/key.pem",
+        "WEB_KEY=/run/secrets/webkey.pem"
+      ],
       "Mounts": [
         {
           "Type": "volume",
@@ -11,8 +15,8 @@
           "Target": "/var/lib/rabbitmq"
         },
         {
-          "Type": "bind",
-          "Source": "${MOUNTS}/mq/accounts",
+          "Type": "volume",
+          "Source": "mq-accounts",
           "Target": "/opt/rabbitmq/conf"
         }
       ],
@@ -20,7 +24,7 @@
         {
           "SecretName": "pki.mq.key",
           "File": {
-            "Name": "pki.millegrilles.ssl.key",
+            "Name": "key.pem",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -29,7 +33,7 @@
         {
           "SecretName": "pki.mq.key",
           "File": {
-            "Name": "pki.millegrilles.wadmin.key",
+            "Name": "webkey.pem",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -40,7 +44,7 @@
         {
           "ConfigName": "pki.mq.cert",
           "File": {
-            "Name": "/run/secrets/pki.millegrilles.ssl.cert",
+            "Name": "/opt/rabbitmq/dist/certs/cert.pem",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -49,7 +53,7 @@
         {
           "ConfigName": "pki.ca.millegrille.fullchain",
           "File": {
-            "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
+            "Name": "/opt/rabbitmq/dist/certs/calist.cert.pem",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -58,7 +62,7 @@
         {
           "ConfigName": "pki.mq.cert",
           "File": {
-            "Name": "/run/secrets/pki.millegrilles.wadmin.cert",
+            "Name": "/opt/rabbitmq/dist/certs/webcert.pem",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -101,7 +105,7 @@
       {
         "Protocol": "tcp",
         "PublishedPort": 8443,
-        "TargetPort": 443,
+        "TargetPort": 8443,
         "PublishMode": "host"
       },
       {
