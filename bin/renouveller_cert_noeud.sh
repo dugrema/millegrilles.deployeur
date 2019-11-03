@@ -8,7 +8,12 @@ CERT_FOLDER=/opt/millegrilles/$NOM_MILLEGRILLE/pki/certs/
 
 preparer_requete_csr() {
   echo "[INFO] Creation d'une requete de certificat"
-  sudo $MILLEGRILLES_BIN/creer_csr_noeud.sh $NOM_MILLEGRILLE
+  PARAMS_CSR=""
+  if [ ! -z $URL_PUBLIC ]; then
+    PARAMS_CSR="$PARAMS_CSR URL_PUBLIC=$URL_PUBLIC"
+  fi
+
+  sudo $PARAMS_CSR $MILLEGRILLES_BIN/creer_csr_noeud.sh $NOM_MILLEGRILLE
 
   HOSTNAME=`hostname`
   CERT_NAME=${HOSTNAME}.noeud.${NOM_MILLEGRILLE}.cert.pem
@@ -16,6 +21,10 @@ preparer_requete_csr() {
 
   if [ -z $INSTALLATION_MANUELLE ]; then
     echo "[INFO] Telechargement du CA Cert"
+
+    echo "Appuyer sur ENTREE pour tenter de telecharger le certificat."
+    read
+
     sudo wget -O $CERT_FOLDER/${NOM_MILLEGRILLE}.CA.cert.pem http://mg-$NOM_MILLEGRILLE.local/certs/${NOM_MILLEGRILLE}.CA.cert.pem
 
     set +e
