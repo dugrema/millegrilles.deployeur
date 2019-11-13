@@ -20,6 +20,7 @@ import datetime
 import shutil
 import argparse
 import socket
+import docker
 
 
 class DeployeurMilleGrilles:
@@ -31,6 +32,7 @@ class DeployeurMilleGrilles:
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
         self.__docker = DockerFacade()
+        self.__docker_client = docker.from_env()
         self.__millegrilles = list()
         self.__parser = None
         self.__args = None
@@ -181,11 +183,12 @@ class DeployeurDockerMilleGrille:
     S'occupe d'une MilleGrille configuree sur docker.
     """
 
-    def __init__(self, nom_millegrille, node_name, docker: DockerFacade, config_millegrille: dict):
+    def __init__(self, nom_millegrille, node_name, docker_facade: DockerFacade, docker_client, config_millegrille: dict):
         self.__nom_millegrille = nom_millegrille
         self.__config_millegrille = config_millegrille
         self.__node_name = node_name
-        self.__docker = docker
+        self.__docker_facade = docker_facade
+        self.__docker_client = docker_client
 
         self.constantes = ConstantesEnvironnementMilleGrilles(nom_millegrille)
         self.__gestionnaire_rabbitmq = GestionnaireComptesRabbitMQ(self.__nom_millegrille, docker)
@@ -210,11 +213,11 @@ class DeployeurDockerMilleGrille:
 
     def arreter(self):
         self.__logger.info("Arreter millegrille ; %s" % self.__nom_millegrille)
-        liste_services = self.__docker.liste_services_millegrille(self.__nom_millegrille)
+        liste_services = self.__docker_facade.liste_services_millegrille(self.__nom_millegrille)
         for service in liste_services:
             id_service = service['ID']
             self.__logger.info("Suppression service: %s" % service['Spec']['Name'])
-            self.__docker.supprimer_service(id_service)
+            self.__docker_facade.supprimer_service(id_service)
 
     def creer_config_monitor_json(self):
         """
@@ -328,7 +331,7 @@ class DeployeurDockerMilleGrille:
                 },
                 "Data": contenu
             }
-            resultat = self.__docker.post('secrets/create', message_cert)
+            resultat = self.__docker_facade.post('secrets/create', message_cert)
             if resultat.status_code != 201:
                 raise Exception("Ajout password status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
 
@@ -373,7 +376,7 @@ class DeployeurDockerMilleGrille:
         """
         versions_images = ServiceDockerConfiguration.charger_versions()
 
-        liste_services = self.__docker.liste_services_millegrille(self.__nom_millegrille)
+        liste_services = self.__docker_facade.liste_services_millegrille(self.__nom_millegrille)
         self.__logger.info("Services deployes: %s" % str(liste_services))
         for service in liste_services:
             name = service['Spec']['Name']
@@ -404,14 +407,12 @@ class DeployeurDockerMilleGrille:
         self.__wait_event.wait(2)
 
         # Activer composants web
-        self.activer_mongoexpress()
+        # self.activer_mongoexpress()
         self.activer_consignationfichiers()
         self.activer_coupdoeilreact()
         self.activer_vitrine()
-        # self.activer_nginx_local()
         self.activer_publicateur_local()
         self.activer_nginx_public()
-        self.activer_certbot()
 
     def configurer_mongo(self):
         etat_filename = self.constantes.fichier_etc_mg('mongo.etat.json')
@@ -432,7 +433,7 @@ class DeployeurDockerMilleGrille:
             messages = self.__gestionnaire_mongo.creer_comptes_mongo(datetag, nom_millegrille)
 
             for message in messages:
-                resultat = self.__docker.post('secrets/create', message)
+                resultat = self.__docker_facade.post('secrets/create', message)
                 self.__logger.info("Insertion secret %s: %s" % (message["Name"], resultat.status_code))
 
             etat_mongo['datetag'] = datetag
@@ -509,12 +510,12 @@ class DeployeurDockerMilleGrille:
 
     def preparer_reseau(self):
         nom_reseau = 'mg_%s_net' % self.__nom_millegrille
-        self.__docker.configurer_reseau(nom_reseau)
+        self.__docker_facade.configurer_reseau(nom_reseau)
 
     def preparer_service(self, nom_service, force=True, mappings: dict = None):
         # Verifier que le service MQ est en fonction - sinon le deployer
         nom_service_complet = '%s_%s' % (self.__nom_millegrille, nom_service)
-        etat_service_resp = self.__docker.info_service(nom_service_complet)
+        etat_service_resp = self.__docker_facade.info_service(nom_service_complet)
         if etat_service_resp.status_code == 200:
             service_etat_json = etat_service_resp.json()
             if len(service_etat_json) == 0 and force:
@@ -531,18 +532,18 @@ class DeployeurDockerMilleGrille:
             self.__logger.warning("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, self.__nom_millegrille))
 
         if mode is not None:
-            docker_secrets = self.__docker.get('secrets').json()
-            docker_configs = self.__docker.get('configs').json()
+            docker_secrets = self.__docker_facade.get('secrets').json()
+            docker_configs = self.__docker_facade.get('configs').json()
             configurateur = ServiceDockerConfiguration(
                 self.__nom_millegrille, nom_service, docker_secrets, docker_configs, mappings)
             service_json = configurateur.formatter_service()
-            etat_service_resp = self.__docker.post('services/%s' % mode, service_json)
+            etat_service_resp = self.__docker_facade.post('services/%s' % mode, service_json)
             status_code = etat_service_resp.status_code
             if 200 <= status_code <= 201:
                 self.__logger.info("Deploiement de Service %s avec ID %s" % (nom_service_complet, str(etat_service_resp.json())))
             elif status_code == 409:
                 # Service existe, on le met a jour
-                etat_service_resp = self.__docker.post('services/update', service_json)
+                etat_service_resp = self.__docker_facade.post('services/update', service_json)
                 status_code = etat_service_resp.status_code
                 self.__logger.info("Update service %s, code %s\n%s" % (nom_service_complet, status_code, etat_service_resp.json()))
             else:
@@ -577,7 +578,7 @@ class DeployeurDockerMilleGrille:
             },
             "Data": contenu_cle
         }
-        resultat = self.__docker.post('secrets/create', message_key)
+        resultat = self.__docker_facade.post('secrets/create', message_key)
         if resultat.status_code != 201:
             raise Exception(
                 "Ajout key status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
@@ -590,7 +591,7 @@ class DeployeurDockerMilleGrille:
             },
             "Data": contenu_cert
         }
-        resultat = self.__docker.post('configs/create', message_cert)
+        resultat = self.__docker_facade.post('configs/create', message_cert)
         if resultat.status_code != 201:
             raise Exception(
                 "Ajout cert status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
@@ -605,7 +606,7 @@ class DeployeurDockerMilleGrille:
                 },
                 "Data": contenu_fullchain
             }
-            resultat = self.__docker.post('configs/create', message_fullchain)
+            resultat = self.__docker_facade.post('configs/create', message_fullchain)
             if resultat.status_code != 201:
                 raise Exception(
                     "Ajout fullchain status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
@@ -624,7 +625,7 @@ class DeployeurDockerMilleGrille:
                 },
                 "Data": cle_cert_combine
             }
-            resultat = self.__docker.post('secrets/create', message_cert)
+            resultat = self.__docker_facade.post('secrets/create', message_cert)
             if resultat.status_code != 201:
                 raise Exception(
                     "Ajout key_cert status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
@@ -724,7 +725,7 @@ class DeployeurDockerMilleGrille:
             self.preparer_service('certbot', mappings=configuration_url)
 
     def deployer_labels(self, node_name, labels):
-        nodes_list = self.__docker.get('nodes').json()
+        nodes_list = self.__docker_facade.get('nodes').json()
         node = [n for n in nodes_list if n['Description']['Hostname'] == node_name]
         if len(node) == 1:
             node = node[0]  # Conserver le node recherche
@@ -740,7 +741,7 @@ class DeployeurDockerMilleGrille:
                 "Availability": node_availability
             }
 
-            label_resp = self.__docker.post('nodes/%s/update?version=%s' % (node_id, node_version), content)
+            label_resp = self.__docker_facade.post('nodes/%s/update?version=%s' % (node_id, node_version), content)
             self.__logger.debug("Label add status:%s\n%s" % (label_resp.status_code, str(label_resp)))
 
     def initialiser_db_mongo(self):
@@ -774,7 +775,7 @@ class DeployeurDockerMilleGrille:
             mongo_pret = False
             nb_essais_attente = 30
             for essai in range(1, nb_essais_attente+1):
-                containers_resp = self.__docker.info_container(nom_container)
+                containers_resp = self.__docker_facade.info_container(nom_container)
                 liste_containers = containers_resp.json()
                 if len(liste_containers) == 1:
                     container_mongo = liste_containers[0]
@@ -784,7 +785,7 @@ class DeployeurDockerMilleGrille:
                         # Tenter d'executer un script pour voir si mongo est pret
                         commande = '/opt/mongodb/scripts/mongo_run_script_admin.sh dummy_script.js'
                         commande = commande.split(' ')
-                        output = self.__docker.container_exec(container_id, commande)
+                        output = self.__docker_facade.container_exec(container_id, commande)
                         if output.status_code == 200:
                             content = str(output.content)
                             if 'Code:253' in content:
@@ -802,7 +803,7 @@ class DeployeurDockerMilleGrille:
                 commande = commande.split(' ')
                 self.__logger.debug("Commande a transmettre: %s" % commande)
 
-                output = self.__docker.container_exec(container_id, commande)
+                output = self.__docker_facade.container_exec(container_id, commande)
                 self.__logger.debug("Output commande id %s (code %s)" % (
                     container_id, output.status_code))
                 self.__logger.debug(output.content)
@@ -819,7 +820,7 @@ class DeployeurDockerMilleGrille:
                 commande = commande.split(' ')
                 self.__logger.debug("Commande a transmettre: %s" % commande)
 
-                output = self.__docker.container_exec(container_id, commande)
+                output = self.__docker_facade.container_exec(container_id, commande)
                 self.__logger.debug("Output commande id %s (code %s)" % (
                     container_id, output.status_code))
                 self.__logger.debug(output.content)
@@ -848,7 +849,7 @@ class DeployeurDockerMilleGrille:
         Format recherche: test1.pki.vitrine.cert.20190930140405
         :return:
         """
-        liste_configs = self.__docker
+        liste_configs = self.__docker_facade
 
 
 if __name__ == '__main__':
