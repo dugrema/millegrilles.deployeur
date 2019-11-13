@@ -1,5 +1,6 @@
 [Unit]
 Description=Service monitor de MilleGrilles.
+After=docker.service
 
 [Service]
 Type=simple
