@@ -212,9 +212,10 @@ class DeployeurDockerMilleGrille:
         self.__docker_facade.demarrer_thread_event_listener()
 
         self.__initialisation_millegrille.installer_mongo()
-        self._installer_mq()
-        self._installer_consignateur_transactions()
-        self._installer_maitredescles()
+        self.__initialisation_millegrille.installer_mq()
+        #self._installer_mq()
+        #self._installer_consignateur_transactions()
+        #self._installer_maitredescles()
 
     def _installer_mq(self):
         labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
