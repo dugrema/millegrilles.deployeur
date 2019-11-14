@@ -6,7 +6,7 @@
 from millegrilles import Constantes
 from millegrilles.domaines.Parametres import ConstantesParametres
 from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
-from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
+from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration, GestionnaireImagesDocker
 from mgdeployeur.InitialisationMilleGrille import InitialisationMilleGrille
 from mgdeployeur.ComptesCertificats import GestionnaireCertificats
 
@@ -80,10 +80,12 @@ class DeployeurMilleGrilles:
         if self.__args.debug:
             self.__logger.setLevel(logging.DEBUG)
             logging.getLogger('millegrilles').setLevel(logging.DEBUG)
+            logging.getLogger('mgdeployeur').setLevel(logging.DEBUG)
             logging.getLogger('__main__').setLevel(logging.DEBUG)
         elif self.__args.info:
             self.__logger.setLevel(logging.INFO)
             logging.getLogger('millegrilles').setLevel(logging.INFO)
+            logging.getLogger('mgdeployeur').setLevel(logging.INFO)
             logging.getLogger('__main__').setLevel(logging.INFO)
 
     def executer_millegrilles(self):
@@ -98,10 +100,11 @@ class DeployeurMilleGrilles:
         if commande == 'installer' is not None:
             # Configurer docker
             deployeur.installer()
-            deployeur.installer_phase1()
             if not self.__args.download_only:
                 # Installer les services
-                pass
+                deployeur.installer_phase1()
+            else:
+                self.__logger.info("Mode download_only, traitement complete")
 
         elif commande == 'maj' is not None:
             deployeur.maj_versions_images()
@@ -152,6 +155,7 @@ class DeployeurDockerMilleGrille:
 
         self.variables_env = VariablesEnvironnementMilleGrilles(nom_millegrille)
         self.__initialisation_millegrille = InitialisationMilleGrille(self.variables_env, self.__docker_facade, self.__node_name)
+        self.__gestionnaire_images = GestionnaireImagesDocker(self.__docker_facade)
         self.__generateur_certificats = GestionnaireCertificats(self.variables_env, self.__docker_facade, self.__node_name)
 
         # Version des secrets a utiliser
@@ -180,7 +184,7 @@ class DeployeurDockerMilleGrille:
         self.__generateur_certificats.generer_certificats_initiaux(self.__node_name)
 
         # Telecharge les images docker requises pour le middleware et les services
-
+        self.__gestionnaire_images.telecharger_images_docker()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
@@ -211,15 +215,12 @@ class DeployeurDockerMilleGrille:
     def _installer_mongo(self):
         labels = {'netzone.private': 'true', 'millegrilles.database': 'true'}
         self.__docker_facade.deployer_nodelabels(self.__node_name, labels)
-        self.configurer_mongo()
-        self.activer_mongo()
+        self.__initialisation_millegrille.configurer_mongo()
 
     def _installer_mq(self):
-        # Activer les serveurs middleware MQ et Mongo
-        self.activer_mq()
         labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-        self.configurer_mq()
+        self.__docker_facade.deployer_nodelabels(self.__node_name, labels)
+        self.__initialisation_millegrille.configurer_mongo()
 
     def _installer_consignateur_transactions(self):
         """

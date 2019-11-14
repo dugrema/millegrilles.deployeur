@@ -1,7 +1,6 @@
 {
     "registries": [
-        "docker.maceroc.com",
-        "dugremat"
+        "docker.maceroc.com"
     ],
     "images": {
         "mongo": {"image": "mongo", "version": "4.0"},

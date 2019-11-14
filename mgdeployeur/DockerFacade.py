@@ -2,6 +2,7 @@ import logging
 import requests_unixsocket
 import json
 import docker
+from docker.errors import APIError
 
 from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
 
@@ -269,6 +270,10 @@ class DockerFacade:
     def swarm(self):
         return self.__docker_client.swarm
 
+    @property
+    def images(self):
+        return self.__docker_client.images
+
 
 class ServiceDockerConfiguration:
 
@@ -464,6 +469,7 @@ class GestionnaireImagesDocker:
     def __init__(self, docker_facade: DockerFacade):
         self.__docker_facade = docker_facade
         self.__versions_images = GestionnaireImagesDocker.charger_versions()
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     @staticmethod
     def charger_versions():
@@ -481,7 +487,54 @@ class GestionnaireImagesDocker:
         S'assure d'avoir une version locale de chaque image - telecharge au besoin
         :return:
         """
-        pass
+        registries = self.__versions_images['registries']
+
+        images_non_trouvees = list()
+
+        for service, config in self.__versions_images['images'].items():
+            nom_image = config['image']
+            tag = config['version']
+
+            image_locale = self.get_image_locale(registries, nom_image, tag)
+            if image_locale is None:
+                image = None
+                for registry in registries:
+                    nom_image_reg = '%s/%s' % (registry, nom_image)
+                    image = self.pull(nom_image_reg, tag)
+                    if image is not None:
+                        break
+                if image is None:
+                    images_non_trouvees.append('%s:%s' % (nom_image, tag))
+
+        if len(images_non_trouvees) > 0:
+            message = "Images non trouvees: %s" % str(images_non_trouvees)
+            raise Exception(message)
+
+    def pull(self, image_name, tag, meme_si_existe=False):
+        image = None
+        try:
+            image = self.__docker_facade.images.pull(image_name, tag)
+            self.__logger.debug("Image pullee : %s" % str(image))
+        except APIError as e:
+            if e.status_code == 404:
+                self.__logger.debug("Image inconnue: %s" % e.explanation)
+            else:
+                self.__logger.warning("Erreur api, %s" % str(e))
+
+        return image
+
+    def get_image_locale(self, registries, image_name, tag):
+        self.__logger.warning("Get image locale %s:%s" % (image_name, tag))
+
+        for registry in registries:
+            nom_image_reg = '%s/%s:%s' % (registry, image_name, tag)
+            try:
+                image = self.__docker_facade.images.get(nom_image_reg)
+                return image
+            except APIError:
+                self.__logger.warning("Image non trouvee: %s" % nom_image_reg)
+
+        return None
 
 
 class ServicesMilleGrillesHelper:
