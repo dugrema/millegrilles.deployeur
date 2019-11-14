@@ -3,6 +3,7 @@ import requests_unixsocket
 import json
 import docker
 from docker.errors import APIError
+from threading import Thread, Event
 
 from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
 
@@ -20,11 +21,52 @@ class DockerFacade:
         self.__docker_socket_path = DockerFacade.__format_unixsocket_docker('/var/run/docker.sock')
         self.__session = requests_unixsocket.Session()
         self.__docker_client = docker.from_env()
+        self.__thread_event_listener = None
         self.__logger = logging.getLogger('%s' % self.__class__.__name__)
+
+        self.__service_images = GestionnaireImagesDocker(self)
+
+        self.event_callbacks = list()  # {'event_matcher': {elem: value}, 'callback': callback(event:dict)}
 
     @staticmethod
     def __format_unixsocket_docker(url):
         return url.replace('/', '%2F')
+
+    def demarrer_thread_event_listener(self):
+        """
+        Demarre une thread pour ecouter les evenements Docker. Va appeler un callback si un match
+        est trouver sur un callback de self.event_callbacks
+        :return:
+        """
+        self.__thread_event_listener = Thread(target=self.run_thread_events, name="DockerEvLst")
+        self.__thread_event_listener.start()
+
+    def run_thread_events(self):
+        self.__logger.info("Demarrage thread event listener docker")
+        for event_bytes in self.__docker_client.events():
+            event = json.loads(event_bytes)
+            self.__logger.debug(json.dumps(event, indent=4))
+            for callback_info in self.event_callbacks:
+                try:
+                    matcher = callback_info['event_matcher']
+                    match = True
+
+                    # Comparer chaque element du matcher
+                    for key, value in matcher.items():
+                        event_value = event.get(key)
+                        if event_value is None:
+                            match = False
+                        elif event_value != value:
+                            match = False
+
+                    if match:
+                        # Invoquer le callback
+                        callback_info['callback'](event)
+
+                except Exception:
+                    self.__logger.exception("Erreur dans event handler")
+
+        self.__logger.info("Fin thread event listener docker")
 
     def get(self, url, json=None):
         r = self.__session.get('http+unix://%s/%s' % (self.__docker_socket_path, url), json=json)
@@ -206,7 +248,7 @@ class DockerFacade:
             docker_secrets = self.get('secrets').json()
             docker_configs = self.get('configs').json()
             configurateur = ServiceDockerConfiguration(
-                nom_millegrille, nom_service, docker_secrets, docker_configs, mappings)
+                nom_millegrille, nom_service, docker_secrets, docker_configs, self.__service_images, mappings)
             service_json = configurateur.formatter_service()
             etat_service_resp = self.post('services/%s' % mode, service_json)
             status_code = etat_service_resp.status_code
@@ -220,6 +262,8 @@ class DockerFacade:
             else:
                 self.__logger.error("Service %s deploy erreur: %d\n%s" % (
                     nom_service_complet, etat_service_resp.status_code, str(etat_service_resp.json())))
+
+        return mode
 
     def maj_versions_images(self, nom_millegrille):
         """
@@ -275,9 +319,102 @@ class DockerFacade:
         return self.__docker_client.images
 
 
+class GestionnaireImagesDocker:
+
+    def __init__(self, docker_facade: DockerFacade):
+        self.__docker_facade = docker_facade
+        self.__versions_images = GestionnaireImagesDocker.charger_versions()
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
+    @staticmethod
+    def charger_versions():
+        config_versions_name = '/opt/millegrilles/etc/docker.versions.json'
+        with open(config_versions_name) as fichier:
+            config_str = fichier.read()
+            if config_str is not None:
+                config_json = json.loads(config_str)
+                return config_json
+
+        return None
+
+    def telecharger_images_docker(self):
+        """
+        S'assure d'avoir une version locale de chaque image - telecharge au besoin
+        :return:
+        """
+        registries = self.__versions_images['registries']
+
+        images_non_trouvees = list()
+
+        for service, config in self.__versions_images['images'].items():
+            nom_image = config['image']
+            tag = config['version']
+
+            image_locale = self.get_image_locale(nom_image, tag)
+            if image_locale is None:
+                image = None
+                for registry in registries:
+                    nom_image_reg = '%s/%s' % (registry, nom_image)
+                    image = self.pull(nom_image_reg, tag)
+                    if image is not None:
+                        break
+                if image is None:
+                    images_non_trouvees.append('%s:%s' % (nom_image, tag))
+
+        if len(images_non_trouvees) > 0:
+            message = "Images non trouvees: %s" % str(images_non_trouvees)
+            raise Exception(message)
+
+    def pull(self, image_name, tag):
+        """
+        Effectue le telechargement d'une image.
+        Cherche dans tous les registres configures.
+        """
+
+        image = None
+        try:
+            image = self.__docker_facade.images.pull(image_name, tag)
+            self.__logger.debug("Image pullee : %s" % str(image))
+        except APIError as e:
+            if e.status_code == 404:
+                self.__logger.debug("Image inconnue: %s" % e.explanation)
+            else:
+                self.__logger.warning("Erreur api, %s" % str(e))
+
+        return image
+
+    def get_image_locale(self, image_name, tag):
+        """
+        Verifie si une image existe deja localement. Cherche dans tous les registres.
+        :param registries:
+        :param image_name:
+        :param tag:
+        :return:
+        """
+        self.__logger.debug("Get image locale %s:%s" % (image_name, tag))
+
+        registries = self.__versions_images['registries']
+        for registry in registries:
+            nom_image_reg = '%s/%s:%s' % (registry, image_name, tag)
+            try:
+                image = self.__docker_facade.images.get(nom_image_reg)
+                self.__logger.info("Image locale %s:%s trouvee" % (image_name, tag))
+                return image
+            except APIError:
+                self.__logger.warning("Image non trouvee: %s" % nom_image_reg)
+
+        return None
+
+    def get_image_parconfig(self, config_key: str):
+        config_values = self.__versions_images['images'].get(config_key)
+        image = self.get_image_locale(config_values['image'], config_values['version'])
+        nom_image = image.tags[0]  # On prend un tag au hasard
+        return nom_image
+
+
 class ServiceDockerConfiguration:
 
-    def __init__(self, nom_millegrille, nom_service, docker_secrets, docker_configs, mappings: dict = None):
+    def __init__(self, nom_millegrille, nom_service, docker_secrets, docker_configs, gestionnaire_images: GestionnaireImagesDocker, mappings: dict = None):
         """
 
         :param nom_millegrille:
@@ -295,7 +432,7 @@ class ServiceDockerConfiguration:
         self.__mappings = mappings
         self.__secrets_par_nom = dict()
         self.__configs_par_nom = dict()
-        self.__versions_images = dict()
+        self.__gestionnaire_images = gestionnaire_images
 
         self.constantes = VariablesEnvironnementMilleGrilles(nom_millegrille)
 
@@ -342,11 +479,15 @@ class ServiceDockerConfiguration:
         container_spec = task_template['ContainerSpec']
 
         # /TaskTemplate/ContainerSpec/Image
-        for image_name, image_docker in self.__versions_images.items():
-            image_tag = '${%s}' % image_name
-            if image_tag in container_spec['Image']:
-                container_spec['Image'] = container_spec['Image'].replace(image_tag, image_docker)
-        container_spec['Image'] = '%s/%s' % (self.__repository, container_spec['Image'])
+        # for image_name, image_docker in self.__versions_images.items():
+        #     image_tag = '${%s}' % image_name
+        #     if image_tag in container_spec['Image']:
+        #         container_spec['Image'] = container_spec['Image'].replace(image_tag, image_docker)
+        # container_spec['Image'] = '%s/%s' % (self.__repository, container_spec['Image'])
+        nom_image = container_spec['Image']
+        if nom_image.startswith('${'):
+            nom_image = nom_image.replace('${', '').replace('}', '')
+            container_spec['Image'] = self.__gestionnaire_images.get_image_parconfig(nom_image)
 
         # /TaskTemplate/ContainerSpec/Args
         if container_spec.get('Args') is not None:
@@ -462,80 +603,6 @@ class ServiceDockerConfiguration:
             return configs[config_date]
 
         return None
-
-
-class GestionnaireImagesDocker:
-
-    def __init__(self, docker_facade: DockerFacade):
-        self.__docker_facade = docker_facade
-        self.__versions_images = GestionnaireImagesDocker.charger_versions()
-        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-
-    @staticmethod
-    def charger_versions():
-        config_versions_name = '/opt/millegrilles/etc/docker.versions.json'
-        with open(config_versions_name) as fichier:
-            config_str = fichier.read()
-            if config_str is not None:
-                config_json = json.loads(config_str)
-                return config_json
-
-        return None
-
-    def telecharger_images_docker(self):
-        """
-        S'assure d'avoir une version locale de chaque image - telecharge au besoin
-        :return:
-        """
-        registries = self.__versions_images['registries']
-
-        images_non_trouvees = list()
-
-        for service, config in self.__versions_images['images'].items():
-            nom_image = config['image']
-            tag = config['version']
-
-            image_locale = self.get_image_locale(registries, nom_image, tag)
-            if image_locale is None:
-                image = None
-                for registry in registries:
-                    nom_image_reg = '%s/%s' % (registry, nom_image)
-                    image = self.pull(nom_image_reg, tag)
-                    if image is not None:
-                        break
-                if image is None:
-                    images_non_trouvees.append('%s:%s' % (nom_image, tag))
-
-        if len(images_non_trouvees) > 0:
-            message = "Images non trouvees: %s" % str(images_non_trouvees)
-            raise Exception(message)
-
-    def pull(self, image_name, tag, meme_si_existe=False):
-        image = None
-        try:
-            image = self.__docker_facade.images.pull(image_name, tag)
-            self.__logger.debug("Image pullee : %s" % str(image))
-        except APIError as e:
-            if e.status_code == 404:
-                self.__logger.debug("Image inconnue: %s" % e.explanation)
-            else:
-                self.__logger.warning("Erreur api, %s" % str(e))
-
-        return image
-
-    def get_image_locale(self, registries, image_name, tag):
-        self.__logger.warning("Get image locale %s:%s" % (image_name, tag))
-
-        for registry in registries:
-            nom_image_reg = '%s/%s:%s' % (registry, image_name, tag)
-            try:
-                image = self.__docker_facade.images.get(nom_image_reg)
-                return image
-            except APIError:
-                self.__logger.warning("Image non trouvee: %s" % nom_image_reg)
-
-        return None
-
 
 class ServicesMilleGrillesHelper:
 

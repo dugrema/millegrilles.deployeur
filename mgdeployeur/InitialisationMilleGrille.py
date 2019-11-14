@@ -42,7 +42,10 @@ class InitialisationMilleGrille:
         nom_reseau = 'mg_%s_net' % self.__nom_millegrille
         self.__docker_facade.configurer_reseau(nom_reseau)
 
-    def configurer_mongo(self):
+    def installer_mongo(self):
+        labels = {'netzone.private': 'true', 'millegrilles.database': 'true'}
+        self.__docker_facade.deployer_nodelabels(self.__docker_nodename, labels)
+
         etat_filename = self.variables_env.fichier_etc_mg('mongo.etat.json')
 
         try:
@@ -70,6 +73,35 @@ class InitialisationMilleGrille:
         # Enregistrer_fichier maj
         with open(etat_filename, 'w') as fichier:
             fichier.write(json.dumps(etat_mongo))
+
+        # Ajouter un callback pour etre notifie des demarrage de containers
+        self.__docker_facade.event_callbacks.append({
+            'event_matcher': {
+                'status': 'start',
+                'Type': 'container',
+                'Action': 'start'
+            },
+            'callback': self.callback_mongo_start
+        })
+
+        # Demarrer le service Mongo sur docker et attendre qu'il soit pret pour poursuivre
+        mode = self.__docker_facade.installer_service(self.__nom_millegrille, 'mongo', restart_any=True)
+
+        if mode == 'create':
+            self.__wait_event.wait(30)
+            if not self.__wait_event.is_set():
+                raise Exception("Erreur d'attente de chargement de Mongo")
+            self.__wait_event.clear()
+        self.__docker_facade.event_callbacks.clear()  # Enlever tous les listeners
+
+        self.initialiser_db_mongo()
+
+    def callback_mongo_start(self, event):
+        attrs = event['Actor']['Attributes']
+        name = attrs.get('name')
+        if name.split('.')[0] == '%s_mongo' % self.__nom_millegrille:
+            self.__logger.info("Mongo est demarre dans docker")
+            self.__wait_event.set()
 
     def initialiser_db_mongo(self):
         """

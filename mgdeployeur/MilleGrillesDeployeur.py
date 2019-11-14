@@ -207,20 +207,17 @@ class DeployeurDockerMilleGrille:
         raise NotImplementedError("Pas implemente")
 
     def installer_phase1(self):
-        self._installer_mongo()
+        # Demarrer la thread qui va ecouter les evenements Docker
+        self.__docker_facade.demarrer_thread_event_listener()
+
+        self.__initialisation_millegrille.installer_mongo()
         self._installer_mq()
         self._installer_consignateur_transactions()
         self._installer_maitredescles()
 
-    def _installer_mongo(self):
-        labels = {'netzone.private': 'true', 'millegrilles.database': 'true'}
-        self.__docker_facade.deployer_nodelabels(self.__node_name, labels)
-        self.__initialisation_millegrille.configurer_mongo()
-
     def _installer_mq(self):
         labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
         self.__docker_facade.deployer_nodelabels(self.__node_name, labels)
-        self.__initialisation_millegrille.configurer_mongo()
 
     def _installer_consignateur_transactions(self):
         """
@@ -228,14 +225,16 @@ class DeployeurDockerMilleGrille:
         Ce service va creer les Q de transaction au demarrage
         :return:
         """
-        self.activer_consignateur_transactions()
+        labels = {'netzone.private': 'true', 'millegrilles.python': 'true', 'millegrilles.database': 'true'}
+        self.__docker_facade.deployer_nodelabels(self.__node_name, labels)
 
     def _installer_maitredescles(self):
         """
         Installe le maitre des cles. Permet de signer les certificats pour creer les autres services.
         :return:
         """
-        self.activer_maitredescles()
+        labels = {'millegrilles.maitredescles': 'true'}
+        self.__docker_facade.deployer_nodelabels(self.__node_name, labels)
 
     def deployer_phase1(self):
         raise NotImplementedError("pas implemente")
