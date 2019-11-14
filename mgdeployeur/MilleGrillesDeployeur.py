@@ -217,10 +217,6 @@ class DeployeurDockerMilleGrille:
         #self._installer_consignateur_transactions()
         #self._installer_maitredescles()
 
-    def _installer_mq(self):
-        labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
-        self.__docker_facade.deployer_nodelabels(self.__node_name, labels)
-
     def _installer_consignateur_transactions(self):
         """
         Installe le consignation de transaction

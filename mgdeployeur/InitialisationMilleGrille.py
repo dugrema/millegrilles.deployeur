@@ -213,6 +213,13 @@ class InitialisationMilleGrille:
         """
         S'assure que les liens compte-certificat sont configures dans MQ
         """
+        labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
+        self.__docker_facade.deployer_nodelabels(self.__docker_nodename, labels)
+
+        # Demarrer le service MQ. Ne fait rien si le service est deja en marche.
+        # L'appel attends que MQ soit demarre
+        self.demarrer_service_blocking('mq')
+
         # Fair liste des sujets de certs, comparer a liste de traitement MQ
         etat_filename = self.variables_env.fichier_etc_mg('mq.etat.json')
 
