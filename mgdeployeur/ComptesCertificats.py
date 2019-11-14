@@ -38,11 +38,10 @@ class GestionnaireComptesRabbitMQ:
         try:
             with open(fichier_motdepasse, 'r') as fichier:
                 motdepasse = fichier.read()
+            self._admin_api = RabbitMQAPI(self.__docker_nodename, motdepasse, self.__constantes.cert_ca_chain)
         except FileNotFoundError:
-            # On met le mot de passe par defaut - il devra etre change
-            motdepasse = 'dudE_W475@euch'
-
-        self._admin_api = RabbitMQAPI(self.__docker_nodename, motdepasse, self.__constantes.cert_ca_chain)
+            # On utilise le compte guest - il sera supprime des que le compte admin sera cree
+            self._admin_api = RabbitMQAPI(self.__docker_nodename, '', self.__constantes.cert_ca_chain, guest=True)
 
     def initialiser_motdepasse_admin(self, reinit=False):
         fichier_motdepasse = self.__constantes.fichier_mq_admin_password
@@ -55,6 +54,9 @@ class GestionnaireComptesRabbitMQ:
 
             # Recharger api avec nouveau mot de passe
             self.charger_api()
+
+            # Supprimer le user guest
+            self._admin_api.delete_user('guest')
 
     def get_container_rabbitmq(self):
         container_resp = self.__docker.info_container('%s_mq' % self.__constantes.nom_millegrille)

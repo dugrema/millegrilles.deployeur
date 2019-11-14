@@ -12,11 +12,17 @@ class RabbitMQAPI:
     Copie pour ajouter handling cert CA pour https (verify)
     """
 
-    def __init__(self, docker_nodename, password, ca_certs, port=8443):
+    def __init__(self, docker_nodename, password, ca_certs, port=8443, guest=False):
         self.logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-        self.url = 'https://%s:%d' % (docker_nodename, port)
-        self.auth = ('admin', password)
-        self.ca_cert_path = ca_certs
+        if guest:
+            self.url = 'https://localhost:%d' % port
+            self.auth = ('guest', 'guest')
+            self.verify = False
+            self.ca_cert_path = False  # Desactive verify pour le compte guest (localhost)
+        else:
+            self.url = 'https://%s:%d' % (docker_nodename, port)
+            self.auth = ('admin', password)
+            self.ca_cert_path = ca_certs
 
         self.headers = {
             'Content-type': 'application/json',
@@ -85,6 +91,17 @@ class RabbitMQAPI:
             '/api/users/{0}'.format(urllib.parse.quote_plus(name)),
             data=data,
         )
+
+    def delete_user(self, name):
+        """
+        Delete a user.
+
+        :param name: The user's name
+        :type name: str
+        """
+        self._api_delete('/api/users/{0}'.format(
+            urllib.parse.quote_plus(name)
+        ))
 
     def create_admin(self, name, password):
         """

@@ -4,6 +4,8 @@ import json
 from requests import HTTPError
 from mgdeployeur.RabbitMQManagement import RabbitMQAPI
 
+import rabbitmq_admin
+
 class TestAPI:
 
     def __init__(self):
