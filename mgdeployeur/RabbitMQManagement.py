@@ -86,6 +86,26 @@ class RabbitMQAPI:
             data=data,
         )
 
+    def create_admin(self, name, password):
+        """
+        Create a user
+
+        :param name: The user's name
+        :type name: str
+        """
+        data = {
+            'tags': 'administrator',
+        }
+        if password is None:
+            data['password_hash']: ''  # Desactive auth par mot de passe
+        else:
+            data['password'] = password
+
+        self._api_put(
+            '/api/users/{0}'.format(urllib.parse.quote_plus(name)),
+            data=data,
+        )
+
     def create_user_permission(self,
                                name,
                                vhost,

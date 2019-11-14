@@ -27,11 +27,34 @@ class GestionnaireComptesRabbitMQ:
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.__constantes = VariablesEnvironnementMilleGrilles(nom_millegrille)
         self.__docker = docker
-        self._admin_api = RabbitMQAPI(docker_nodename, 'dudE_W475@euch', '/opt/millegrilles/dev3/pki/deployeur/pki.ca.fullchain.pem')
+        self.__docker_nodename = docker_nodename
+        self._admin_api = None
         self.__wait_event = Event()
 
-    def changer_motdepasse_admin(self):
-        pass
+        self.charger_api()
+
+    def charger_api(self):
+        fichier_motdepasse = self.__constantes.fichier_mq_admin_password
+        try:
+            with open(fichier_motdepasse, 'r') as fichier:
+                motdepasse = fichier.read()
+        except FileNotFoundError:
+            # On met le mot de passe par defaut - il devra etre change
+            motdepasse = 'dudE_W475@euch'
+
+        self._admin_api = RabbitMQAPI(self.__docker_nodename, motdepasse, self.__constantes.cert_ca_chain)
+
+    def initialiser_motdepasse_admin(self, reinit=False):
+        fichier_motdepasse = self.__constantes.fichier_mq_admin_password
+        if not os.path.isfile(fichier_motdepasse) or reinit:
+            nouveau_motdepasse = secrets.token_hex(16)
+            with open(fichier_motdepasse, 'w') as fichier:
+                fichier.write(nouveau_motdepasse)
+            os.chmod(fichier_motdepasse, 0o400)
+            self._admin_api.create_admin('admin', nouveau_motdepasse)
+
+            # Recharger api avec nouveau mot de passe
+            self.charger_api()
 
     def get_container_rabbitmq(self):
         container_resp = self.__docker.info_container('%s_mq' % self.__constantes.nom_millegrille)
@@ -59,7 +82,7 @@ class GestionnaireComptesRabbitMQ:
                     break
             except ConnectionError:
                 pass
-            except HTTPError:
+            except HTTPError as e:
                 pass
 
             self.__logger.debug("Attente MQ (%s/%s)" % (essai, nb_essais_max))

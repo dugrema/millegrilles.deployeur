@@ -22,6 +22,7 @@ class VariablesEnvironnementMilleGrilles:
     # Fichiers
     FICHIER_CONFIG_ETAT_CERTIFICATS = 'certificats.etat.json'
     FICHIER_CONFIG_URL_PUBLIC = 'url.etat.json'
+    FICHIER_MQ_ADMIN_MOTDEPASSE = 'mq.adminpassword.txt'
 
     # CHAMPS_CONFIG
     CHAMP_EXPIRATION = 'expiration'
@@ -88,6 +89,15 @@ class VariablesEnvironnementMilleGrilles:
             VariablesEnvironnementMilleGrilles.MILLEGRILLES_DEPLOYEUR_SECRETS
         )
 
+    @property
+    def fichier_mq_admin_password(self):
+        return '%s/%s/%s/%s' % (
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            self.nom_millegrille,
+            VariablesEnvironnementMilleGrilles.MILLEGRILLES_DEPLOYEUR_SECRETS,
+            VariablesEnvironnementMilleGrilles.FICHIER_MQ_ADMIN_MOTDEPASSE
+        )
+
     def rep_mq_accounts(self, fichier):
         return '%s/%s/%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
@@ -110,7 +120,7 @@ class VariablesEnvironnementMilleGrilles:
 
     @property
     def cert_ca_chain(self):
-        return '%s/%s_CA_chain.cert.pem' % (self.rep_certs, self.nom_millegrille)
+        return '%s/pki.ca.fullchain.pem' % self.rep_secrets_deployeur
 
     @property
     def cert_ca_fullchain(self):

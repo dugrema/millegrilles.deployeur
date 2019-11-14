@@ -6,13 +6,11 @@ import shutil
 import os
 from threading import Event
 
-from millegrilles import Constantes
 from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
 from mgdeployeur.ComptesCertificats import GestionnaireComptesRabbitMQ, GestionnaireComptesMongo, GestionnaireCertificats
 from mgdeployeur.DockerFacade import DockerFacade
-from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurInitial, \
-    EnveloppeCleCert, RenouvelleurCertificat
 from millegrilles.SecuritePKI import EnveloppeCertificat
+
 
 class InitialisationMilleGrille:
 
@@ -246,6 +244,11 @@ class InitialisationMilleGrille:
         if initialser_comptes:
             if not self.__gestionnaire_rabbitmq.attendre_mq():
                 raise Exception("MQ pas disponible")
+
+            # Change le mot de passe admin au besoin
+            self.__gestionnaire_rabbitmq.initialiser_motdepasse_admin()
+
+            # Ajout nouveau vhost
             self.__gestionnaire_rabbitmq.ajouter_vhost()
 
         # Charger enveloppes des certificats
