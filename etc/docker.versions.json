@@ -1,11 +1,16 @@
 {
-    "consignationfichiers": "consignationfichiers:1.14.3",
-    "coupdoeilreact": "coupdoeil_react:1.15.1",
-    "mongo": "mg_mongo:4.0_4",
-    "mongoexpress": "mg_mongo_express:0.49_4",
-    "mq": "mg_rabbitmq:3.8-management_0",
-    "mg-python": "millegrilles_consignation_python_main:1.15.7",
-    "nginx": "mg_nginx:1.17_6",
-    "vitrinereact": "vitrine_react:1.15.0",
-    "certbot": "mg_certbot_scripts:0.39_0.2"
+    "registries": [
+        "docker.maceroc.com",
+        "dugremat"
+    ],
+    "images": {
+        "mongo": {"image": "mongo", "version": "4.0"},
+        "mq": {"image": "mg_rabbitmq", "version": "3.8-management_2"},
+        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.15.8"},
+        "nginx": {"image": "mg_nginx", "version": "1.17_6"},
+        "consignationfichiers": {"image": "consignationfichiers", "version": "1.14.3"},
+        "coupdoeilreact": {"image": "coupdoeil_react", "version": "1.15.1"},
+        "vitrinereact": {"image": "vitrine_react", "version": "1.15.0"},
+        "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
+    }
 }

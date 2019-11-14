@@ -1,4 +1,4 @@
-class ConstantesEnvironnementMilleGrilles:
+class VariablesEnvironnementMilleGrilles:
 
     # Globaux pour toutes les millegrilles
     REPERTOIRE_MILLEGRILLES = '/opt/millegrilles'
@@ -53,60 +53,60 @@ class ConstantesEnvironnementMilleGrilles:
         self.mapping = {
             "NOM_MILLEGRILLE": self.nom_millegrille,
             "MOUNTS": self.rep_mounts,
-            "MONGO_INITDB_ROOT_USERNAME": ConstantesEnvironnementMilleGrilles.MONGO_INITDB_ROOT_USERNAME,
+            "MONGO_INITDB_ROOT_USERNAME": VariablesEnvironnementMilleGrilles.MONGO_INITDB_ROOT_USERNAME,
         }
 
     @property
     def rep_mounts(self):
         return '%s/%s/%s' % (
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
             self.nom_millegrille,
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MOUNTS
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MOUNTS
         )
 
     @property
     def rep_certs(self):
         return '%s/%s/%s' % (
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
             self.nom_millegrille,
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_CERTS
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_CERTS
         )
 
     @property
     def rep_cles(self):
         return '%s/%s/%s' % (
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
             self.nom_millegrille,
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_KEYS
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_KEYS
         )
 
     @property
     def rep_secrets_deployeur(self):
         return '%s/%s/%s' % (
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
             self.nom_millegrille,
-            ConstantesEnvironnementMilleGrilles.MILLEGRILLES_DEPLOYEUR_SECRETS
+            VariablesEnvironnementMilleGrilles.MILLEGRILLES_DEPLOYEUR_SECRETS
         )
 
     def rep_mq_accounts(self, fichier):
         return '%s/%s/%s/%s' % (
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
             self.nom_millegrille,
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MQ_ACCOUNTS,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MQ_ACCOUNTS,
             fichier
         )
 
     def rep_mongo_scripts(self, fichier):
         return '%s/%s/%s/%s' % (
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
             self.nom_millegrille,
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MONGO_SCRIPTS,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MONGO_SCRIPTS,
             fichier
         )
 
     @property
     def rep_etc_mg(self):
-        return '%s/%s' % (ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC, self.nom_millegrille)
+        return '%s/%s' % (VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC, self.nom_millegrille)
 
     @property
     def cert_ca_chain(self):
@@ -118,7 +118,7 @@ class ConstantesEnvironnementMilleGrilles:
 
     def fichier_etc_mg(self, path):
         return '%s/%s/%s' % (
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
             self.nom_millegrille,
             path
         )

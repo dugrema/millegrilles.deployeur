@@ -1,7 +1,7 @@
 from millegrilles.util.Daemon import Daemon
 from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
 from millegrilles.dao.MessageDAO import BaseCallback, RoutingKeyInconnue
-from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
+from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
 from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
 from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
 from millegrilles.SecuritePKI import GestionnaireEvenementsCertificat, EnveloppeCertificat
@@ -108,7 +108,7 @@ class DeployeurMonitor:
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
-        self.__configuration_deployeur_fichier = ConstantesEnvironnementMilleGrilles.FICHIER_JSON_CONFIG_DEPLOYEUR
+        self.__configuration_deployeur_fichier = VariablesEnvironnementMilleGrilles.FICHIER_JSON_CONFIG_DEPLOYEUR
         self.__configuration_deployeur = None
 
         self.__stop_event = Event()
@@ -120,7 +120,7 @@ class DeployeurMonitor:
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def __config_logging(self):
-        logging.basicConfig(format=ConstantesEnvironnementMilleGrilles.LOGGING_FORMAT, level=logging.WARNING)
+        logging.basicConfig(format=VariablesEnvironnementMilleGrilles.LOGGING_FORMAT, level=logging.WARNING)
 
         level = logging.WARNING
         if self.__args.debug:
@@ -223,7 +223,7 @@ class MonitorMilleGrille:
         self.__config = config
         self.__docker = docker
 
-        self.__constantes = ConstantesEnvironnementMilleGrilles(self.__nom_millegrille)
+        self.__constantes = VariablesEnvironnementMilleGrilles(self.__nom_millegrille)
 
         self.__stop_event = Event()
 
@@ -276,8 +276,8 @@ class MonitorMilleGrille:
 
         # Connecter sur exchange noeuds
         routing_keys_noeuds = [
-            ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_CERT,
-            ConstantesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE,
+            VariablesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_CERT,
+            VariablesEnvironnementMilleGrilles.ROUTING_RENOUVELLEMENT_REPONSE,
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_LISTE,
             ConstantesMonitor.REQUETE_DOCKER_SERVICES_NOEUDS,
             'commande.monitor.#',
@@ -418,72 +418,8 @@ class MonitorMilleGrille:
             else:
                 self.__logger.error("Commande inconnue, routing: %s" % routing)
 
-    def exposer_ports(self, commande):
-        """
-
-        :param commande: Liste de mappings (dict): cle = port_externe, valeur = {port_interne, ipv4_interne]
-        :return:
-        """
-        self.__logger.info("Exposer pors: %s" % str(commande))
-
-        # Commencer par faire la liste des ports existants
-        gestionnaire_publique = self.__monitor.gestionnaire_publique
-
-        # Cleanup des mappings qui ont ete remplaces
-        etat_upnp = gestionnaire_publique.get_etat_upnp()
-        mappings_existants = etat_upnp.get(ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4)
-        for mapping in mappings_existants:
-            port_externe = mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_EXTERIEUR]
-            if mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM].startswith('mg_%s' % self.__contexte.configuration.nom_millegrille):
-                gestionnaire_publique.remove_port_mapping(int(port_externe), mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL])
-
-        # mappings_courants = etat_upnp[ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4]
-        mappings_demandes = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4_DEMANDES]
-        etat_actuel = gestionnaire_publique.get_etat_upnp()
-        mappings_existants = etat_actuel[ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4]
-
-        resultat_ports = dict()
-        for port_externe in mappings_demandes:
-            # mapping_existant = mappings_courants.get(port_externe)
-            mapping_demande = mappings_demandes.get(port_externe)
-
-            # Ajouter mapping - peut ecraser un mapping existant
-            port_int = int(mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_INTERNE])
-            ip_interne = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_IPV4_INTERNE]
-            protocole = 'TCP'
-            description = mapping_demande[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM]
-
-            mapping_protocole = [m for m in mappings_existants if m[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_EXTERIEUR] == int(port_externe) and
-                                 m[ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL] == 'TCP']
-            if len(mapping_protocole) > 0:
-                mapping_existant = mapping_protocole[0]
-                if mapping_existant[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_INTERNE] != port_int or \
-                        mapping_existant[ConstantesParametres.DOCUMENT_PUBLIQUE_IPV4_INTERNE] != ip_interne:
-                    self.__logger.warning("On doit enlever un mapping existant pour appliquer le nouveau sur port %s" % port_externe)
-                    gestionnaire_publique.remove_port_mapping(int(port_externe), protocole)
-
-            port_mappe = gestionnaire_publique.add_port_mapping(
-                port_int, ip_interne, int(port_externe), protocole, description)
-
-            resultat_ports[port_externe] = port_mappe
-
-        self.__contexte.generateur_transactions.soumettre_transaction(
-            {
-                ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4_DEMANDES: mappings_demandes,
-                'resultat_mapping': resultat_ports,
-                'token_resumer': commande.get('token_resumer'),
-            },
-            ConstantesParametres.TRANSACTION_CONFIRMATION_ROUTEUR,
-        )
-
-        self.toggle_transmettre_etat_upnp()  # Va forcer le renvoi de l'ete
-
-        url_web = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_URL_WEB]
-        url_coupdoeil = commande[ConstantesParametres.DOCUMENT_PUBLIQUE_URL_COUPDOEIL]
-        self.maj_nginx(url_web, url_coupdoeil)
-
     def maj_nginx(self, url_web, url_coupdoeil):
-        fichier_configuration_url = self.__constantes.fichier_etc_mg(ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_URL_PUBLIC)
+        fichier_configuration_url = self.__constantes.fichier_etc_mg(VariablesEnvironnementMilleGrilles.FICHIER_CONFIG_URL_PUBLIC)
         try:
             with open(fichier_configuration_url, 'r') as fichier:
                 configuration_url = json.load(fichier)
@@ -497,21 +433,6 @@ class MonitorMilleGrille:
 
         # Mettre a jour service nginx
         self.__deployeur.activer_nginx_public()  # Redeployer nginx avec nouvaux noms de domaines()
-        self.__deployeur.activer_certbot()  # Redeployer nginx avec nouvaux noms de domaines()
-
-    def retirer_ports(self, commande):
-        # Commencer par faire la liste des ports existants
-        gestionnaire_publique = self.__monitor.gestionnaire_publique
-
-        # Cleanup de tous les mappings de la millegrille
-        etat_upnp = gestionnaire_publique.get_etat_upnp()
-        mappings_existants = etat_upnp.get(ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4)
-        for mapping in mappings_existants:
-            port_externe = mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_EXTERIEUR]
-            if mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM].startswith('mg_%s' % self.__contexte.configuration.nom_millegrille):
-                gestionnaire_publique.remove_port_mapping(int(port_externe), mapping[ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL])
-
-        self.toggle_transmettre_etat_upnp()  # Va forcer le renvoi de l'ete
 
     def deployer_noeud_public(self, commande):
         docker = self.__docker
@@ -543,248 +464,6 @@ class MonitorMilleGrille:
     def fermer_millegrilles(self, commande):
         resultat = subprocess.call(['sudo', '/sbin/shutdown', '-h', 'now'])
         self.__logger.warning("Shutdown millegrilles demande, resultat: %d" % resultat)
-
-
-class RenouvellementCertificats:
-
-    def __init__(self, nom_millegrille, monitor: MonitorMilleGrille, deployeur: DeployeurDockerMilleGrille):
-        self.__nom_millegrille = nom_millegrille
-        self.__monitor = monitor
-        self.__deployeur = deployeur
-
-        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-
-        self.__liste_demandes = dict()  # Key=Role, Valeur={clecert,datedemande,property}
-        self.__constantes = ConstantesEnvironnementMilleGrilles(self.__nom_millegrille)
-        self.__fichier_etat_certificats = self.__constantes.fichier_etc_mg(
-            ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
-
-        self.__maj_certwebs_dict = None  # Placeholder pour conserver documents certs en attendant cle
-
-        # Detecter expiration a moins de 60 jours
-        self.__delta_expiration = datetime.timedelta(days=60)
-
-    def trouver_certs_a_renouveller(self):
-        with open(self.__fichier_etat_certificats, 'r') as fichier:
-            fichier_etat = json.load(fichier)
-
-        date_courante = datetime.datetime.utcnow()
-        for role, date_epoch in fichier_etat[ConstantesEnvironnementMilleGrilles.CHAMP_EXPIRATION].items():
-            date_exp = datetime.datetime.fromtimestamp(date_epoch)
-            date_comparaison = date_exp - self.__delta_expiration
-            if date_courante > date_comparaison:
-                self.__logger.info("Certificat role %s du pour renouvellement (expiration: %s)" % (role, str(date_exp)))
-
-                self.preparer_demande_renouvellement(role)
-
-    def executer_commande_renouvellement(self, commande):
-        roles = commande['roles']
-        for role in roles:
-            self.preparer_demande_renouvellement(role, ajouter_url_public=True)
-
-    def preparer_demande_renouvellement(self, role, ajouter_url_public=False):
-        """
-        Demande un renouvellement pour le certificat.
-        :param role: Module pour lequel le certificat doit etre genere
-        :param ajouter_url_public: Si la millegrille a ete publiee, s'assurer de mettre les URLs publics dans alt names
-        :return:
-        """
-        if ajouter_url_public and role in ['mq']:
-            # Ajouter le nom domaine public au besoin
-            # Aller chercher document certificat dans Pki
-            domaine_requete = '%s.%s' % (ConstantesParametres.DOMAINE_NOM, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL)
-            requetes = {
-                'requetes': [{
-                    'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesParametres.LIBVAL_CONFIGURATION_PUBLIQUE}
-                }]
-            }
-            generateur_transactions = self.__monitor.generateur_transactions
-            generateur_transactions.transmettre_requete(
-                requetes, domaine_requete, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL, self.__monitor.queue_reponse)
-
-        else:
-            self.transmettre_demande_renouvellement(role, None)
-
-    def transmettre_demande_renouvellement_urlpublics(self, role, resultats: dict):
-        resultat = resultats['resultats'][0][0]
-        mq_url_public = resultat.get(ConstantesParametres.DOCUMENT_PUBLIQUE_URL_MQ)
-        urls = None
-        if mq_url_public is not None:
-            urls = [mq_url_public]
-        self.transmettre_demande_renouvellement(role, urls_publics=urls)
-
-    def transmettre_demande_renouvellement(self, role, urls_publics: list = None):
-        generateur_csr = GenerateurCertificat(self.__nom_millegrille)
-
-        clecert = generateur_csr.preparer_key_request(role, self.__monitor.node_name, alt_names=urls_publics)
-
-        demande = {
-            'csr': clecert.csr_bytes.decode('utf-8'),
-            'datedemande': int(datetime.datetime.utcnow().timestamp()),
-            'role': role,
-            'node': self.__monitor.node_name,
-        }
-
-        # Conserver la demande en memoire pour combiner avec le certificat, inclue la cle privee
-        persistance_memoire = {
-            'clecert': clecert,
-        }
-        persistance_memoire.update(demande)
-        self.__liste_demandes[role] = persistance_memoire
-
-        self.__logger.debug("Demande:\n%s" % json.dumps(demande, indent=2))
-
-        domaine = ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT
-        generateur_transactions = self.__monitor.generateur_transactions
-        generateur_transactions.soumettre_transaction(
-            demande, domaine, correlation_id=role, reply_to=self.__monitor.queue_reponse)
-
-        return persistance_memoire
-
-    def traiter_reponse_renouvellement(self, message, correlation_id):
-        role = correlation_id
-        demande = self.__liste_demandes.get(role)
-
-        if demande is not None:
-            # Traiter la reponse
-            del self.__liste_demandes[role]  # Effacer la demande (on a la reponse)
-
-            # Extraire le certificat et ajouter a clecert
-            clecert = demande['clecert']
-            cert_pem = message['cert']
-            clecert.cert_from_pem_bytes(cert_pem.encode('utf-8'))
-            fullchain = message['fullchain']
-            clecert.chaine = fullchain
-
-            # Verifier que la cle et le nouveau cert correspondent
-            correspondance = clecert.cle_correspondent()
-            if not correspondance:
-                raise Exception("La cle et le certificat ne correspondent pas pour: %s" % role)
-
-            # On a maintenant une cle et son certificat correspondant. Il faut la sauvegarder dans
-            # docker puis redeployer le service pour l'utiliser.
-            id_secret = 'pki.%s' % role
-            combiner_clecert = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
-
-            if role == 'deployeur':
-                self.__deployeur.sauvegarder_clecert_deployeur(clecert)
-            else:
-                self.__deployeur.deployer_clecert(id_secret, clecert, combiner_cle_cert=combiner_clecert)
-
-            self.update_cert_time(role, clecert)
-
-            self.__monitor.ceduler_redemarrage(60, role)
-
-        else:
-            self.__logger.warning("Recu reponse de renouvellement non sollicitee, role: %s" % role)
-            raise Exception("Recu reponse de renouvellement non sollicitee, role: %s" % role)
-
-    def update_cert_time(self, role, clecert):
-        with open(self.__fichier_etat_certificats, 'r') as fichier:
-            fichier_etat = json.load(fichier)
-
-        date_expiration = clecert.not_valid_after
-        expirations = fichier_etat[ConstantesEnvironnementMilleGrilles.CHAMP_EXPIRATION]
-        expirations[role] = int(date_expiration.timestamp())
-
-        with open(self.__fichier_etat_certificats, 'w') as fichier:
-            json.dump(fichier_etat, fichier)
-
-    def recevoir_document_cleweb(self, type, reponse):
-        if self.__maj_certwebs_dict is None:
-            self.__maj_certwebs_dict = dict()
-
-        self.__maj_certwebs_dict[type] = reponse
-
-        if len(self.__maj_certwebs_dict) > 1:
-            self.__monitor.toggle_renouveller_certs_web()
-
-        self.__logger.debug("Document cleweb recu (type=%s): %s" % (type, json.dumps(self.__maj_certwebs_dict, indent=2)))
-
-    def maj_certificats_web_requetes(self, commande):
-
-        # Aller chercher document certificat dans Pki
-        domaine_requete = '%s.%s' % (ConstantesPki.DOMAINE_NOM, ConstantesPki.LIBVAL_PKI_WEB)
-        requetes = {
-            'requetes': [{
-                'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesPki.LIBVAL_PKI_WEB}
-            }]
-        }
-        generateur_transactions = self.__monitor.generateur_transactions
-        generateur_transactions.transmettre_requete(
-            requetes, domaine_requete, ConstantesMonitor.REPONSE_DOCUMENT_CLEWEB, self.__monitor.queue_reponse)
-
-        # Demander cle decryptage a maitredescles
-        domaine_cle_maitredescles = '%s.%s' % (ConstantesMaitreDesCles.DOMAINE_NOM, ConstantesMaitreDesCles.REQUETE_DECRYPTAGE_DOCUMENT)
-        requetes = {
-            'requetes': [{
-                'filtre': {
-                    Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesPki.LIBVAL_PKI_WEB,
-                }
-            }]
-        }
-        generateur_transactions.transmettre_requete(
-            requetes, domaine_cle_maitredescles, ConstantesMonitor.REPONSE_CLE_CLEWEB, self.__monitor.queue_reponse)
-
-    def renouveller_certs_web(self):
-        self.__logger.info("Appliquer les nouveaux certificats web")
-
-        self.__logger.debug("Document: %s" % json.dumps(self.__maj_certwebs_dict, indent=2))
-
-        copie_docs = self.__maj_certwebs_dict
-        self.__maj_certwebs_dict = None
-
-        # Decrypter cle
-        cle_info = copie_docs['cleweb']['resultats'][0]
-        cle_iv = base64.b64decode(cle_info['iv'].encode('utf-8'))
-        cle_secrete_cryptee = cle_info['cle']
-
-        fichier_cle = self.__monitor.configuration.mq_keyfile
-        with open(fichier_cle, 'rb') as fichier:
-            fichier_cle_bytes = fichier.read()
-        clecert = EnveloppeCleCert()
-        clecert.key_from_pem_bytes(fichier_cle_bytes)
-        helper = DecryptionHelper(clecert)
-        cle_secrete = helper.decrypter_asymmetrique(cle_secrete_cryptee)
-
-        document_resultats = copie_docs['document']['resultats'][0][0]
-        document_crypte = document_resultats[ConstantesPki.LIBELLE_CLE_CRYPTEE]
-        document_crypte = document_crypte.encode('utf-8')
-        document_crypte = base64.b64decode(document_crypte)
-
-        document_decrypte = helper.decrypter_symmetrique(cle_secrete, cle_iv, document_crypte)
-        document_str = document_decrypte.decode('utf-8')
-        dict_pem = json.loads(document_str)
-
-        cle_certbot_pem = dict_pem['pem']
-        cert_certbot_pem = document_resultats[ConstantesPki.LIBELLE_CERTIFICAT_PEM]
-        fullchain = document_resultats[ConstantesPki.LIBELLE_CHAINES]['fullchain']['pem']
-
-        clecert_certbot = EnveloppeCleCert()
-        clecert_certbot.from_pem_bytes(
-            private_key_bytes=cle_certbot_pem.encode('utf-8'),
-            cert_bytes=cert_certbot_pem.encode('utf-8'),
-        )
-        clecert_certbot.set_chaine_str(fullchain)
-
-        # Demander deploiement du clecert
-        date_debut = clecert_certbot.not_valid_before
-        datetag = date_debut.strftime('%Y%m%d%H%M%S')
-        self.__deployeur.deployer_clecert('pki.millegrilles.web', clecert_certbot, datetag=datetag)
-
-        # Ceduler redemarrage de nginx pour utiliser le nouveau certificat
-        self.__monitor.ceduler_redemarrage(nom_service=ConstantesEnvironnementMilleGrilles.SERVICE_NGINX)
-
-    def ajouter_compte_mq(self, commande: dict):
-        """
-        Ajoute un compte MQ avec un certificat.
-        :param commande:
-        :return:
-        """
-        certificat_pem = commande[ConstantesPki.LIBELLE_CERTIFICAT_PEM]
-        enveloppe = EnveloppeCertificat(certificat_pem=certificat_pem)
-        if enveloppe.date_valide():
-            self.__deployeur.ajouter_compte_mq(enveloppe)
 
 
 class GestionnairePublique:

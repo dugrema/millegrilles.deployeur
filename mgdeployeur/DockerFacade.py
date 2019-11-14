@@ -1,8 +1,9 @@
 import logging
 import requests_unixsocket
 import json
+import docker
 
-from mgdeployeur.Constantes import ConstantesEnvironnementMilleGrilles
+from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
 
 class DockerConstantes:
 
@@ -17,6 +18,7 @@ class DockerFacade:
     def __init__(self):
         self.__docker_socket_path = DockerFacade.__format_unixsocket_docker('/var/run/docker.sock')
         self.__session = requests_unixsocket.Session()
+        self.__docker_client = docker.from_env()
         self.__logger = logging.getLogger('%s' % self.__class__.__name__)
 
     @staticmethod
@@ -170,6 +172,81 @@ class DockerFacade:
 
         return resultat
 
+    def installer_service(self, nom_millegrille, nom_service: str, restart_any=False, force=True, mappings: dict = None):
+        """
+        Installe un nouveau service de millegrille
+        :param nom_millegrille:
+        :param nom_service:
+        :param force:
+        :param mappings:
+        :return:
+        """
+
+        # Verifier que le service MQ est en fonction - sinon le deployer
+        nom_service_complet = '%s_%s' % (nom_millegrille, nom_service)
+        etat_service_resp = self.info_service(nom_service_complet)
+        if etat_service_resp.status_code == 200:
+            service_etat_json = etat_service_resp.json()
+            if len(service_etat_json) == 0 and force:
+                mode = 'create'
+                self.__logger.warning("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, nom_millegrille))
+            else:
+                service_deploye = service_etat_json[0]
+                service_id = service_deploye['ID']
+                version_service = service_deploye['Version']['Index']
+                mode = '%s/update?version=%s' % (service_id, version_service)
+                self.__logger.warning("Service %s sera re-deploye sur %s (force update), mode=%s" % (nom_service_complet, nom_millegrille, mode))
+        else:
+            mode = 'create'
+            self.__logger.warning("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, nom_millegrille))
+
+        if mode is not None:
+            docker_secrets = self.get('secrets').json()
+            docker_configs = self.get('configs').json()
+            configurateur = ServiceDockerConfiguration(
+                nom_millegrille, nom_service, docker_secrets, docker_configs, mappings)
+            service_json = configurateur.formatter_service()
+            etat_service_resp = self.post('services/%s' % mode, service_json)
+            status_code = etat_service_resp.status_code
+            if 200 <= status_code <= 201:
+                self.__logger.info("Deploiement de Service %s avec ID %s" % (nom_service_complet, str(etat_service_resp.json())))
+            elif status_code == 409:
+                # Service existe, on le met a jour
+                etat_service_resp = self.post('services/update', service_json)
+                status_code = etat_service_resp.status_code
+                self.__logger.info("Update service %s, code %s\n%s" % (nom_service_complet, status_code, etat_service_resp.json()))
+            else:
+                self.__logger.error("Service %s deploy erreur: %d\n%s" % (
+                    nom_service_complet, etat_service_resp.status_code, str(etat_service_resp.json())))
+
+    def deployer_labels(self, node_name, labels):
+        nodes_list = self.get('nodes').json()
+        node = [n for n in nodes_list if n['Description']['Hostname'] == node_name]
+        if len(node) == 1:
+            node = node[0]  # Conserver le node recherche
+            node_id = node['ID']
+            node_version = node['Version']['Index']
+            node_role = node['Spec']['Role']
+            node_availability = node['Spec']['Availability']
+            new_labels = labels.copy()
+            new_labels.update(node['Spec']['Labels'])
+            content = {
+                "Labels": new_labels,
+                "Role": node_role,
+                "Availability": node_availability
+            }
+
+            label_resp = self.post('nodes/%s/update?version=%s' % (node_id, node_version), content)
+            self.__logger.debug("Label add status:%s\n%s" % (label_resp.status_code, str(label_resp)))
+
+    @property
+    def pull(self):
+        return self.__docker_client.images.pull
+
+    @property
+    def swarm(self):
+        return self.__docker_client.swarm
+
 
 class ServiceDockerConfiguration:
 
@@ -193,32 +270,17 @@ class ServiceDockerConfiguration:
         self.__configs_par_nom = dict()
         self.__versions_images = dict()
 
-        self.__repository = 'registry.maple.mdugre.info:5000'
-
-        self.constantes = ConstantesEnvironnementMilleGrilles(nom_millegrille)
+        self.constantes = VariablesEnvironnementMilleGrilles(nom_millegrille)
 
         config_json_filename = '/opt/millegrilles/etc/docker.%s.json' % nom_service
         with open(config_json_filename, 'r') as fichier:
             self.__configuration_json = json.load(fichier)
-
-        self.__versions_images = ServiceDockerConfiguration.charger_versions()
 
         for secret in docker_secrets:
             self.__secrets_par_nom[secret['Spec']['Name']] = secret['ID']
 
         for config in docker_configs:
             self.__configs_par_nom[config['Spec']['Name']] = config['ID']
-
-    @staticmethod
-    def charger_versions():
-        config_versions_name = '/opt/millegrilles/etc/docker.versions.json'
-        with open(config_versions_name) as fichier:
-            config_str = fichier.read()
-            if config_str is not None:
-                config_json = json.loads(config_str)
-                return config_json
-
-        return None
 
     def formatter_service(self):
         service_config = self.__configuration_json
@@ -229,7 +291,7 @@ class ServiceDockerConfiguration:
         self.remplacer_variables()
 
         config_path = '%s/%s' % (
-            ConstantesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
             self.__nom_millegrille
         )
         config_filename = '%s/docker.%s.json' % (config_path,self.__nom_service)
@@ -373,3 +435,112 @@ class ServiceDockerConfiguration:
             return configs[config_date]
 
         return None
+
+
+class GestionnaireImagesDocker:
+
+    def __init__(self, docker_facade: DockerFacade):
+        self.__docker_facade = docker_facade
+        self.__versions_images = GestionnaireImagesDocker.charger_versions()
+
+    @staticmethod
+    def charger_versions():
+        config_versions_name = '/opt/millegrilles/etc/docker.versions.json'
+        with open(config_versions_name) as fichier:
+            config_str = fichier.read()
+            if config_str is not None:
+                config_json = json.loads(config_str)
+                return config_json
+
+        return None
+
+    def telecharger_images_docker(self):
+        """
+        S'assure d'avoir une version locale de chaque image - telecharge au besoin
+        :return:
+        """
+        pass
+
+
+class ServicesMilleGrillesHelper:
+
+    def __init__(self, docker_facade: DockerFacade):
+        self.__docker_facade = docker_facade
+
+    def activer_mongo(self):
+        self.__docker_facade.installer_service('mongo')
+
+    def activer_mq(self):
+        self.__docker_facade.installer_service('mq')
+
+    def activer_maitredescles(self):
+        self.__docker_facade.installer_service('maitredescles')
+        labels = {'millegrilles.maitredescles': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_consignateur_transactions(self):
+        self.__docker_facade.installer_service('transaction')
+        labels = {'netzone.private': 'true', 'millegrilles.python': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_ceduleur(self):
+        self.__docker_facade.installer_service('ceduleur')
+        labels = {'netzone.private': 'true', 'millegrilles.python': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_domaines(self):
+        self.__docker_facade.installer_service('domaines')
+        labels = {'netzone.private': 'true', 'millegrilles.python': 'true', 'millegrilles.domaines': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_coupdoeilreact(self):
+        self.__docker_facade.installer_service('coupdoeilreact')
+        labels = {'netzone.private': 'true', 'millegrilles.coupdoeil': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_consignationfichiers(self):
+        self.__docker_facade.installer_service('consignationfichiers')
+        labels = {'netzone.private': 'true', 'millegrilles.consignationfichiers': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_vitrine(self):
+        self.__docker_facade.installer_service('vitrinereact')
+        labels = {'millegrilles.vitrine': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_nginx_local(self):
+        self.__docker_facade.installer_service('nginxlocal')
+        labels = {'netzone.private': 'true', 'millegrilles.nginx': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_publicateur_local(self):
+        self.__docker_facade.installer_service('publicateurlocal')
+
+    def activer_nginx_public(self):
+        # Charger configuration de nginx
+        configuration_url = self.charger_configuration_web()
+        self.__docker_facade.installer_service('nginxpublic', mappings=configuration_url)
+        labels = {'millegrilles.nginx': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def activer_mongoexpress(self):
+        self.__docker_facade.installer_service('mongoexpress')
+        labels = {'netzone.private': 'true', 'millegrilles.consoles': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+
+    def charger_configuration_web(self, default=True):
+        fichier_configuration_url = self.constantes.fichier_etc_mg(
+            ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_URL_PUBLIC)
+
+        configuration_url = None
+        if os.path.isfile(fichier_configuration_url):
+            with open(fichier_configuration_url, 'r') as fichier:
+                configuration_url = json.load(fichier)
+        elif default:
+            # Configuraiton initiale, on met des valeurs dummy
+            configuration_url = {
+                ConstantesParametres.DOCUMENT_PUBLIQUE_URL_WEB: 'mg_public',
+                ConstantesParametres.DOCUMENT_PUBLIQUE_URL_COUPDOEIL: 'coupdoeil_public',
+            }
+
+        return configuration_url
