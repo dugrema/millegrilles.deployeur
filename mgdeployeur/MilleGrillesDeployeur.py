@@ -59,6 +59,11 @@ class DeployeurMilleGrilles:
         )
 
         self.__parser.add_argument(
+            '--no_monitor', action='store_true', required=False,
+            help="Ne demarre pas le monitor pour une commande installer"
+        )
+
+        self.__parser.add_argument(
             '--docker_advertise_addr', type=str, required=False, default='127.0.0.1',
             help="Advertise address pour docker swarm"
         )

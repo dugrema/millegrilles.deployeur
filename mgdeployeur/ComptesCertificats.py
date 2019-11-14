@@ -1,4 +1,5 @@
 from requests import HTTPError
+from requests.exceptions import ConnectionError
 from threading import Event
 import logging
 import secrets
@@ -56,9 +57,12 @@ class GestionnaireComptesRabbitMQ:
                     self.__logger.debug("MQ est pret")
                     mq_pret = True
                     break
+            except ConnectionError:
+                pass
             except HTTPError:
-                self.__logger.debug("Attente MQ (%s/%s)" % (essai, nb_essais_max))
+                pass
 
+            self.__logger.debug("Attente MQ (%s/%s)" % (essai, nb_essais_max))
             self.__wait_event.wait(10)
 
         return mq_pret
