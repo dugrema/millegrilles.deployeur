@@ -1,3 +1,4 @@
+from requests import HTTPError
 from threading import Event
 import logging
 import secrets
@@ -28,13 +29,8 @@ class GestionnaireComptesRabbitMQ:
         self._admin_api = RabbitMQAPI(docker_nodename, 'dudE_W475@euch', '/opt/millegrilles/dev3/pki/deployeur/pki.ca.fullchain.pem')
         self.__wait_event = Event()
 
-    def connecter_api(self, password='dudE_W475@euch'):
-        """
-        Se connecte a RabbitMQ Management Console via docker (adresse localhost)
-        :param password:
-        :return:
-        """
-        self._admin_api = AdminAPI(url='https://127.0.0.1:8443', auth=('admin', password))
+    def changer_motdepasse_admin(self):
+        pass
 
     def get_container_rabbitmq(self):
         container_resp = self.__docker.info_container('%s_mq' % self.__constantes.nom_millegrille)
@@ -54,22 +50,15 @@ class GestionnaireComptesRabbitMQ:
         mq_pret = False
         nb_essais_max = int(attente_sec / 10) + 1
         for essai in range(1, nb_essais_max):
-            container = self.get_container_rabbitmq()
-            if container is not None:
-                state = container['State']
-                if state == 'running':
-                    # Tenter d'executer un script pour voir si mongo est pret
-                    commande = 'rabbitmqctl list_vhosts'
-                    try:
-                        output = self.__executer_commande(commande)
-                        content = str(output)
-                        if 'Listing vhosts' in content:
-                            mq_pret = True
-                            break
-                    except Exception as e:
-                        self.__logger.warning("Erreur access rabbitmqctl: %s" % str(e))
+            try:
+                resultat_healthcheck = self._admin_api.healthchecks()
+                if resultat_healthcheck.get('status') == 'ok':
+                    self.__logger.debug("MQ est pret")
+                    mq_pret = True
+                    break
+            except HTTPError:
+                self.__logger.debug("Attente MQ (%s/%s)" % (essai, nb_essais_max))
 
-            self.__logger.debug("Attente MQ (%s/%s)" % (essai, nb_essais_max))
             self.__wait_event.wait(10)
 
         return mq_pret
@@ -78,35 +67,15 @@ class GestionnaireComptesRabbitMQ:
         nom_millegrille = self.__constantes.nom_millegrille
         subject = enveloppe.subject_rfc4514_string_mq()
 
-        commandes = [
-            "rabbitmqctl add_user %s CLEAR_ME" % subject,
-            "rabbitmqctl clear_password %s",
-            "rabbitmqctl set_permissions -p %s %s .* .* .*" % (nom_millegrille, subject),
-            "rabbitmqctl set_topic_permissions -p %s %s millegrilles.middleware .* .*" % (nom_millegrille, subject),
-            "rabbitmqctl set_topic_permissions -p %s %s millegrilles.inter .* .*" % (nom_millegrille, subject),
-            "rabbitmqctl set_topic_permissions -p %s %s millegrilles.noeuds .* .*" % (nom_millegrille, subject),
-            "rabbitmqctl set_topic_permissions -p %s %s millegrilles.public .* .*" % (nom_millegrille, subject),
-        ]
-
-        for commande in commandes:
-            output = self.__executer_commande(commande)
-            self.__logger.debug("Output %s:\n%s" % (commande, str(output)))
-            if 'does not exist' in str(output):
-                raise Exception("Erreur creation compte %s:\n%s" % (subject, str(output)))
+        self._admin_api.create_user(subject)
+        self._admin_api.create_user_permission(subject, nom_millegrille)
+        self._admin_api.create_user_topic(subject, nom_millegrille, 'millegrilles.middleware')
+        self._admin_api.create_user_topic(subject, nom_millegrille, 'millegrilles.inter')
+        self._admin_api.create_user_topic(subject, nom_millegrille, 'millegrilles.noeuds')
+        self._admin_api.create_user_topic(subject, nom_millegrille, 'millegrilles.public')
 
     def ajouter_vhost(self):
-        output = None
-        for tentative in range(0, 5):
-            commande = 'rabbitmqctl add_vhost %s' % self.__constantes.nom_millegrille
-            output = self.__executer_commande(commande)
-            self.__logger.debug("Essai %d: Output %s:\n%s" % (tentative, commande, str(output)))
-            if 'vhost_already_exists' in str(output):
-                return  # Ok, deja cree
-            elif 'Error:' not in str(output):
-                return  # Ok, le vhost est pret
-
-        self.__logger.error("Erreur ajout vhost. Output:\n%s" % str(output))
-        raise Exception("Erreur ajout vhost")
+        self._admin_api.create_vhost(self.__constantes.nom_millegrille)
 
     def __executer_commande(self, commande:str):
         commande = commande.split(' ')
