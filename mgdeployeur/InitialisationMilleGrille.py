@@ -3,25 +3,31 @@ import json
 import base64
 import datetime
 import shutil
+import os
+from threading import Event
 
 from millegrilles import Constantes
+from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
 from mgdeployeur.ComptesCertificats import GestionnaireComptesRabbitMQ, GestionnaireComptesMongo, GestionnaireCertificats
 from mgdeployeur.DockerFacade import DockerFacade
-from mgdeployeur.MilleGrillesDeployeur import VariablesEnvironnementMilleGrilles
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurInitial, \
     EnveloppeCleCert, RenouvelleurCertificat
 
 
 class InitialisationMilleGrille:
 
-    def __init__(self, variables_env: VariablesEnvironnementMilleGrilles, docker_facade: DockerFacade):
+    def __init__(self, variables_env: VariablesEnvironnementMilleGrilles, docker_facade: DockerFacade, docker_nodename):
         self.__docker_facade = docker_facade
+        self.__docker_nodename = docker_nodename
         self.variables_env = variables_env
         self.__nom_millegrille = variables_env.nom_millegrille
+        self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
-        self.__gestionnaire_certificats = GestionnaireCertificats(self.__nom_millegrille, self.variables_env)
+        self.__gestionnaire_certificats = GestionnaireCertificats(self.variables_env, self.__docker_facade, self.__docker_nodename)
         self.__gestionnaire_rabbitmq = GestionnaireComptesRabbitMQ(self.__nom_millegrille, self.__docker_facade)
         self.__gestionnaire_mongo = GestionnaireComptesMongo(self.__nom_millegrille)
+
+        self.__wait_event = Event()
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 

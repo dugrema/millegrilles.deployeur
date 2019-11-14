@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 
 # Deployeur de MilleGrille
-# Responsable de l'installation, mise a jour et health check
+# Responsable de l'installation et bootstrap d'une MilleGrille.
 
 from millegrilles import Constantes
 from millegrilles.domaines.Parametres import ConstantesParametres
 from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
 from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
 from mgdeployeur.InitialisationMilleGrille import InitialisationMilleGrille
+from mgdeployeur.ComptesCertificats import GestionnaireCertificats
 
 from threading import Event
 import json
@@ -75,8 +76,6 @@ class DeployeurMilleGrilles:
         self.__args = self.__parser.parse_args()
 
     def _configurer_logging(self):
-        logging.basicConfig(format=Constantes.LOGGING_FORMAT)
-
         """ Utilise args pour ajuster le logging level (debug, info) """
         if self.__args.debug:
             self.__logger.setLevel(logging.DEBUG)
@@ -91,14 +90,15 @@ class DeployeurMilleGrilles:
 
         commande = self.__args.commande
         nom_millegrille = self.__args.nom_millegrille
-        node_name = self.__args.node
+        node_name = self.__args.nodename
         self.__logger.debug("Deployeur MilleGrille %s, docker node name : %s" % (nom_millegrille, node_name))
 
-        deployeur = DeployeurDockerMilleGrille(nom_millegrille, node_name, self.__docker_facade)
+        deployeur = DeployeurDockerMilleGrille(nom_millegrille, node_name, self.__docker_facade, self.__args)
 
         if commande == 'installer' is not None:
-            # Verifier que docker est accessible
-            deployeur.configurer()
+            # Configurer docker
+            deployeur.installer()
+            deployeur.installer_phase1()
             if not self.__args.download_only:
                 # Installer les services
                 pass
@@ -151,7 +151,8 @@ class DeployeurDockerMilleGrille:
         self.__args = args
 
         self.variables_env = VariablesEnvironnementMilleGrilles(nom_millegrille)
-        self.__initialisation_millegrille = InitialisationMilleGrille(self.variables_env)
+        self.__initialisation_millegrille = InitialisationMilleGrille(self.variables_env, self.__docker_facade, self.__node_name)
+        self.__generateur_certificats = GestionnaireCertificats(self.variables_env, self.__docker_facade, self.__node_name)
 
         # Version des secrets a utiliser
         self.__certificats = dict()
@@ -162,10 +163,24 @@ class DeployeurDockerMilleGrille:
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
-    def configurer(self):
+    def installer(self):
+        """
+        Initialise docker (swarm, reseau), genere les certificats initiaux pour bootstrapper la MilleGrille
+        et telecharge les images docker du middleware et des services.
+        :return:
+        """
+
+        # Initialise docker swarm (global - si pas deja configure)
         self.__initialisation_millegrille.configurer_swarm(self.__args.docker_advertise_addr)
+
+        # Prepare le reseau overlay de la MilleGrille
         self.__initialisation_millegrille.preparer_reseau()
-        self.generer_certificats_initiaux()  # Genere certificats essentiels pour demarrer le systeme
+
+        # Genere certificats essentiels pour demarrer la nouvelle MilleGrille
+        self.__generateur_certificats.generer_certificats_initiaux(self.__node_name)
+
+        # Telecharge les images docker requises pour le middleware et les services
+
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
 
@@ -182,42 +197,31 @@ class DeployeurDockerMilleGrille:
             self.__docker_facade.supprimer_service(id_service)
 
     def maj_versions_images(self):
-        """
-        Met a jour la version des images de la millegrille. Ne deploie pas de nouveaux services.
-        :return:
-        """
-        versions_images = ServiceDockerConfiguration.charger_versions()
+        raise NotImplementedError("Pas implemente")
 
-        liste_services = self.__docker_facade.liste_services_millegrille(self.__nom_millegrille)
-        self.__logger.info("Services deployes: %s" % str(liste_services))
-        for service in liste_services:
-            name = service['Spec']['Name']
-            name = name.replace('%s_' % self.__nom_millegrille)  # Enlever prefixe (nom de la millegrille)
-            image = service['Spect']['TaskTemplate']['ContainerSpec']['Image']
-            version_deployee = image.split('/')
-            version_deployee = version_deployee[-1]  # Conserver derniere partie du nom d'image
+    def force_reload(self):
+        raise NotImplementedError("Pas implemente")
 
-            image_config = versions_images.get(name)
-            if image_config != version_deployee:
-                self.__logger.info("Mise a jour version service %s" % name)
-                self.preparer_service(name)
+    def installer_phase1(self):
+        self._installer_mongo()
+        self._installer_mq()
+        self._installer_consignateur_transactions()
+        self._installer_maitredescles()
 
-    def installer_mq(self):
-        # Activer les serveurs middleware MQ et Mongo
-        self.activer_mq()
-
-    def installer_mongo(self):
-        self.configurer_mongo()
+    def _installer_mongo(self):
         labels = {'netzone.private': 'true', 'millegrilles.database': 'true'}
-
-        # Si premiere execution, attendre deploiement:
-        #  - executer rs.init()
-        #  - ajouter comptes
-        self.initialiser_db_mongo()
-        self.deployer_labels(self.__node_name, labels)
+        self.__docker_facade.deployer_nodelabels(self.__node_name, labels)
+        self.configurer_mongo()
         self.activer_mongo()
 
-    def installer_consignateur_transactions(self):
+    def _installer_mq(self):
+        # Activer les serveurs middleware MQ et Mongo
+        self.activer_mq()
+        labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
+        self.deployer_labels(self.__node_name, labels)
+        self.configurer_mq()
+
+    def _installer_consignateur_transactions(self):
         """
         Installe le consignation de transaction
         Ce service va creer les Q de transaction au demarrage
@@ -225,27 +229,17 @@ class DeployeurDockerMilleGrille:
         """
         self.activer_consignateur_transactions()
 
-    def installer_maitredescles(self):
+    def _installer_maitredescles(self):
         """
         Installe le maitre des cles. Permet de signer les certificats pour creer les autres services.
         :return:
         """
         self.activer_maitredescles()
 
-
-    def installer_phase1(self):
-        self.installer_mongo()
-        self.installer_mq()
-
-    def activer_mq(self):
-        self.preparer_service('mq')
-        labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-        self.configurer_mq()
-
+    def deployer_phase1(self):
+        raise NotImplementedError("pas implemente")
 
 
 if __name__ == '__main__':
-    deployeur = DeployeurMilleGrilles()
-    deployeur.main()
-
+    logging.basicConfig(format=Constantes.LOGGING_FORMAT)
+    DeployeurMilleGrilles().main()

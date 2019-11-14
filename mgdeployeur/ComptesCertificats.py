@@ -13,9 +13,9 @@ from millegrilles.domaines.MaitreDesCles import ConstantesMaitreDesCles
 from millegrilles.SecuritePKI import EnveloppeCertificat
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurInitial, \
     EnveloppeCleCert, RenouvelleurCertificat, DecryptionHelper, GenerateurCertificat
-from mgdeployeur.MilleGrillesDeployeur import VariablesEnvironnementMilleGrilles
+from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
 from mgdeployeur.DockerFacade import DockerFacade
-from mgdeployeur.MilleGrillesMonitor import ConstantesMonitor
+# from mgdeployeur.MilleGrillesMonitor import ConstantesMonitor
 
 
 class GestionnaireComptesRabbitMQ:
@@ -189,12 +189,15 @@ class GestionnaireComptesMongo:
 
 class GestionnaireCertificats:
 
-    def __init__(self, variables_env: VariablesEnvironnementMilleGrilles, docker_facade: DockerFacade):
+    def __init__(self, variables_env: VariablesEnvironnementMilleGrilles, docker_facade: DockerFacade, docker_nodename: str):
         self.variables_env = variables_env
         self.__nom_millegrille = variables_env.nom_millegrille
         self.__docker_facade = docker_facade
+        self.__docker_nodename = docker_nodename
         self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
+        self.__certificats = dict()
 
     def sauvegarder_clecert_deployeur(self, clecert, millegrille_clecert=None):
         os.makedirs(self.variables_env.rep_secrets_deployeur, exist_ok=True)
@@ -406,7 +409,7 @@ class GestionnaireCertificats:
 
         config = {
             ('MG_%s' % Constantes.CONFIG_NOM_MILLEGRILLE).upper(): self.__nom_millegrille,
-            ('MG_%s' % Constantes.CONFIG_MQ_HOST).upper(): self.__node_name,
+            ('MG_%s' % Constantes.CONFIG_MQ_HOST).upper(): self.__docker_nodename,
             ('MG_%s' % Constantes.CONFIG_MQ_PORT).upper(): '5673',
             ('MG_%s' % Constantes.CONFIG_MQ_SSL).upper(): 'on',
             ('MG_%s' % Constantes.CONFIG_MQ_AUTH_CERT).upper(): 'on',
@@ -430,252 +433,252 @@ class GestionnaireCertificats:
         liste_configs = self.__docker_facade
 
 
-class RenouvellementCertificats:
-
-    def __init__(self, nom_millegrille, monitor: MonitorMilleGrille, deployeur: DeployeurDockerMilleGrille):
-        self.__nom_millegrille = nom_millegrille
-        self.__monitor = monitor
-        self.__deployeur = deployeur
-
-        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-
-        self.__liste_demandes = dict()  # Key=Role, Valeur={clecert,datedemande,property}
-        self.__constantes = VariablesEnvironnementMilleGrilles(self.__nom_millegrille)
-        self.__fichier_etat_certificats = self.__constantes.fichier_etc_mg(
-            VariablesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
-
-        self.__maj_certwebs_dict = None  # Placeholder pour conserver documents certs en attendant cle
-
-        # Detecter expiration a moins de 60 jours
-        self.__delta_expiration = datetime.timedelta(days=60)
-
-    def trouver_certs_a_renouveller(self):
-        with open(self.__fichier_etat_certificats, 'r') as fichier:
-            fichier_etat = json.load(fichier)
-
-        date_courante = datetime.datetime.utcnow()
-        for role, date_epoch in fichier_etat[VariablesEnvironnementMilleGrilles.CHAMP_EXPIRATION].items():
-            date_exp = datetime.datetime.fromtimestamp(date_epoch)
-            date_comparaison = date_exp - self.__delta_expiration
-            if date_courante > date_comparaison:
-                self.__logger.info("Certificat role %s du pour renouvellement (expiration: %s)" % (role, str(date_exp)))
-
-                self.preparer_demande_renouvellement(role)
-
-    def executer_commande_renouvellement(self, commande):
-        roles = commande['roles']
-        for role in roles:
-            self.preparer_demande_renouvellement(role, ajouter_url_public=True)
-
-    def preparer_demande_renouvellement(self, role, ajouter_url_public=False):
-        """
-        Demande un renouvellement pour le certificat.
-        :param role: Module pour lequel le certificat doit etre genere
-        :param ajouter_url_public: Si la millegrille a ete publiee, s'assurer de mettre les URLs publics dans alt names
-        :return:
-        """
-        if ajouter_url_public and role in ['mq']:
-            # Ajouter le nom domaine public au besoin
-            # Aller chercher document certificat dans Pki
-            domaine_requete = '%s.%s' % (ConstantesParametres.DOMAINE_NOM, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL)
-            requetes = {
-                'requetes': [{
-                    'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesParametres.LIBVAL_CONFIGURATION_PUBLIQUE}
-                }]
-            }
-            generateur_transactions = self.__monitor.generateur_transactions
-            generateur_transactions.transmettre_requete(
-                requetes, domaine_requete, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL, self.__monitor.queue_reponse)
-
-        else:
-            self.transmettre_demande_renouvellement(role, None)
-
-    def transmettre_demande_renouvellement_urlpublics(self, role, resultats: dict):
-        resultat = resultats['resultats'][0][0]
-        mq_url_public = resultat.get(ConstantesParametres.DOCUMENT_PUBLIQUE_URL_MQ)
-        urls = None
-        if mq_url_public is not None:
-            urls = [mq_url_public]
-        self.transmettre_demande_renouvellement(role, urls_publics=urls)
-
-    def transmettre_demande_renouvellement(self, role, urls_publics: list = None):
-        generateur_csr = GenerateurCertificat(self.__nom_millegrille)
-
-        clecert = generateur_csr.preparer_key_request(role, self.__monitor.node_name, alt_names=urls_publics)
-
-        demande = {
-            'csr': clecert.csr_bytes.decode('utf-8'),
-            'datedemande': int(datetime.datetime.utcnow().timestamp()),
-            'role': role,
-            'node': self.__monitor.node_name,
-        }
-
-        # Conserver la demande en memoire pour combiner avec le certificat, inclue la cle privee
-        persistance_memoire = {
-            'clecert': clecert,
-        }
-        persistance_memoire.update(demande)
-        self.__liste_demandes[role] = persistance_memoire
-
-        self.__logger.debug("Demande:\n%s" % json.dumps(demande, indent=2))
-
-        domaine = ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT
-        generateur_transactions = self.__monitor.generateur_transactions
-        generateur_transactions.soumettre_transaction(
-            demande, domaine, correlation_id=role, reply_to=self.__monitor.queue_reponse)
-
-        return persistance_memoire
-
-    def traiter_reponse_renouvellement(self, message, correlation_id):
-        role = correlation_id
-        demande = self.__liste_demandes.get(role)
-
-        if demande is not None:
-            # Traiter la reponse
-            del self.__liste_demandes[role]  # Effacer la demande (on a la reponse)
-
-            # Extraire le certificat et ajouter a clecert
-            clecert = demande['clecert']
-            cert_pem = message['cert']
-            clecert.cert_from_pem_bytes(cert_pem.encode('utf-8'))
-            fullchain = message['fullchain']
-            clecert.chaine = fullchain
-
-            # Verifier que la cle et le nouveau cert correspondent
-            correspondance = clecert.cle_correspondent()
-            if not correspondance:
-                raise Exception("La cle et le certificat ne correspondent pas pour: %s" % role)
-
-            # On a maintenant une cle et son certificat correspondant. Il faut la sauvegarder dans
-            # docker puis redeployer le service pour l'utiliser.
-            id_secret = 'pki.%s' % role
-            combiner_clecert = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
-
-            if role == 'deployeur':
-                self.__deployeur.sauvegarder_clecert_deployeur(clecert)
-            else:
-                self.__deployeur.deployer_clecert(id_secret, clecert, combiner_cle_cert=combiner_clecert)
-
-            self.update_cert_time(role, clecert)
-
-            self.__monitor.ceduler_redemarrage(60, role)
-
-        else:
-            self.__logger.warning("Recu reponse de renouvellement non sollicitee, role: %s" % role)
-            raise Exception("Recu reponse de renouvellement non sollicitee, role: %s" % role)
-
-    def update_cert_time(self, role, clecert):
-        with open(self.__fichier_etat_certificats, 'r') as fichier:
-            fichier_etat = json.load(fichier)
-
-        date_expiration = clecert.not_valid_after
-        expirations = fichier_etat[VariablesEnvironnementMilleGrilles.CHAMP_EXPIRATION]
-        expirations[role] = int(date_expiration.timestamp())
-
-        with open(self.__fichier_etat_certificats, 'w') as fichier:
-            json.dump(fichier_etat, fichier)
-
-    def recevoir_document_cleweb(self, type, reponse):
-        if self.__maj_certwebs_dict is None:
-            self.__maj_certwebs_dict = dict()
-
-        self.__maj_certwebs_dict[type] = reponse
-
-        if len(self.__maj_certwebs_dict) > 1:
-            self.__monitor.toggle_renouveller_certs_web()
-
-        self.__logger.debug("Document cleweb recu (type=%s): %s" % (type, json.dumps(self.__maj_certwebs_dict, indent=2)))
-
-    def maj_certificats_web_requetes(self, commande):
-
-        # Aller chercher document certificat dans Pki
-        domaine_requete = '%s.%s' % (ConstantesPki.DOMAINE_NOM, ConstantesPki.LIBVAL_PKI_WEB)
-        requetes = {
-            'requetes': [{
-                'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesPki.LIBVAL_PKI_WEB}
-            }]
-        }
-        generateur_transactions = self.__monitor.generateur_transactions
-        generateur_transactions.transmettre_requete(
-            requetes, domaine_requete, ConstantesMonitor.REPONSE_DOCUMENT_CLEWEB, self.__monitor.queue_reponse)
-
-        # Demander cle decryptage a maitredescles
-        domaine_cle_maitredescles = '%s.%s' % (ConstantesMaitreDesCles.DOMAINE_NOM, ConstantesMaitreDesCles.REQUETE_DECRYPTAGE_DOCUMENT)
-        requetes = {
-            'requetes': [{
-                'filtre': {
-                    Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesPki.LIBVAL_PKI_WEB,
-                }
-            }]
-        }
-        generateur_transactions.transmettre_requete(
-            requetes, domaine_cle_maitredescles, ConstantesMonitor.REPONSE_CLE_CLEWEB, self.__monitor.queue_reponse)
-
-    def renouveller_certs_web(self):
-        self.__logger.info("Appliquer les nouveaux certificats web")
-
-        self.__logger.debug("Document: %s" % json.dumps(self.__maj_certwebs_dict, indent=2))
-
-        copie_docs = self.__maj_certwebs_dict
-        self.__maj_certwebs_dict = None
-
-        # Decrypter cle
-        cle_info = copie_docs['cleweb']['resultats'][0]
-        cle_iv = base64.b64decode(cle_info['iv'].encode('utf-8'))
-        cle_secrete_cryptee = cle_info['cle']
-
-        fichier_cle = self.__monitor.configuration.mq_keyfile
-        with open(fichier_cle, 'rb') as fichier:
-            fichier_cle_bytes = fichier.read()
-        clecert = EnveloppeCleCert()
-        clecert.key_from_pem_bytes(fichier_cle_bytes)
-        helper = DecryptionHelper(clecert)
-        cle_secrete = helper.decrypter_asymmetrique(cle_secrete_cryptee)
-
-        document_resultats = copie_docs['document']['resultats'][0][0]
-        document_crypte = document_resultats[ConstantesPki.LIBELLE_CLE_CRYPTEE]
-        document_crypte = document_crypte.encode('utf-8')
-        document_crypte = base64.b64decode(document_crypte)
-
-        document_decrypte = helper.decrypter_symmetrique(cle_secrete, cle_iv, document_crypte)
-        document_str = document_decrypte.decode('utf-8')
-        dict_pem = json.loads(document_str)
-
-        cle_certbot_pem = dict_pem['pem']
-        cert_certbot_pem = document_resultats[ConstantesPki.LIBELLE_CERTIFICAT_PEM]
-        fullchain = document_resultats[ConstantesPki.LIBELLE_CHAINES]['fullchain']['pem']
-
-        clecert_certbot = EnveloppeCleCert()
-        clecert_certbot.from_pem_bytes(
-            private_key_bytes=cle_certbot_pem.encode('utf-8'),
-            cert_bytes=cert_certbot_pem.encode('utf-8'),
-        )
-        clecert_certbot.set_chaine_str(fullchain)
-
-        # Demander deploiement du clecert
-        date_debut = clecert_certbot.not_valid_before
-        datetag = date_debut.strftime('%Y%m%d%H%M%S')
-        self.__deployeur.deployer_clecert('pki.millegrilles.web', clecert_certbot, datetag=datetag)
-
-        # Ceduler redemarrage de nginx pour utiliser le nouveau certificat
-        self.__monitor.ceduler_redemarrage(nom_service=VariablesEnvironnementMilleGrilles.SERVICE_NGINX)
-
-    def ajouter_compte_mq(self, commande: dict):
-        """
-        Ajoute un compte MQ avec un certificat.
-        :param commande:
-        :return:
-        """
-        certificat_pem = commande[ConstantesPki.LIBELLE_CERTIFICAT_PEM]
-        enveloppe = EnveloppeCertificat(certificat_pem=certificat_pem)
-        if enveloppe.date_valide():
-            self.__deployeur.ajouter_compte_mq(enveloppe)
-
-
-class RenouvelleurCertificatAcme:
-    """
-    Renouvelle des certificats publics avec Acme
-    """
-
-    def __init__(self):
-        pass
+# class RenouvellementCertificats:
+#
+#     def __init__(self, nom_millegrille, monitor: MonitorMilleGrille, deployeur: DeployeurDockerMilleGrille):
+#         self.__nom_millegrille = nom_millegrille
+#         self.__monitor = monitor
+#         self.__deployeur = deployeur
+#
+#         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+#
+#         self.__liste_demandes = dict()  # Key=Role, Valeur={clecert,datedemande,property}
+#         self.__constantes = VariablesEnvironnementMilleGrilles(self.__nom_millegrille)
+#         self.__fichier_etat_certificats = self.__constantes.fichier_etc_mg(
+#             VariablesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
+#
+#         self.__maj_certwebs_dict = None  # Placeholder pour conserver documents certs en attendant cle
+#
+#         # Detecter expiration a moins de 60 jours
+#         self.__delta_expiration = datetime.timedelta(days=60)
+#
+#     def trouver_certs_a_renouveller(self):
+#         with open(self.__fichier_etat_certificats, 'r') as fichier:
+#             fichier_etat = json.load(fichier)
+#
+#         date_courante = datetime.datetime.utcnow()
+#         for role, date_epoch in fichier_etat[VariablesEnvironnementMilleGrilles.CHAMP_EXPIRATION].items():
+#             date_exp = datetime.datetime.fromtimestamp(date_epoch)
+#             date_comparaison = date_exp - self.__delta_expiration
+#             if date_courante > date_comparaison:
+#                 self.__logger.info("Certificat role %s du pour renouvellement (expiration: %s)" % (role, str(date_exp)))
+#
+#                 self.preparer_demande_renouvellement(role)
+#
+#     def executer_commande_renouvellement(self, commande):
+#         roles = commande['roles']
+#         for role in roles:
+#             self.preparer_demande_renouvellement(role, ajouter_url_public=True)
+#
+#     def preparer_demande_renouvellement(self, role, ajouter_url_public=False):
+#         """
+#         Demande un renouvellement pour le certificat.
+#         :param role: Module pour lequel le certificat doit etre genere
+#         :param ajouter_url_public: Si la millegrille a ete publiee, s'assurer de mettre les URLs publics dans alt names
+#         :return:
+#         """
+#         if ajouter_url_public and role in ['mq']:
+#             # Ajouter le nom domaine public au besoin
+#             # Aller chercher document certificat dans Pki
+#             domaine_requete = '%s.%s' % (ConstantesParametres.DOMAINE_NOM, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL)
+#             requetes = {
+#                 'requetes': [{
+#                     'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesParametres.LIBVAL_CONFIGURATION_PUBLIQUE}
+#                 }]
+#             }
+#             generateur_transactions = self.__monitor.generateur_transactions
+#             generateur_transactions.transmettre_requete(
+#                 requetes, domaine_requete, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL, self.__monitor.queue_reponse)
+#
+#         else:
+#             self.transmettre_demande_renouvellement(role, None)
+#
+#     def transmettre_demande_renouvellement_urlpublics(self, role, resultats: dict):
+#         resultat = resultats['resultats'][0][0]
+#         mq_url_public = resultat.get(ConstantesParametres.DOCUMENT_PUBLIQUE_URL_MQ)
+#         urls = None
+#         if mq_url_public is not None:
+#             urls = [mq_url_public]
+#         self.transmettre_demande_renouvellement(role, urls_publics=urls)
+#
+#     def transmettre_demande_renouvellement(self, role, urls_publics: list = None):
+#         generateur_csr = GenerateurCertificat(self.__nom_millegrille)
+#
+#         clecert = generateur_csr.preparer_key_request(role, self.__monitor.node_name, alt_names=urls_publics)
+#
+#         demande = {
+#             'csr': clecert.csr_bytes.decode('utf-8'),
+#             'datedemande': int(datetime.datetime.utcnow().timestamp()),
+#             'role': role,
+#             'node': self.__monitor.node_name,
+#         }
+#
+#         # Conserver la demande en memoire pour combiner avec le certificat, inclue la cle privee
+#         persistance_memoire = {
+#             'clecert': clecert,
+#         }
+#         persistance_memoire.update(demande)
+#         self.__liste_demandes[role] = persistance_memoire
+#
+#         self.__logger.debug("Demande:\n%s" % json.dumps(demande, indent=2))
+#
+#         domaine = ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT
+#         generateur_transactions = self.__monitor.generateur_transactions
+#         generateur_transactions.soumettre_transaction(
+#             demande, domaine, correlation_id=role, reply_to=self.__monitor.queue_reponse)
+#
+#         return persistance_memoire
+#
+#     def traiter_reponse_renouvellement(self, message, correlation_id):
+#         role = correlation_id
+#         demande = self.__liste_demandes.get(role)
+#
+#         if demande is not None:
+#             # Traiter la reponse
+#             del self.__liste_demandes[role]  # Effacer la demande (on a la reponse)
+#
+#             # Extraire le certificat et ajouter a clecert
+#             clecert = demande['clecert']
+#             cert_pem = message['cert']
+#             clecert.cert_from_pem_bytes(cert_pem.encode('utf-8'))
+#             fullchain = message['fullchain']
+#             clecert.chaine = fullchain
+#
+#             # Verifier que la cle et le nouveau cert correspondent
+#             correspondance = clecert.cle_correspondent()
+#             if not correspondance:
+#                 raise Exception("La cle et le certificat ne correspondent pas pour: %s" % role)
+#
+#             # On a maintenant une cle et son certificat correspondant. Il faut la sauvegarder dans
+#             # docker puis redeployer le service pour l'utiliser.
+#             id_secret = 'pki.%s' % role
+#             combiner_clecert = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
+#
+#             if role == 'deployeur':
+#                 self.__deployeur.sauvegarder_clecert_deployeur(clecert)
+#             else:
+#                 self.__deployeur.deployer_clecert(id_secret, clecert, combiner_cle_cert=combiner_clecert)
+#
+#             self.update_cert_time(role, clecert)
+#
+#             self.__monitor.ceduler_redemarrage(60, role)
+#
+#         else:
+#             self.__logger.warning("Recu reponse de renouvellement non sollicitee, role: %s" % role)
+#             raise Exception("Recu reponse de renouvellement non sollicitee, role: %s" % role)
+#
+#     def update_cert_time(self, role, clecert):
+#         with open(self.__fichier_etat_certificats, 'r') as fichier:
+#             fichier_etat = json.load(fichier)
+#
+#         date_expiration = clecert.not_valid_after
+#         expirations = fichier_etat[VariablesEnvironnementMilleGrilles.CHAMP_EXPIRATION]
+#         expirations[role] = int(date_expiration.timestamp())
+#
+#         with open(self.__fichier_etat_certificats, 'w') as fichier:
+#             json.dump(fichier_etat, fichier)
+#
+#     def recevoir_document_cleweb(self, type, reponse):
+#         if self.__maj_certwebs_dict is None:
+#             self.__maj_certwebs_dict = dict()
+#
+#         self.__maj_certwebs_dict[type] = reponse
+#
+#         if len(self.__maj_certwebs_dict) > 1:
+#             self.__monitor.toggle_renouveller_certs_web()
+#
+#         self.__logger.debug("Document cleweb recu (type=%s): %s" % (type, json.dumps(self.__maj_certwebs_dict, indent=2)))
+#
+#     def maj_certificats_web_requetes(self, commande):
+#
+#         # Aller chercher document certificat dans Pki
+#         domaine_requete = '%s.%s' % (ConstantesPki.DOMAINE_NOM, ConstantesPki.LIBVAL_PKI_WEB)
+#         requetes = {
+#             'requetes': [{
+#                 'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesPki.LIBVAL_PKI_WEB}
+#             }]
+#         }
+#         generateur_transactions = self.__monitor.generateur_transactions
+#         generateur_transactions.transmettre_requete(
+#             requetes, domaine_requete, ConstantesMonitor.REPONSE_DOCUMENT_CLEWEB, self.__monitor.queue_reponse)
+#
+#         # Demander cle decryptage a maitredescles
+#         domaine_cle_maitredescles = '%s.%s' % (ConstantesMaitreDesCles.DOMAINE_NOM, ConstantesMaitreDesCles.REQUETE_DECRYPTAGE_DOCUMENT)
+#         requetes = {
+#             'requetes': [{
+#                 'filtre': {
+#                     Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesPki.LIBVAL_PKI_WEB,
+#                 }
+#             }]
+#         }
+#         generateur_transactions.transmettre_requete(
+#             requetes, domaine_cle_maitredescles, ConstantesMonitor.REPONSE_CLE_CLEWEB, self.__monitor.queue_reponse)
+#
+#     def renouveller_certs_web(self):
+#         self.__logger.info("Appliquer les nouveaux certificats web")
+#
+#         self.__logger.debug("Document: %s" % json.dumps(self.__maj_certwebs_dict, indent=2))
+#
+#         copie_docs = self.__maj_certwebs_dict
+#         self.__maj_certwebs_dict = None
+#
+#         # Decrypter cle
+#         cle_info = copie_docs['cleweb']['resultats'][0]
+#         cle_iv = base64.b64decode(cle_info['iv'].encode('utf-8'))
+#         cle_secrete_cryptee = cle_info['cle']
+#
+#         fichier_cle = self.__monitor.configuration.mq_keyfile
+#         with open(fichier_cle, 'rb') as fichier:
+#             fichier_cle_bytes = fichier.read()
+#         clecert = EnveloppeCleCert()
+#         clecert.key_from_pem_bytes(fichier_cle_bytes)
+#         helper = DecryptionHelper(clecert)
+#         cle_secrete = helper.decrypter_asymmetrique(cle_secrete_cryptee)
+#
+#         document_resultats = copie_docs['document']['resultats'][0][0]
+#         document_crypte = document_resultats[ConstantesPki.LIBELLE_CLE_CRYPTEE]
+#         document_crypte = document_crypte.encode('utf-8')
+#         document_crypte = base64.b64decode(document_crypte)
+#
+#         document_decrypte = helper.decrypter_symmetrique(cle_secrete, cle_iv, document_crypte)
+#         document_str = document_decrypte.decode('utf-8')
+#         dict_pem = json.loads(document_str)
+#
+#         cle_certbot_pem = dict_pem['pem']
+#         cert_certbot_pem = document_resultats[ConstantesPki.LIBELLE_CERTIFICAT_PEM]
+#         fullchain = document_resultats[ConstantesPki.LIBELLE_CHAINES]['fullchain']['pem']
+#
+#         clecert_certbot = EnveloppeCleCert()
+#         clecert_certbot.from_pem_bytes(
+#             private_key_bytes=cle_certbot_pem.encode('utf-8'),
+#             cert_bytes=cert_certbot_pem.encode('utf-8'),
+#         )
+#         clecert_certbot.set_chaine_str(fullchain)
+#
+#         # Demander deploiement du clecert
+#         date_debut = clecert_certbot.not_valid_before
+#         datetag = date_debut.strftime('%Y%m%d%H%M%S')
+#         self.__deployeur.deployer_clecert('pki.millegrilles.web', clecert_certbot, datetag=datetag)
+#
+#         # Ceduler redemarrage de nginx pour utiliser le nouveau certificat
+#         self.__monitor.ceduler_redemarrage(nom_service=VariablesEnvironnementMilleGrilles.SERVICE_NGINX)
+#
+#     def ajouter_compte_mq(self, commande: dict):
+#         """
+#         Ajoute un compte MQ avec un certificat.
+#         :param commande:
+#         :return:
+#         """
+#         certificat_pem = commande[ConstantesPki.LIBELLE_CERTIFICAT_PEM]
+#         enveloppe = EnveloppeCertificat(certificat_pem=certificat_pem)
+#         if enveloppe.date_valide():
+#             self.__deployeur.ajouter_compte_mq(enveloppe)
+#
+#
+# class RenouvelleurCertificatAcme:
+#     """
+#     Renouvelle des certificats publics avec Acme
+#     """
+#
+#     def __init__(self):
+#         pass

@@ -62,6 +62,7 @@ class DockerFacade:
         for reseau in reseaux.json():
             if reseau.get('Name') == nom_reseau:
                 reseau_existe = True
+                self.__logger.debug("Reseau existe: %s" % str(reseau))
                 break
 
         if not reseau_existe:
@@ -219,7 +220,28 @@ class DockerFacade:
                 self.__logger.error("Service %s deploy erreur: %d\n%s" % (
                     nom_service_complet, etat_service_resp.status_code, str(etat_service_resp.json())))
 
-    def deployer_labels(self, node_name, labels):
+    def maj_versions_images(self, nom_millegrille):
+        """
+        Met a jour la version des images de la millegrille. Ne deploie pas de nouveaux services.
+        :return:
+        """
+        versions_images = GestionnaireImagesDocker.charger_versions()
+
+        liste_services = self.liste_services_millegrille(nom_millegrille)
+        self.__logger.info("Services deployes: %s" % str(liste_services))
+        for service in liste_services:
+            name = service['Spec']['Name']
+            name = name.replace('%s_' % nom_millegrille)  # Enlever prefixe (nom de la millegrille)
+            image = service['Spect']['TaskTemplate']['ContainerSpec']['Image']
+            version_deployee = image.split('/')
+            version_deployee = version_deployee[-1]  # Conserver derniere partie du nom d'image
+
+            image_config = versions_images.get(name)
+            if image_config != version_deployee:
+                self.__logger.info("Mise a jour version service %s" % name)
+                self.installer_service(nom_millegrille, name)
+
+    def deployer_nodelabels(self, node_name, labels):
         nodes_list = self.get('nodes').json()
         node = [n for n in nodes_list if n['Description']['Hostname'] == node_name]
         if len(node) == 1:
