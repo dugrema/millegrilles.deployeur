@@ -292,3 +292,26 @@ class InitialisationMilleGrille:
         # Enregistrer_fichier maj
         with open(etat_filename, 'w') as fichier:
             fichier.write(json.dumps(etat_mq))
+
+    def installer_consignateur_transactions(self):
+        """
+        Installe le consignation de transaction
+        Ce service va creer les Q de transaction au demarrage
+        :return:
+        """
+        labels = {'netzone.private': 'true', 'millegrilles.python': 'true', 'millegrilles.database': 'true'}
+        self.__docker_facade.deployer_nodelabels(self.__docker_nodename, labels)
+
+        # L'appel attends que le consignateur de transactions soit demarre
+        self.demarrer_service_blocking('transaction')
+
+    def installer_maitredescles(self):
+        """
+        Installe le maitre des cles. Permet de signer les certificats pour creer les autres services.
+        :return:
+        """
+        labels = {'millegrilles.maitredescles': 'true'}
+        self.__docker_facade.deployer_nodelabels(self.__docker_nodename, labels)
+
+        # L'appel attends que le maitredescles soit demarre
+        self.demarrer_service_blocking('maitredescles')

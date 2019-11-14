@@ -208,31 +208,17 @@ class DeployeurDockerMilleGrille:
         raise NotImplementedError("Pas implemente")
 
     def installer_phase1(self):
+        self.__logger.info("Phase 1 : Installation des modules middleware de base")
+
         # Demarrer la thread qui va ecouter les evenements Docker
         self.__docker_facade.demarrer_thread_event_listener()
 
         self.__initialisation_millegrille.installer_mongo()
         self.__initialisation_millegrille.installer_mq()
-        #self._installer_mq()
-        #self._installer_consignateur_transactions()
-        #self._installer_maitredescles()
+        self.__initialisation_millegrille.installer_consignateur_transactions()
+        self.__initialisation_millegrille.installer_maitredescles()
 
-    def _installer_consignateur_transactions(self):
-        """
-        Installe le consignation de transaction
-        Ce service va creer les Q de transaction au demarrage
-        :return:
-        """
-        labels = {'netzone.private': 'true', 'millegrilles.python': 'true', 'millegrilles.database': 'true'}
-        self.__docker_facade.deployer_nodelabels(self.__node_name, labels)
-
-    def _installer_maitredescles(self):
-        """
-        Installe le maitre des cles. Permet de signer les certificats pour creer les autres services.
-        :return:
-        """
-        labels = {'millegrilles.maitredescles': 'true'}
-        self.__docker_facade.deployer_nodelabels(self.__node_name, labels)
+        self.__logger.info("Phase 1 : Installation terminee")
 
     def deployer_phase1(self):
         raise NotImplementedError("pas implemente")
