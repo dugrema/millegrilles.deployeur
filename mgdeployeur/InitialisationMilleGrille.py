@@ -12,7 +12,7 @@ from mgdeployeur.ComptesCertificats import GestionnaireComptesRabbitMQ, Gestionn
 from mgdeployeur.DockerFacade import DockerFacade
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurInitial, \
     EnveloppeCleCert, RenouvelleurCertificat
-
+from millegrilles.SecuritePKI import EnveloppeCertificat
 
 class InitialisationMilleGrille:
 
@@ -24,7 +24,7 @@ class InitialisationMilleGrille:
         self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
         self.__gestionnaire_certificats = GestionnaireCertificats(self.variables_env, self.__docker_facade, self.__docker_nodename)
-        self.__gestionnaire_rabbitmq = GestionnaireComptesRabbitMQ(self.__nom_millegrille, self.__docker_facade)
+        self.__gestionnaire_rabbitmq = GestionnaireComptesRabbitMQ(self.__nom_millegrille, self.__docker_facade, self.__docker_nodename)
         self.__gestionnaire_mongo = GestionnaireComptesMongo(self.__nom_millegrille)
 
         self.__wait_event = Event()
@@ -248,8 +248,30 @@ class InitialisationMilleGrille:
                 raise Exception("MQ pas disponible")
             self.__gestionnaire_rabbitmq.ajouter_vhost()
 
-        for sujet in self.__certificats:
-            enveloppe = self.__certificats[sujet]
+        # Charger enveloppes des certificats
+        liste_certificats = list()
+
+        # Deployeur
+        deployeur_certfile = '%s/deployeur.cert.pem' % self.variables_env.rep_secrets_deployeur
+        with open(deployeur_certfile, 'r') as f:
+            deployeur_enveloppe = EnveloppeCertificat(certificat_pem=f.read())
+            liste_certificats.append(deployeur_enveloppe)
+
+        # Charger certs dans docker config
+        docker_configs = self.__docker_facade.configs.list()
+        for config in docker_configs:
+            if config.name.startswith('%s.pki' % self.__nom_millegrille):
+                elems = config.name.split('.')
+                if elems[3] == 'cert' and elems[2] in ('transaction', 'maitredescles'):
+                    # Charger ce certificat
+                    data = config.attrs['Spec']['Data']
+                    cert = base64.b64decode(data)
+                    enveloppe = EnveloppeCertificat(certificat_pem=cert)
+                    self.__logger.debug("Ajout certificat %s" % config.name)
+                    liste_certificats.append(enveloppe)
+
+        # Valider et ajouter comptes associes au certificat dans RabbitMQ
+        for enveloppe in liste_certificats:
             if enveloppe.date_valide():
                 self.__logger.debug("Cert valide: %s" % enveloppe.subject_rfc4514_string_mq())
 
@@ -270,10 +292,3 @@ class InitialisationMilleGrille:
         # Enregistrer_fichier maj
         with open(etat_filename, 'w') as fichier:
             fichier.write(json.dumps(etat_mq))
-
-    def callback_mq_start(self, event):
-        attrs = event['Actor']['Attributes']
-        name = attrs.get('name')
-        if name.split('.')[0] == '%s_mq' % self.__nom_millegrille:
-            self.__logger.info("Mongo est demarre dans docker")
-            self.__wait_event.set()

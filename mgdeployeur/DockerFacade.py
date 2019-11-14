@@ -322,6 +322,9 @@ class DockerFacade:
     def containers(self):
         return self.__docker_client.containers
 
+    @property
+    def configs(self):
+        return self.__docker_client.configs
 
 
 class GestionnaireImagesDocker:
