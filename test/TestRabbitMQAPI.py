@@ -32,6 +32,19 @@ class TestAPI:
     def get_user(self, name):
         return self.api.get_user(name)
 
+    def create_exchange(self, name, vhost):
+        self.api.create_exchange_for_vhost(name, vhost, {
+            "type": "topic",
+            "durable": True,
+        })
+
+    def run_healthchecks(self):
+        print(self.api.healthchecks())
+        print(self.api.aliveness('dev1'))
+
+    def changer_motdepasse(self):
+        self.api.create_user('user2', 'p1234')
+
 
 if __name__ == '__main__':
     logging.basicConfig()
@@ -43,7 +56,10 @@ if __name__ == '__main__':
     test = TestAPI()
     #test.overview()
     #test.vhost_tests()
-    test.create_user()
+    # test.create_user()
     # user = test.get_user('user2')
     # logger.debug("User:\n%s" % json.dumps(user, indent=4))
+    # test.create_exchange('exchange1', 'dev1')
+    # test.run_healthchecks()
+    test.changer_motdepasse()
 

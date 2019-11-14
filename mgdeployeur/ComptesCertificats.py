@@ -5,7 +5,6 @@ import json
 import base64
 import datetime
 import os
-from rabbitmq_admin import AdminAPI
 
 from millegrilles import Constantes
 from millegrilles.domaines.Parametres import ConstantesParametres
@@ -17,15 +16,16 @@ from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, Ge
 from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
 from mgdeployeur.DockerFacade import DockerFacade
 # from mgdeployeur.MilleGrillesMonitor import ConstantesMonitor
+from mgdeployeur.RabbitMQManagement import RabbitMQAPI
 
 
 class GestionnaireComptesRabbitMQ:
 
-    def __init__(self, nom_millegrille, docker):
+    def __init__(self, nom_millegrille: str, docker: DockerFacade, docker_nodename: str):
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.__constantes = VariablesEnvironnementMilleGrilles(nom_millegrille)
         self.__docker = docker
-        self._admin_api = None
+        self._admin_api = RabbitMQAPI(docker_nodename, 'dudE_W475@euch', '/opt/millegrilles/dev3/pki/deployeur/pki.ca.fullchain.pem')
         self.__wait_event = Event()
 
     def connecter_api(self, password='dudE_W475@euch'):

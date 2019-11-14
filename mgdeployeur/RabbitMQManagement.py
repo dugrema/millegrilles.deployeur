@@ -65,7 +65,7 @@ class RabbitMQAPI:
             urllib.parse.quote_plus(name)
         ))
 
-    def create_user(self, name):
+    def create_user(self, name, password=None):
         """
         Create a user
 
@@ -74,8 +74,12 @@ class RabbitMQAPI:
         """
         data = {
             'tags': '',
-            'password_hash': ''  # Desactive auth par mot de passe
+
         }
+        if password is None:
+            data['password_hash']: ''  # Desactive auth par mot de passe
+        else:
+            data['password'] = password
 
         self._api_put(
             '/api/users/{0}'.format(urllib.parse.quote_plus(name)),
@@ -128,6 +132,44 @@ class RabbitMQAPI:
             ),
             data=data
         )
+
+    def create_exchange_for_vhost(self, exchange, vhost, body):
+        """
+        Create an individual exchange.
+        The body should look like:
+        ::
+
+            {
+                "type": "direct",
+                "auto_delete": false,
+                "durable": true,
+                "internal": false,
+                "arguments": {}
+            }
+
+        The type key is mandatory; other keys are optional.
+
+        :param exchange: The exchange name
+        :type exchange: str
+
+        :param vhost: The vhost name
+        :type vhost: str
+
+        :param body: A body for the exchange.
+        :type body: dict
+        """
+        self._api_put(
+            '/api/exchanges/{0}/{1}'.format(
+                urllib.parse.quote_plus(vhost),
+                urllib.parse.quote_plus(exchange)),
+            data=body
+        )
+
+    def healthchecks(self):
+        return self._api_get('/api/healthchecks/node')
+
+    def aliveness(self, vhost):
+        return self._api_get('/api/aliveness-test/%s' % vhost)
 
     def _api_get(self, url, **kwargs):
         """
