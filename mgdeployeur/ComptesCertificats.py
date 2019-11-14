@@ -5,6 +5,7 @@ import json
 import base64
 import datetime
 import os
+from rabbitmq_admin import AdminAPI
 
 from millegrilles import Constantes
 from millegrilles.domaines.Parametres import ConstantesParametres
@@ -24,7 +25,16 @@ class GestionnaireComptesRabbitMQ:
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.__constantes = VariablesEnvironnementMilleGrilles(nom_millegrille)
         self.__docker = docker
+        self._admin_api = None
         self.__wait_event = Event()
+
+    def connecter_api(self, password='dudE_W475@euch'):
+        """
+        Se connecte a RabbitMQ Management Console via docker (adresse localhost)
+        :param password:
+        :return:
+        """
+        self._admin_api = AdminAPI(url='https://127.0.0.1:8443', auth=('admin', password))
 
     def get_container_rabbitmq(self):
         container_resp = self.__docker.info_container('%s_mq' % self.__constantes.nom_millegrille)
