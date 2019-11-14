@@ -147,9 +147,14 @@ class InitialisationMilleGrille:
                         output = self.__docker_facade.container_exec(container_id, commande)
                         if output.status_code == 200:
                             content = str(output.content)
+                            self.__logger.debug("Content: %s" % str(content))
                             if 'Code:253' in content:
                                 mongo_pret = True
                                 break
+                        else:
+                            self.__logger.debug("Erreur dans l'output: %s" % str(output))
+                    else:
+                        self.__logger.debug("Mongo pas running: %s" % state)
 
                 self.__logger.info('Attente de chargement mongo (%d/%d)' % (essai, nb_essais_attente))
                 self.__wait_event.wait(10)  # Attendre que mongo soit pret

@@ -3,7 +3,14 @@
   "TaskTemplate": {
     "ContainerSpec": {
       "Image": "${mongo}",
-      "Hostname": "mongo.local",
+      "Args": [
+        "mongod",
+        "--replSet", "rs0",
+        "--sslMode", "requireSSL",
+        "--sslPEMKeyFile", "/run/secrets/pki.millegrilles.ssl.key_cert",
+        "--sslCAFile", "/run/secrets/pki.millegrilles.ssl.CAchain"
+      ],
+      "Hostname": "mongo",
       "Env": [
         "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}",
         "MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongo.root.password"

@@ -173,6 +173,7 @@ class DeployeurDockerMilleGrille:
         et telecharge les images docker du middleware et des services.
         :return:
         """
+        os.makedirs(self.variables_env.rep_etc_mg, exist_ok=True)
 
         # Initialise docker swarm (global - si pas deja configure)
         self.__initialisation_millegrille.configurer_swarm(self.__args.docker_advertise_addr)

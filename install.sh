@@ -34,7 +34,7 @@ installer_deployeur() {
 
   # Installer MilleGrilles.consignation.python
   if [ ! -d $MG_CONSIGNATION ]; then
-    git clone ssh://mathieu@repository.maple.mdugre.info/var/lib/git/$MG_CONSIGNATION
+    git clone https://github.com/dugrema/millegrilles.consignation.git
   else
     git -C $MG_CONSIGNATION pull
   fi
@@ -98,12 +98,13 @@ installer() {
   # Au besoin, preparer l'environnement du RPi avant le reste. Ajoute swapfile et autres dependances
   preparer_rpi
 
+  preparer_opt
+  preparer_comptes
+
   installer_docker
   installer_autres_deps
   installer_deployeur
 
-  preparer_comptes
-  preparer_opt
 }
 
 creer_millegrille() {
