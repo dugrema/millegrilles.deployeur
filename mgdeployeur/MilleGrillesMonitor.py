@@ -13,6 +13,7 @@ from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
 from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
 from mgdeployeur.GestionExterne import GestionnairePublique
 from mgdeployeur.ComptesCertificats import RenouvellementCertificats
+from mgdeployeur.GestionnaireServices import  GestionnairesServicesDocker
 
 from threading import Thread, Event
 
@@ -60,7 +61,7 @@ class DeployeurDaemon(Daemon):
 
         self.__parser.add_argument(
             'command', type=str, nargs=1, choices=['start', 'stop', 'restart', 'nofork'],
-            help="Commande a executer: start, stop, restart"
+            help="Commande a executer (daemon): start, stop, restart. nofork execute en foreground"
         )
 
     def __parse(self):
@@ -98,7 +99,7 @@ class DeployeurMonitor:
 
         self.__millegrilles_monitors = dict()
 
-        self.__docker = DockerFacade()
+        self.__gestionnaire_services_docker = GestionnairesServicesDocker(DockerFacade())
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
@@ -132,20 +133,23 @@ class DeployeurMonitor:
         if not self.__stop_event.is_set():
             self.__stop_event.set()  # Va liberer toutes les millegrilles
 
+            try:
+                self.__gestionnaire_services_docker.arreter()
+            except Exception as e:
+                self.__logger.info("Erreur fermeture Docker: %s" % str(e))
+
             for monitor in self.__millegrilles_monitors.values():
                 monitor.arreter()
-
-            # Arrete l'ecoute d'evenements sur docker
-            self.__docker.arreter_thread_event_listener()
 
     def __demarrer_monitoring(self, nom_millegrille, config):
         self.__logger.info("Demarrage monitoring des MilleGrilles")
 
-        millegrille_monitor = MonitorMilleGrille(self, nom_millegrille, self.__args.node, config, self.__docker)
+        millegrille_monitor = MonitorMilleGrille(
+            self, nom_millegrille, self.__args.node, config, self.__gestionnaire_services_docker)
         self.__millegrilles_monitors[nom_millegrille] = millegrille_monitor
 
         # Commence a ecouter evenements sur docker
-        self.__docker.demarrer_thread_event_listener()
+        self.__gestionnaire_services_docker.demarrer()
 
         try:
             self.__gestionnaire_publique = GestionnairePublique()
@@ -198,14 +202,11 @@ class DeployeurMonitor:
     def node_name(self):
         return self.__args.node
 
-    @property
-    def docker(self):
-        return self.__docker
-
 
 class MonitorMilleGrille:
 
-    def __init__(self, monitor: DeployeurMonitor, nom_millegrille: str, node_name: str, config: dict, docker: DockerFacade):
+    def __init__(self, monitor: DeployeurMonitor, nom_millegrille: str, node_name: str, config: dict,
+                 gestionnaire_services_docker: GestionnairesServicesDocker):
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
         # Config et constantes
@@ -216,11 +217,10 @@ class MonitorMilleGrille:
 
         # Gestionnaires et helpers
         self.__monitor = monitor
-        self.__docker = docker
-        self.__deployeur = None
         self.__certificat_event_handler = None
         self.__message_handler = None
         self.__renouvellement_certificats = None
+        self.__gestionnaire_services_docker = gestionnaire_services_docker
 
         # Threading
         self.__stop_event = Event()
@@ -243,12 +243,20 @@ class MonitorMilleGrille:
         self.__thread = Thread(target=self.executer, name=self.__nom_millegrille)
         self.__thread.start()
 
+    def arreter(self):
+        self.__stop_event.set()
+        self.__action_event.set()
+
+        try:
+            self.__contexte.message_dao.deconnecter()
+        except Exception as e:
+            self.__logger.info("Erreur fermeture MQ: %s" % str(e))
+
     def _initialiser_contexte(self):
         self.__contexte = ContexteRessourcesMilleGrilles()
         self.__contexte.initialiser(init_document=False, connecter=True)
 
         # Configurer le deployeur de MilleGrilles
-        self.__deployeur = DeployeurDockerMilleGrille(self.__nom_millegrille, self.__node_name, self.__docker, dict())
         self.__renouvellement_certificats = RenouvellementCertificats(
             self.__nom_millegrille, self.node_name, self.generateur_transactions, self.queue_reponse)
 
@@ -288,17 +296,11 @@ class MonitorMilleGrille:
     def __on_channel_close(self, channel=None, code=None, reason=None):
         self.__channel = None
 
-    def arreter(self):
-        self.__stop_event.set()
-        self.__action_event.set()
-        try:
-            self.__contexte.message_dao.deconnecter()
-        except Exception as e:
-            self.__logger.info("Erreur fermeture MQ: %s" % str(e))
-
     def executer(self):
         self.__logger.info("Debut execution thread %s" % self.__nom_millegrille)
         self._initialiser_contexte()
+
+        # Verifier que tous les modules de la MilleGrille sont demarres
 
         # Verification initiale pour renouveller les certificats
         self.__renouvellement_certificats.trouver_certs_a_renouveller()
@@ -328,6 +330,14 @@ class MonitorMilleGrille:
             self.__action_event.wait(60)
 
         self.__logger.info("Fin execution thread %s" % self.__nom_millegrille)
+
+    def demarrer_modules(self):
+        # Phase 1 - middleware, transactions et cles
+
+        # Phase 2 - composants internes
+
+        # Phase 3 - composants externes
+        pass
 
     def ceduler_redemarrage(self, delai=30, nom_service=None):
         delta = datetime.timedelta(seconds=delai)
