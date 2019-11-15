@@ -86,14 +86,14 @@ class InitialisationMilleGrille:
                 self.__wait_event.set()
 
         # Ajouter un callback pour etre notifie des demarrage de containers
-        self.__docker_facade.event_callbacks.append({
-            'event_matcher': {
+        self.__docker_facade.add_event_callback(
+            {
                 'status': 'start',
                 'Type': 'container',
                 'Action': 'start'
             },
-            'callback': callback_start_confirm
-        })
+            callback_start_confirm
+        )
 
         # Demarrer le service Mongo sur docker et attendre qu'il soit pret pour poursuivre
         mode = self.__docker_facade.installer_service(self.__nom_millegrille, nom_service, restart_any=True)
@@ -103,7 +103,7 @@ class InitialisationMilleGrille:
             if not self.__wait_event.is_set():
                 raise Exception("Erreur d'attente de chargement de %s" % nom_service)
             self.__wait_event.clear()
-        self.__docker_facade.event_callbacks.clear()  # Enlever tous les listeners
+        self.__docker_facade.clear_event_callbacks()  # Enlever tous les listeners
 
     def __initialiser_db_mongo(self):
         """

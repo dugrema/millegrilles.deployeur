@@ -26,11 +26,18 @@ class DockerFacade:
 
         self.__service_images = GestionnaireImagesDocker(self)
 
-        self.event_callbacks = list()  # {'event_matcher': {elem: value}, 'callback': callback(event:dict)}
+        self.__event_callbacks = list()  # {'event_matcher': {elem: value}, 'callback': callback(event:dict)}
+        self.__events_object = None
 
     @staticmethod
     def __format_unixsocket_docker(url):
         return url.replace('/', '%2F')
+
+    def add_event_callback(self, matcher: dict, callback: classmethod):
+        self.__event_callbacks.append({'event_matcher': matcher, 'callback': callback})
+
+    def clear_event_callbacks(self):
+        self.__event_callbacks.clear()
 
     def demarrer_thread_event_listener(self):
         """
@@ -41,12 +48,16 @@ class DockerFacade:
         self.__thread_event_listener = Thread(target=self.run_thread_events, name="DockerEvLst")
         self.__thread_event_listener.start()
 
+    def arreter_thread_event_listener(self):
+        self.__events_object.close()
+
     def run_thread_events(self):
         self.__logger.info("Demarrage thread event listener docker")
-        for event_bytes in self.__docker_client.events():
+        self.__events_object = self.__docker_client.events()
+        for event_bytes in self.__events_object:
             event = json.loads(event_bytes)
             self.__logger.debug(json.dumps(event, indent=4))
-            for callback_info in self.event_callbacks:
+            for callback_info in self.__event_callbacks:
                 try:
                     matcher = callback_info['event_matcher']
                     match = True

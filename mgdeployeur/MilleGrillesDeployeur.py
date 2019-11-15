@@ -223,6 +223,7 @@ class DeployeurDockerMilleGrille:
         self.__initialisation_millegrille.installer_consignateur_transactions()
         self.__initialisation_millegrille.installer_maitredescles()
 
+        self.__docker_facade.arreter_thread_event_listener()
         self.__logger.info("Phase 1 : Installation terminee")
 
     def deployer_phase1(self):
