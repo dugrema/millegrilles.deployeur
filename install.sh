@@ -26,7 +26,7 @@ installer_autres_deps() {
 
 installer_deployeur() {
   echo "[INFO] Installer deployeur Python et dependances"
-  MG_CONSIGNATION=MilleGrilles.consignation.python
+  MG_CONSIGNATION=millegrilles.consignation.python
 
   set -e
   mkdir -p tmp/
@@ -34,7 +34,7 @@ installer_deployeur() {
 
   # Installer MilleGrilles.consignation.python
   if [ ! -d $MG_CONSIGNATION ]; then
-    git clone https://github.com/dugrema/millegrilles.consignation.git
+    git clone https://github.com/dugrema/${MG_CONSIGNATION}.git
   else
     git -C $MG_CONSIGNATION pull
   fi
@@ -76,7 +76,7 @@ preparer_comptes() {
   sudo useradd -u $MILLEGRILLES_USER_MONGO_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_MONGO || true
 
   # Compte deployeur et monitor
-  sudo useradd -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_DEPLOYEUR || true
+  sudo useradd -m -s /bin/bash -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_DEPLOYEUR || true
   sudo adduser $MILLEGRILLES_USER_DEPLOYEUR docker || true
 
   echo "[OK] Comptes millegrilles prets"

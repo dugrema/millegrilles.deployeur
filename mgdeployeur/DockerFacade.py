@@ -392,6 +392,7 @@ class GestionnaireImagesDocker:
 
         image = None
         try:
+            self.__logger.info("Telechargement image %s" % image_name)
             image = self.__docker_facade.images.pull(image_name, tag)
             self.__logger.debug("Image pullee : %s" % str(image))
         except APIError as e:
