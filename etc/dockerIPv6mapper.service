@@ -4,9 +4,8 @@ After=docker.service
 
 [Service]
 Type=simple
-PIDFile=/var/run/dockerIPv6mapper.pid
-ExecStart=/opt/millegrilles/bin/DockerIPv6mapper.py --info -d start
-ExecStop=/opt/millegrilles/bin/DockerIPv6mapper.py -d stop
+ExecStart=/opt/millegrilles/bin/DockerIPv6mapper.py --info
+User=mg_deployeur
 
 [Install]
 WantedBy=multi-user.target
