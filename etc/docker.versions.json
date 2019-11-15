@@ -6,6 +6,10 @@
         "mongo": {"image": "mongo", "version": "4.0"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_3"},
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.15.8"},
-        "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
+        "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"},
+        "nginx": {"image": "mg_nginx", "version": "1.17_6"},
+        "consignationfichiers": {"image": "consignationfichiers", "version": "1.14.3"},
+        "coupdoeilreact": {"image": "coupdoeil_react", "version": "1.15.1"},
+        "vitrinereact": {"image": "vitrine_react", "version": "1.15.0"}
     }
 }

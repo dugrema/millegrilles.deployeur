@@ -229,8 +229,10 @@ class MonitorMilleGrille:
         self.__contexte = None
 
         # Messaging
-        self.__queue_reponse = None
-        self.__channel = None
+        self.__mq_info = {
+            'queue_reponse': None,
+            'channel': None
+        }
 
         # Actions
         self.__cedule_redemarrage = None
@@ -258,7 +260,7 @@ class MonitorMilleGrille:
 
         # Configurer le deployeur de MilleGrilles
         self.__renouvellement_certificats = RenouvellementCertificats(
-            self.__nom_millegrille, self.node_name, self.generateur_transactions, self.queue_reponse)
+            self.__nom_millegrille, self.__gestionnaire_services_docker, self.node_name, self.generateur_transactions, self.__mq_info)
 
         # Message handler et Q pour monitor
         self.__message_handler = MonitorMessageHandler(self.__contexte, self.__renouvellement_certificats, self)
@@ -268,9 +270,13 @@ class MonitorMilleGrille:
         self.__certificat_event_handler = GestionnaireEvenementsCertificat(self.__contexte)
         self.__certificat_event_handler.initialiser()
 
+        # Attendre que la Q de reponse soit prete
+        self.__action_event.wait(30)
+        self.__action_event.clear()
+
     def register_mq_handler(self, queue):
         nom_queue = queue.method.queue
-        self.__queue_reponse = nom_queue
+        self.__mq_info['queue_reponse'] = nom_queue
 
         # Connecter sur exchange noeuds
         routing_keys_noeuds = [
@@ -282,16 +288,20 @@ class MonitorMilleGrille:
             'ceduleur.#',
         ]
         exchange_noeuds = self.__contexte.configuration.exchange_noeuds
+        channel = self.__mq_info['channel']
         for routing in routing_keys_noeuds:
-            self.__channel.queue_bind(queue=nom_queue, exchange=exchange_noeuds, routing_key=routing, callback=None)
+            channel.queue_bind(queue=nom_queue, exchange=exchange_noeuds, routing_key=routing, callback=None)
 
-        self.__channel.basic_consume(self.__message_handler.callbackAvecAck, queue=nom_queue, no_ack=False)
+        channel.basic_consume(self.__message_handler.callbackAvecAck, queue=nom_queue, no_ack=False)
+
+        # Indiquer que la Q est prete
+        self.__action_event.set()
 
     def on_channel_open(self, channel):
         channel.basic_qos(prefetch_count=1)
         channel.add_on_close_callback(self.__on_channel_close)
-        self.__channel = channel
-        self.__channel.queue_declare(queue='', exclusive=True, callback=self.register_mq_handler)
+        self.__mq_info['channel'] = channel
+        channel.queue_declare(queue='', exclusive=True, callback=self.register_mq_handler)
 
     def __on_channel_close(self, channel=None, code=None, reason=None):
         self.__channel = None
@@ -355,7 +365,7 @@ class MonitorMilleGrille:
 
     @property
     def queue_reponse(self):
-        return self.__queue_reponse
+        return self.__mq_info['queue_reponse']
 
     def toggle_transmettre_etat_upnp(self):
         self.__transmettre_etat_upnp = True
@@ -480,8 +490,10 @@ class MonitorMessageHandler(BaseCallback):
             self.traiter_cedule(message_dict)
         elif evenement == ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
+            self.__monitor.ceduler_redemarrage(30)
         elif evenement == Constantes.EVENEMENT_TRANSACTION_PERSISTEE:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
+            self.__monitor.ceduler_redemarrage(30)
         elif evenement == ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         elif routing_key.startswith('requete'):

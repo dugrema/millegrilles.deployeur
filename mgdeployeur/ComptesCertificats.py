@@ -19,7 +19,7 @@ from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, Ge
 from mgdeployeur.DockerFacade import DockerFacade
 from mgdeployeur.RabbitMQManagement import RabbitMQAPI
 from mgdeployeur.Constantes import ConstantesMonitor, VariablesEnvironnementMilleGrilles
-
+from mgdeployeur.GestionnaireServices import GestionnairesServicesDocker
 
 class GestionnaireComptesRabbitMQ:
 
@@ -448,20 +448,23 @@ class GestionnaireCertificats:
 
 
 class RenouvellementCertificats:
+    """
+    Sauvegarde les certificats pour qu'ils soient accessibles aux services docker.
+    """
 
-    # , monitor: MonitorMilleGrille, deployeur: DeployeurDockerMilleGrille
-    def __init__(self, nom_millegrille, docker_nodename: str, generateur_transactions: GenerateurTransaction, q_reponse: str):
+    def __init__(self, nom_millegrille, gestionnaire_services_docker: GestionnairesServicesDocker, docker_nodename: str, generateur_transactions: GenerateurTransaction, mq_info: dict):
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
         self.__nom_millegrille = nom_millegrille
         self.__docker_nodename = docker_nodename
         self.__generateur_transactions = generateur_transactions
-        self.__q_reponse = q_reponse
-        #self.__monitor = monitor
-        #self.__deployeur = deployeur
-
-        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+        self.__mq_info = mq_info
+        self.__gestionnaire_services_docker = gestionnaire_services_docker
 
         self.__liste_demandes = dict()  # Key=Role, Valeur={clecert,datedemande,property}
         self.__constantes = VariablesEnvironnementMilleGrilles(self.__nom_millegrille)
+        self.__gestionnaire_certificats = GestionnaireCertificats(
+            self.__constantes,  gestionnaire_services_docker.docker_facade, docker_nodename)
         self.__fichier_etat_certificats = self.__constantes.fichier_etc_mg(
             VariablesEnvironnementMilleGrilles.FICHIER_CONFIG_ETAT_CERTIFICATS)
 
@@ -475,7 +478,6 @@ class RenouvellementCertificats:
             fichier_etat = json.load(fichier)
 
         date_courante = datetime.datetime.utcnow()
-        trouver_certs = False
         for role, date_epoch in fichier_etat[VariablesEnvironnementMilleGrilles.CHAMP_EXPIRATION].items():
             date_exp = datetime.datetime.fromtimestamp(date_epoch)
             date_comparaison = date_exp - self.__delta_expiration
@@ -483,7 +485,6 @@ class RenouvellementCertificats:
                 self.__logger.info("Certificat role %s du pour renouvellement (expiration: %s)" % (role, str(date_exp)))
 
                 self.preparer_demande_renouvellement(role)
-                trouver_certs = True
 
     def executer_commande_renouvellement(self, commande):
         roles = commande['roles']
@@ -508,7 +509,7 @@ class RenouvellementCertificats:
             }
             generateur_transactions = self.__generateur_transactions
             generateur_transactions.transmettre_requete(
-                requetes, domaine_requete, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL, self.__q_reponse)
+                requetes, domaine_requete, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL, self.__mq_info['queue_reponse'])
 
         else:
             self.transmettre_demande_renouvellement(role, None)
@@ -545,7 +546,7 @@ class RenouvellementCertificats:
         domaine = ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT
         generateur_transactions = self.__generateur_transactions
         generateur_transactions.soumettre_transaction(
-            demande, domaine, correlation_id=role, reply_to=self.__q_reponse)
+            demande, domaine, correlation_id=role, reply_to=self.__mq_info['queue_reponse'])
 
         return persistance_memoire
 
@@ -575,13 +576,11 @@ class RenouvellementCertificats:
             combiner_clecert = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
 
             if role == 'deployeur':
-                self.__deployeur.sauvegarder_clecert_deployeur(clecert)
+                self.__gestionnaire_certificats.sauvegarder_clecert_deployeur(clecert)
             else:
-                self.__deployeur.deployer_clecert(id_secret, clecert, combiner_cle_cert=combiner_clecert)
+                self.__gestionnaire_certificats.deployer_clecert(id_secret, clecert, combiner_cle_cert=combiner_clecert)
 
             self.update_cert_time(role, clecert)
-
-            self.__monitor.ceduler_redemarrage(60, role)
 
         else:
             self.__logger.warning("Recu reponse de renouvellement non sollicitee, role: %s" % role)
@@ -620,7 +619,7 @@ class RenouvellementCertificats:
         }
         generateur_transactions = self.__generateur_transactions
         generateur_transactions.transmettre_requete(
-            requetes, domaine_requete, ConstantesMonitor.REPONSE_DOCUMENT_CLEWEB, self.__q_reponse)
+            requetes, domaine_requete, ConstantesMonitor.REPONSE_DOCUMENT_CLEWEB, self.__mq_info['queue_reponse'])
 
         # Demander cle decryptage a maitredescles
         domaine_cle_maitredescles = '%s.%s' % (ConstantesMaitreDesCles.DOMAINE_NOM, ConstantesMaitreDesCles.REQUETE_DECRYPTAGE_DOCUMENT)
@@ -632,7 +631,7 @@ class RenouvellementCertificats:
             }]
         }
         generateur_transactions.transmettre_requete(
-            requetes, domaine_cle_maitredescles, ConstantesMonitor.REPONSE_CLE_CLEWEB, self.__q_reponse)
+            requetes, domaine_cle_maitredescles, ConstantesMonitor.REPONSE_CLE_CLEWEB, self.__mq_info['queue_reponse'])
 
     def renouveller_certs_web(self):
         self.__logger.info("Appliquer les nouveaux certificats web")

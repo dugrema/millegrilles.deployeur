@@ -76,3 +76,7 @@ class GestionnairesServicesDocker:
 
     def arreter_service(self, nom_service):
         pass
+
+    @property
+    def docker_facade(self):
+        return self.__docker_facade
