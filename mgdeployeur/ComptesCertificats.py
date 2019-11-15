@@ -376,14 +376,6 @@ class GestionnaireCertificats:
             roles = [
                 ConstantesGenerateurCertificat.ROLE_TRANSACTIONS,
                 ConstantesGenerateurCertificat.ROLE_MAITREDESCLES,
-                # ConstantesGenerateurCertificat.ROLE_DOMAINES,
-                # ConstantesGenerateurCertificat.ROLE_CEDULEUR,
-                # ConstantesGenerateurCertificat.ROLE_FICHIERS,
-                # ConstantesGenerateurCertificat.ROLE_COUPDOEIL,
-                # ConstantesGenerateurCertificat.ROLE_PUBLICATEUR,
-                # ConstantesGenerateurCertificat.ROLE_VITRINE,
-                # ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
-                # ConstantesGenerateurCertificat.ROLE_NGINX,
             ]
             for role in roles:
                 combiner = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
@@ -394,6 +386,20 @@ class GestionnaireCertificats:
                 self.ajouter_cert_ssl(clecert.cert_bytes.decode('utf-8'))
 
                 certificats_expiration[role] = int(clecert.not_valid_after.timestamp())
+
+            roles_latents = [
+                ConstantesGenerateurCertificat.ROLE_DOMAINES,
+                ConstantesGenerateurCertificat.ROLE_CEDULEUR,
+                ConstantesGenerateurCertificat.ROLE_FICHIERS,
+                ConstantesGenerateurCertificat.ROLE_COUPDOEIL,
+                ConstantesGenerateurCertificat.ROLE_PUBLICATEUR,
+                ConstantesGenerateurCertificat.ROLE_VITRINE,
+                ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
+                ConstantesGenerateurCertificat.ROLE_NGINX,
+            ]
+
+            for role in roles_latents:
+                certificats_expiration[role] = 0
 
             # Generer fichier de configuration pour monitor
             self.creer_config_monitor_json()
@@ -469,6 +475,7 @@ class RenouvellementCertificats:
             fichier_etat = json.load(fichier)
 
         date_courante = datetime.datetime.utcnow()
+        trouver_certs = False
         for role, date_epoch in fichier_etat[VariablesEnvironnementMilleGrilles.CHAMP_EXPIRATION].items():
             date_exp = datetime.datetime.fromtimestamp(date_epoch)
             date_comparaison = date_exp - self.__delta_expiration
@@ -476,6 +483,7 @@ class RenouvellementCertificats:
                 self.__logger.info("Certificat role %s du pour renouvellement (expiration: %s)" % (role, str(date_exp)))
 
                 self.preparer_demande_renouvellement(role)
+                trouver_certs = True
 
     def executer_commande_renouvellement(self, commande):
         roles = commande['roles']

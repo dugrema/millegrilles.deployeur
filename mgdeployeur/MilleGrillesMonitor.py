@@ -300,7 +300,8 @@ class MonitorMilleGrille:
         self.__logger.info("Debut execution thread %s" % self.__nom_millegrille)
         self._initialiser_contexte()
 
-        # Verifier que tous les modules de la MilleGrille sont demarres
+        # Redemarrer services
+        self.ceduler_redemarrage(5)
 
         # Verification initiale pour renouveller les certificats
         self.__renouvellement_certificats.trouver_certs_a_renouveller()
@@ -330,14 +331,6 @@ class MonitorMilleGrille:
             self.__action_event.wait(60)
 
         self.__logger.info("Fin execution thread %s" % self.__nom_millegrille)
-
-    def demarrer_modules(self):
-        # Phase 1 - middleware, transactions et cles
-
-        # Phase 2 - composants internes
-
-        # Phase 3 - composants externes
-        pass
 
     def ceduler_redemarrage(self, delai=30, nom_service=None):
         delta = datetime.timedelta(seconds=delai)
@@ -381,8 +374,9 @@ class MonitorMilleGrille:
             date_now = datetime.datetime.utcnow()
             if date_now > self.__cedule_redemarrage:
                 self.__cedule_redemarrage = None
-                # Redemarrer service pour utiliser le nouveau certificat
-                self.__deployeur.deployer_services()  # Pour l'instant on redeploie tous les services
+
+                # Verifier que tous les modules de la MilleGrille sont demarres
+                self.__gestionnaire_services_docker.demarrage_services(self.__nom_millegrille)
 
     def get_liste_service(self):
         docker = self.__monitor.docker
@@ -457,9 +451,10 @@ class MonitorMilleGrille:
         self.__action_event.set()  # Declenche execution immediatement
 
     def emetre_etat_noeuds_docker(self):
-        liste = self.get_liste_nodes()
-        domaine = 'noeuds.monitor.docker.nodes'
-        self.generateur_transactions.emettre_message({'noeuds': liste}, domaine)
+        pass
+        # liste = self.get_liste_nodes()
+        # domaine = 'noeuds.monitor.docker.nodes'
+        # self.generateur_transactions.emettre_message({'noeuds': liste}, domaine)
 
     def fermer_millegrilles(self, commande):
         resultat = subprocess.call(['sudo', '/sbin/shutdown', '-h', 'now'])
