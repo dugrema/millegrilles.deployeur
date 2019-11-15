@@ -98,16 +98,21 @@ class DeployeurMilleGrilles:
         commande = self.__args.commande
         nom_millegrille = self.__args.nom_millegrille
         node_name = self.__args.nodename
+        configuration_millegrille = self.__configuration_deployeur.get(nom_millegrille)
+        if configuration_millegrille is None:
+            configuration_millegrille = {}
+            self.__configuration_deployeur[nom_millegrille] = configuration_millegrille
         self.__logger.debug("Deployeur MilleGrille %s, docker node name : %s" % (nom_millegrille, node_name))
 
         deployeur = DeployeurDockerMilleGrille(nom_millegrille, node_name, self.__docker_facade, self.__args)
 
         if commande == 'installer' is not None:
             # Configurer docker
+
             deployeur.installer()
             if not self.__args.download_only:
                 # Installer les services
-                deployeur.installer_phase1()
+                deployeur.installer_phase1(configuration_millegrille)
             else:
                 self.__logger.info("Mode download_only, traitement complete")
 
@@ -212,7 +217,7 @@ class DeployeurDockerMilleGrille:
     def force_reload(self):
         raise NotImplementedError("Pas implemente")
 
-    def installer_phase1(self):
+    def installer_phase1(self, configuration: dict):
         self.__logger.info("Phase 1 : Installation des modules middleware de base")
 
         # Demarrer la thread qui va ecouter les evenements Docker

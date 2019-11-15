@@ -1,9 +1,6 @@
 from millegrilles.util.Daemon import Daemon
 from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
 from millegrilles.dao.MessageDAO import BaseCallback, RoutingKeyInconnue
-from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
-from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
-from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
 from millegrilles.SecuritePKI import GestionnaireEvenementsCertificat, EnveloppeCertificat
 from millegrilles import Constantes
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurCertificat
@@ -11,6 +8,10 @@ from millegrilles.domaines.MaitreDesCles import ConstantesMaitreDesCles
 from millegrilles.domaines.Parametres import ConstantesParametres
 from millegrilles.util.X509Certificate import EnveloppeCleCert, DecryptionHelper
 from millegrilles.domaines.Pki import ConstantesPki
+from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles, ConstantesMonitor
+from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
+from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
+from mgdeployeur.GestionExterne import GestionnairePublique
 
 from threading import Thread, Event
 
@@ -25,29 +26,10 @@ import base64
 import binascii
 
 
-class ConstantesMonitor:
-
-    REQUETE_DOCKER_SERVICES_LISTE = 'requete.monitor.services.liste'
-    REQUETE_DOCKER_SERVICES_NOEUDS = 'requete.monitor.services.noeuds'
-
-    COMMANDE_EXPOSER_PORTS = 'commande.monitor.exposerPorts'
-    COMMANDE_RETIRER_PORTS = 'commande.monitor.retirerPorts'
-    COMMANDE_PUBLIER_NOEUD_DOCKER = 'commande.monitor.publierNoeudDocker'
-    COMMANDE_PRIVATISER_NOEUD_DOCKER = 'commande.monitor.privatiserNoeudDocker'
-    COMMANDE_MAJ_CERTIFICATS_WEB = 'commande.monitor.maj.cerificatsWeb'
-    COMMANDE_MAJ_CERTIFICATS_PAR_ROLE = 'commande.monitor.maj.certificatsParRole'
-    COMMANDE_AJOUTER_COMPTE_MQ = 'commande.monitor.ajouterCompteMq'
-    COMMANDE_FERMER_MILLEGRILLES = 'commande.monitor.fermerMilleGrilles'
-
-    REPONSE_DOCUMENT_CLEWEB = 'reponse.document.clesWeb'
-    REPONSE_CLE_CLEWEB = 'reponse.cle.clesWeb'
-    REPONSE_MQ_PUBLIC_URL = 'reponse.mq.public_url'
-
-
 class DeployeurDaemon(Daemon):
 
     def __init__(self):
-        self.__pidfile = '/var/run/millegrilles/monitor.pid'
+        self.__pidfile = '/var/run/monitor.pid'
         self.__stdout = '/var/log/millegrilles/monitor.log'
         self.__stderr = '/var/log/millegrilles/monitor.err'
 
@@ -152,11 +134,17 @@ class DeployeurMonitor:
             for monitor in self.__millegrilles_monitors.values():
                 monitor.arreter()
 
+            # Arrete l'ecoute d'evenements sur docker
+            self.__docker.arreter_thread_event_listener()
+
     def __demarrer_monitoring(self, nom_millegrille, config):
         self.__logger.info("Demarrage monitoring des MilleGrilles")
 
         millegrille_monitor = MonitorMilleGrille(self, nom_millegrille, self.__args.node, config, self.__docker)
         self.__millegrilles_monitors[nom_millegrille] = millegrille_monitor
+
+        # Commence a ecouter evenements sur docker
+        self.__docker.demarrer_thread_event_listener()
 
         try:
             self.__gestionnaire_publique = GestionnairePublique()
@@ -464,101 +452,6 @@ class MonitorMilleGrille:
     def fermer_millegrilles(self, commande):
         resultat = subprocess.call(['sudo', '/sbin/shutdown', '-h', 'now'])
         self.__logger.warning("Shutdown millegrilles demande, resultat: %d" % resultat)
-
-
-class GestionnairePublique:
-    """
-    S'occupe de la partie publique de la millegrille: certificats, routeurs, dns, etc.
-    """
-
-    def __init__(self):
-        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-
-        self.__miniupnp = None
-        self.__document_parametres = None
-        self.__etat_upnp = None
-
-    def setup(self):
-        import miniupnpc
-        self.__miniupnp = miniupnpc.UPnP()
-        self.__miniupnp.discoverdelay = 10
-
-    def get_etat_upnp(self):
-        self.__miniupnp.discover()
-        self.__miniupnp.selectigd()
-        externalipaddress = self.__miniupnp.externalipaddress()
-        status_info = self.__miniupnp.statusinfo()
-        # connection_type = self.__miniupnp.connectiontype()
-        existing_mappings = list()
-        i = 0
-        while True:
-            p = self.__miniupnp.getgenericportmapping(i)
-            if p is None:
-                break
-
-            mapping = {
-                ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_EXTERIEUR: p[0],
-                ConstantesParametres.DOCUMENT_PUBLIQUE_PROTOCOL: p[1],
-                ConstantesParametres.DOCUMENT_PUBLIQUE_IPV4_INTERNE: p[2][0],
-                ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_INTERNE: p[2][1],
-                ConstantesParametres.DOCUMENT_PUBLIQUE_PORT_MAPPING_NOM: p[3],
-            }
-            existing_mappings.append(mapping)
-            i = i + 1
-
-        etat = {
-            ConstantesParametres.DOCUMENT_PUBLIQUE_IPV4_EXTERNE: externalipaddress,
-            ConstantesParametres.DOCUMENT_PUBLIQUE_MAPPINGS_IPV4: existing_mappings,
-            ConstantesParametres.DOCUMENT_PUBLIQUE_ROUTEUR_STATUS: status_info,
-        }
-
-        return etat
-
-    def add_port_mapping(self, port_int, ip_interne, port_ext, protocol, description):
-        """
-        Ajoute un mapping via uPnP
-        :param port_int:
-        :param ip_interne:
-        :param port_ext:
-        :param protocol:
-        :param description:
-        :return: True si ok.
-        """
-        try:
-            resultat = self.__miniupnp.addportmapping(port_ext, protocol, ip_interne, port_int, description, '')
-            return resultat
-        except Exception as e:
-            self.__logger.exception("Erreur ajout port: %s" % str(e))
-            return False
-
-    def remove_port_mapping(self, port_ext, protocol):
-        """
-        Enleve un mapping via uPnP
-        :param port_ext:
-        :param protocol:
-        :return: True si ok.
-        """
-        try:
-            resultat = self.__miniupnp.deleteportmapping(int(port_ext), protocol)   # NoSuchEntryInArray
-            return resultat
-        except Exception as e:
-            self.__logger.exception("Erreur retrait port: %s" % str(e))
-            return False
-
-    def verifier_ip_dns(self):
-        self.__etat_upnp = self.get_etat_upnp()
-        if self.__etat_upnp is None:
-            # Verifier avec adresse externe, e.g.: http://checkip.dyn.com/
-            external_ip = ''
-        else:
-            external_ip = self.__etat_upnp['external_ip']
-
-        # Verifier l'adresse url fourni pour s'assurer que l'adresse IP correspond
-        url = 'www.maple.millegrilles.mdugre.info'
-        adresse = socket.gethostbyname(url)
-
-        if adresse != external_ip:
-            self.__logger.info("Mismatch adresse ip externe (%s) et url dns (%s)" % (external_ip, adresse))
 
 
 class MonitorMessageHandler(BaseCallback):

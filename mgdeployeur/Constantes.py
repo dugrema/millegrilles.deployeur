@@ -1,3 +1,23 @@
+
+class ConstantesMonitor:
+
+    REQUETE_DOCKER_SERVICES_LISTE = 'requete.monitor.services.liste'
+    REQUETE_DOCKER_SERVICES_NOEUDS = 'requete.monitor.services.noeuds'
+
+    COMMANDE_EXPOSER_PORTS = 'commande.monitor.exposerPorts'
+    COMMANDE_RETIRER_PORTS = 'commande.monitor.retirerPorts'
+    COMMANDE_PUBLIER_NOEUD_DOCKER = 'commande.monitor.publierNoeudDocker'
+    COMMANDE_PRIVATISER_NOEUD_DOCKER = 'commande.monitor.privatiserNoeudDocker'
+    COMMANDE_MAJ_CERTIFICATS_WEB = 'commande.monitor.maj.cerificatsWeb'
+    COMMANDE_MAJ_CERTIFICATS_PAR_ROLE = 'commande.monitor.maj.certificatsParRole'
+    COMMANDE_AJOUTER_COMPTE_MQ = 'commande.monitor.ajouterCompteMq'
+    COMMANDE_FERMER_MILLEGRILLES = 'commande.monitor.fermerMilleGrilles'
+
+    REPONSE_DOCUMENT_CLEWEB = 'reponse.document.clesWeb'
+    REPONSE_CLE_CLEWEB = 'reponse.cle.clesWeb'
+    REPONSE_MQ_PUBLIC_URL = 'reponse.mq.public_url'
+
+
 class VariablesEnvironnementMilleGrilles:
 
     # Globaux pour toutes les millegrilles
