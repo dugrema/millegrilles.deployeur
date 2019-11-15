@@ -17,7 +17,7 @@ import docker
 from millegrilles import Constantes
 
 LOGGING_FORMAT = Constantes.LOGGING_FORMAT
-PID_FILE = '/var/run/millegrilles/dockerIPv6Mapper.pid'
+PID_FILE = '/var/run/dockerIPv6mapper.pid'
 LOG_FILE = '/var/log/millegrilles/dockerIPv6Mapper.log'
 
 

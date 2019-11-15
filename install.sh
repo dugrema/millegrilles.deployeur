@@ -51,10 +51,16 @@ installer_deployeur() {
   sudo pip3 install -r requirements.txt
   sudo python3 setup.py install
 
-  # Installer script demarrage
-  sudo cp etc/millegrilles.service /etc/systemd/system/millegrilles.service
+  # Installer script demarrage et IPv6
+  sudo cp mgdeployeur/DockerIPv6mapper.py /opt/millegrilles/bin
+  sudo chmod 755 /opt/millegrilles/bin/DockerIPv6mapper.py
+  sudo cp etc/*.service /etc/systemd/system/
   sudo chmod 644 /etc/systemd/system/millegrilles.service
+  sudo chmod 644 /etc/systemd/system/dockerIPv6mapper.service
+  sudo systemctl daemon-reload
   sudo systemctl enable millegrilles
+  sudo systemctl enable dockerIPv6mapper
+  sudo systemctl start dockerIPv6mapper
 
   echo "[OK] Deployeur Python et dependances installes"
 }
