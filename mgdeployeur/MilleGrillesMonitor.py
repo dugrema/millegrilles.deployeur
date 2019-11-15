@@ -12,6 +12,7 @@ from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles, Constante
 from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
 from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
 from mgdeployeur.GestionExterne import GestionnairePublique
+from mgdeployeur.ComptesCertificats import RenouvellementCertificats
 
 from threading import Thread, Event
 
@@ -163,7 +164,7 @@ class DeployeurMonitor:
 
         node_name = self.__args.node
         self.__logger.info("Node name, utilisation de : %s" % node_name)
-        config_millegrilles = self.__configuration_deployeur.get('millegrilles')
+        config_millegrilles = self.__configuration_deployeur
         for nom_millegrille, config in config_millegrilles.items():
             self.__demarrer_monitoring(nom_millegrille, config)
 
@@ -205,38 +206,38 @@ class DeployeurMonitor:
 class MonitorMilleGrille:
 
     def __init__(self, monitor: DeployeurMonitor, nom_millegrille: str, node_name: str, config: dict, docker: DockerFacade):
-        self.__monitor = monitor
+        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
+        # Config et constantes
         self.__nom_millegrille = nom_millegrille
+        self.__constantes = VariablesEnvironnementMilleGrilles(self.__nom_millegrille)
         self.__node_name = node_name
         self.__config = config
+
+        # Gestionnaires et helpers
+        self.__monitor = monitor
         self.__docker = docker
-
-        self.__constantes = VariablesEnvironnementMilleGrilles(self.__nom_millegrille)
-
-        self.__stop_event = Event()
-
         self.__deployeur = None
-
         self.__certificat_event_handler = None
         self.__message_handler = None
-
         self.__renouvellement_certificats = None
 
+        # Threading
+        self.__stop_event = Event()
         self.__thread = None
         self.__action_event = Event()  # Set lors d'une action, declenche execution immediate
         self.__contexte = None
 
+        # Messaging
         self.__queue_reponse = None
         self.__channel = None
 
+        # Actions
         self.__cedule_redemarrage = None
         self.__transmettre_etat_upnp = True
         self.__emettre_etat_noeuds_docker = True
         self.__renouveller_certs_web = False
-
         self.__commandes_routeur = list()
-
-        self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def start(self):
         self.__thread = Thread(target=self.executer, name=self.__nom_millegrille)
@@ -248,7 +249,8 @@ class MonitorMilleGrille:
 
         # Configurer le deployeur de MilleGrilles
         self.__deployeur = DeployeurDockerMilleGrille(self.__nom_millegrille, self.__node_name, self.__docker, dict())
-        self.__renouvellement_certificats = RenouvellementCertificats(self.__nom_millegrille, self, self.__deployeur)
+        self.__renouvellement_certificats = RenouvellementCertificats(
+            self.__nom_millegrille, self.node_name, self.generateur_transactions, self.queue_reponse)
 
         # Message handler et Q pour monitor
         self.__message_handler = MonitorMessageHandler(self.__contexte, self.__renouvellement_certificats, self)
