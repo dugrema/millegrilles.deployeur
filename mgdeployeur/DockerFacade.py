@@ -130,8 +130,11 @@ class DockerFacade:
             }
             self.post('networks/create', config_reseau)
 
-    def liste_services(self):
-        liste = self.__docker_client.services.list()
+    def liste_services(self, filtre_nom_millegrille: str = None):
+        params = dict()
+        if filtre_nom_millegrille is not None:
+            params['label'] = 'millegrille=%s' % filtre_nom_millegrille
+        liste = self.__docker_client.services.list(filters=params)
         return liste
 
     def liste_services_millegrille(self, nom_millegrille):

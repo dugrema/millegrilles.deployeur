@@ -12,7 +12,7 @@ class GestionnairesServicesDocker:
         self.__docker_facade = docker_facade
         self.__gestionnaire_images = GestionnaireImagesDocker(self.__docker_facade)
 
-        self.__etat_services = dict()
+        self.__phase_execution = '1'
         self.__wait_event = Event()
 
         # Phase des services. Les services sont charges sequentiellement (blocking) dans l'ordre
@@ -70,14 +70,46 @@ class GestionnairesServicesDocker:
             # Verifier si le service existe deja
             nom_service = conf_service['nom']
             labels = conf_service['labels']
-            if True:
-                # Installer le service
-                self.__docker_facade.ajouter_nodelabels(docker_nodename, labels)
-                self.demarrer_service_blocking(nom_millegrille, nom_service)
+
+            # Installer le service
+            self.__docker_facade.ajouter_nodelabels(docker_nodename, labels)
+            self.demarrer_service_blocking(nom_millegrille, nom_service)
+
+        # Conserver la phase confirmee comme active
+        self.__phase_execution = phase
 
     def arreter_phase(self, phase: str, nom_millegrille: str, docker_nodename: str):
+        # Indiquer qu'on est rendu a cette phase d'execution
+        self.__phase_execution = phase
+
         # Arreter les services en ordre inverse d'activation
         noms_services = self.__noms_services_phases[phase].reverse()
+
+    def redemarrer_services_inactifs(self, nom_millegrille: str):
+        if self.__phase_execution == '3':
+            services = self.docker_facade.liste_services(nom_millegrille)
+            for service in services:
+                service_name = service.attrs['Spec']['Name']
+
+                # Garder etat de mise a jour du service au besoin
+                update_state = None
+                update_status = service.attrs.get('UpdateStatus')
+                if update_status is not None:
+                    update_state = update_status['State']
+
+                # Compter le nombre de taches actives
+                running = list()
+                for task in service.tasks():
+                    status = task['Status']
+                    state = status['State']
+                    desired_state = task['DesiredState']
+                    if state == 'running' or desired_state == 'running' or update_state == 'updating':
+                        running.append(running)
+
+                if len(running) == 0:
+                    # Redemarrer
+                    self.__logger.info("Redemarrer service %s" % service_name)
+                    service.force_update()
 
     def pull_image(self, nom_service, force=False):
         """

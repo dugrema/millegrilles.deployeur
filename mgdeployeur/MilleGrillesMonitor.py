@@ -314,8 +314,7 @@ class MonitorMilleGrille:
         self.__logger.info("Debut execution thread %s" % self.__nom_millegrille)
         self._initialiser_contexte()
 
-        # Redemarrer services
-        self.ceduler_redemarrage(5)
+        self.ceduler_redemarrage(15)
 
         # Verification initiale pour renouveller les certificats
         self.__renouvellement_certificats.trouver_certs_a_renouveller()
@@ -326,7 +325,7 @@ class MonitorMilleGrille:
 
                 self.executer_commandes_routeur()
 
-                self.verifier_cedule_deploiement()
+                self.entretien_services()
 
                 if self.__transmettre_etat_upnp:
                     self.__transmettre_etat_upnp = False
@@ -342,7 +341,7 @@ class MonitorMilleGrille:
             except Exception as e:
                 self.__logger.exception("Erreur traitement cedule: %s" % str(e))
 
-            self.__action_event.wait(5)
+            self.__action_event.wait(20)
 
         self.__logger.info("Fin execution thread %s" % self.__nom_millegrille)
 
@@ -383,7 +382,7 @@ class MonitorMilleGrille:
         self.__renouveller_certs_web = True
         self.__action_event.set()
 
-    def verifier_cedule_deploiement(self):
+    def entretien_services(self):
         if self.__cedule_redemarrage is not None:
             date_now = datetime.datetime.utcnow()
             if date_now > self.__cedule_redemarrage:
@@ -391,6 +390,9 @@ class MonitorMilleGrille:
 
                 # Verifier que tous les modules de la MilleGrille sont demarres
                 self.__gestionnaire_services_docker.demarrage_services(self.__nom_millegrille, self.__node_name)
+        else:
+            # Pas de redemarrage. On fait juste s'assurer que tous les services de la millegrille sont actifs.
+            self.__gestionnaire_services_docker.redemarrer_services_inactifs(self.__nom_millegrille)
 
     def get_liste_service(self):
         liste = self.__gestionnaire_services_docker.liste_services()
