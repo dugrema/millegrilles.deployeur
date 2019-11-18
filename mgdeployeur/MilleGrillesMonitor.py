@@ -26,6 +26,7 @@ import json
 import datetime
 import base64
 import binascii
+import os
 
 
 class DeployeurDaemon(Daemon):
@@ -101,6 +102,9 @@ class DeployeurMonitor:
 
         self.__gestionnaire_services_docker = GestionnairesServicesDocker(DockerFacade())
 
+        self.__pipe_file = '/run/millegrilles/mg_monitor.pipe'
+        self.__pipe_thread = None
+
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def __config_logging(self):
@@ -152,6 +156,19 @@ class DeployeurMonitor:
         self.__gestionnaire_services_docker.demarrer()
 
         try:
+            os.mkfifo(self.__pipe_file)
+        except FileExistsError:
+            self.__pipe_thread = Thread(name="FifoCmd", target=self.pipe_commands)
+        except OSError:
+            self.__logger.exception("Erreur creation fifo pipe")
+        else:
+            self.__pipe_thread = Thread(name="FifoCmd", target=self.pipe_commands)
+
+        if self.__pipe_thread is not None:
+            self.__pipe_thread.daemon = True
+            self.__pipe_thread.start()
+
+        try:
             self.__gestionnaire_publique = GestionnairePublique()
             self.__gestionnaire_publique.setup()
         except Exception as e:
@@ -193,6 +210,32 @@ class DeployeurMonitor:
                 etat,
                 ConstantesParametres.TRANSACTION_ETAT_ROUTEUR
             )
+
+    def pipe_commands(self):
+
+        while not self.__stop_event.is_set():
+
+            with open(self.__pipe_file, 'r') as pipe:
+                while True:
+                    try:
+                        # Bloque jusqu'a ouverture du pipe
+                        commande = json.load(pipe)
+                        self.__logger.info("Commande pipe\n%s" % json.dumps(commande, indent=4))
+
+                        for monitor in self.__millegrilles_monitors.values():
+                            monitor.ajouter_commande(commande['routing'], commande['commande'])
+
+                    except json.JSONDecodeError:
+                        # Pipe probablement ferme cote ecriture, on ouvre a nouveau pour bloquer
+                        break
+                    except Exception:
+                        self.__logger.exception("Erreur")
+                        break
+
+                    self.__stop_event.wait(0.1)
+
+        self.__logger.info("Arret thread commandes pipes")
+        self.__pipe_thread = None
 
     @property
     def gestionnaire_publique(self):
