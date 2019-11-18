@@ -62,9 +62,9 @@
       }
     },
     "RestartPolicy": {
-      "Condition": "any",
-      "Delay": 30000000000,
-      "MaxAttempts": 10
+      "Condition": "on-failure",
+      "Delay": 60000000000,
+      "MaxAttempts": 3
     },
     "Mode": {
       "Replicated": {

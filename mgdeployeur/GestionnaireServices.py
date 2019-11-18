@@ -1,5 +1,6 @@
 # Gestion des services dans Docker
 import logging
+from threading import Event
 
 from mgdeployeur.DockerFacade import DockerFacade, GestionnaireImagesDocker
 
@@ -10,6 +11,9 @@ class GestionnairesServicesDocker:
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.__docker_facade = docker_facade
         self.__gestionnaire_images = GestionnaireImagesDocker(self.__docker_facade)
+
+        self.__etat_services = dict()
+        self.__wait_event = Event()
 
         # Phase des services. Les services sont charges sequentiellement (blocking) dans l'ordre
         # represente dans la liste
@@ -28,8 +32,8 @@ class GestionnairesServicesDocker:
             '3': [
                 {'nom': 'coupdoeilreact',  'labels': {'millegrilles.coupdoeil': 'true'}},
                 {'nom': 'vitrinereact',  'labels': {'millegrilles.vitrine': 'true'}},
-                {'nom': 'publicateur',  'labels': {}},
                 {'nom': 'nginx', 'labels': {'millegrilles.nginx': 'true'}},
+                {'nom': 'publicateur',  'labels': {}},
             ]
         }
 
@@ -69,7 +73,7 @@ class GestionnairesServicesDocker:
             if True:
                 # Installer le service
                 self.__docker_facade.ajouter_nodelabels(docker_nodename, labels)
-                self.__docker_facade.installer_service(nom_millegrille, nom_service)
+                self.demarrer_service_blocking(nom_millegrille, nom_service)
 
     def arreter_phase(self, phase: str, nom_millegrille: str, docker_nodename: str):
         # Arreter les services en ordre inverse d'activation
@@ -90,6 +94,35 @@ class GestionnairesServicesDocker:
         :return:
         """
         pass
+
+    def demarrer_service_blocking(self, nom_millegrille, nom_service):
+
+        def callback_start_confirm(event):
+            attrs = event['Actor']['Attributes']
+            name = attrs.get('name')
+            if name.split('.')[0] == '%s_%s' % (nom_millegrille, nom_service):
+                self.__logger.info("Mongo est demarre dans docker")
+                self.__wait_event.set()
+
+        # Ajouter un callback pour etre notifie des demarrage de containers
+        self.__docker_facade.add_event_callback(
+            {
+                'status': 'start',
+                'Type': 'container',
+                'Action': 'start'
+            },
+            callback_start_confirm
+        )
+
+        # Demarrer le service Mongo sur docker et attendre qu'il soit pret pour poursuivre
+        mode = self.__docker_facade.installer_service(nom_millegrille, nom_service)
+
+        if mode == 'create':
+            self.__wait_event.wait(120)
+            if not self.__wait_event.is_set():
+                raise Exception("Erreur d'attente de chargement de %s" % nom_service)
+            self.__wait_event.clear()
+        self.__docker_facade.clear_event_callbacks()  # Enlever tous les listeners
 
     def arreter_service(self, nom_service):
         pass

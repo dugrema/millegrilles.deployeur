@@ -45,8 +45,9 @@ class DockerFacade:
         est trouver sur un callback de self.event_callbacks
         :return:
         """
-        self.__thread_event_listener = Thread(target=self.run_thread_events, name="DockerEvLst")
-        self.__thread_event_listener.start()
+        if self.__thread_event_listener is None:
+            self.__thread_event_listener = Thread(target=self.run_thread_events, name="DockerEvLst")
+            self.__thread_event_listener.start()
 
     def arreter_thread_event_listener(self):
         self.__events_object.close()
@@ -77,6 +78,7 @@ class DockerFacade:
                 except Exception:
                     self.__logger.exception("Erreur dans event handler")
 
+        self.__thread_event_listener = None
         self.__logger.info("Fin thread event listener docker")
 
     def get(self, url, json=None):
@@ -146,7 +148,7 @@ class DockerFacade:
         return liste
 
     def info_service(self, nom_service):
-        liste = self.get('services?filters={"name": ["%s"]}' % nom_service)
+        liste = self.__docker_client.services.list(filters={"name": nom_service})
         return liste
 
     def info_container(self, nom_container):
@@ -191,7 +193,7 @@ class DockerFacade:
 
             node.update(spec)
 
-    def installer_service(self, nom_millegrille, nom_service: str, restart_any=False, force=True, mappings: dict = None):
+    def installer_service(self, nom_millegrille, nom_service: str, force=False, mappings: dict = None):
         """
         Installe un nouveau service de millegrille
         :param nom_millegrille:
@@ -204,20 +206,15 @@ class DockerFacade:
         # Verifier que le service MQ est en fonction - sinon le deployer
         nom_service_complet = '%s_%s' % (nom_millegrille, nom_service)
         etat_service_resp = self.info_service(nom_service_complet)
-        if etat_service_resp.status_code == 200:
-            service_etat_json = etat_service_resp.json()
-            if len(service_etat_json) == 0 and force:
-                mode = 'create'
-                self.__logger.warning("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, nom_millegrille))
-            else:
-                service_deploye = service_etat_json[0]
-                service_id = service_deploye['ID']
-                version_service = service_deploye['Version']['Index']
-                mode = '%s/update?version=%s' % (service_id, version_service)
-                self.__logger.warning("Service %s sera re-deploye sur %s (force update), mode=%s" % (nom_service_complet, nom_millegrille, mode))
-        else:
+        if len(etat_service_resp) == 0:
             mode = 'create'
             self.__logger.warning("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, nom_millegrille))
+        else:
+            service_deploye = etat_service_resp[0].attrs
+            service_id = service_deploye['ID']
+            version_service = service_deploye['Version']['Index']
+            mode = '%s/update?version=%s' % (service_id, version_service)
+            self.__logger.warning("Service %s sera re-deploye sur %s (force update), mode=%s" % (nom_service_complet, nom_millegrille, mode))
 
         if mode is not None:
             docker_secrets = self.get('secrets').json()

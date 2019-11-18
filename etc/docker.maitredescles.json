@@ -136,8 +136,8 @@
       }
     },
     "RestartPolicy": {
-      "Condition": "any",
-      "Delay": 30000000000
+      "Condition": "on-failure",
+      "Delay": 90000000000
     },
     "Mode": {
       "Replicated": {

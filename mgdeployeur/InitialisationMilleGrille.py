@@ -96,7 +96,7 @@ class InitialisationMilleGrille:
         )
 
         # Demarrer le service Mongo sur docker et attendre qu'il soit pret pour poursuivre
-        mode = self.__docker_facade.installer_service(self.__nom_millegrille, nom_service, restart_any=True)
+        mode = self.__docker_facade.installer_service(self.__nom_millegrille, nom_service)
 
         if mode == 'create':
             self.__wait_event.wait(120)

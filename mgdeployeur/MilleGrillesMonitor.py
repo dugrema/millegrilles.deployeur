@@ -246,10 +246,12 @@ class MonitorMilleGrille:
     def start(self):
         self.__thread = Thread(target=self.executer, name=self.__nom_millegrille)
         self.__thread.start()
+        self.__gestionnaire_services_docker.demarrer()
 
     def arreter(self):
         self.__stop_event.set()
         self.__action_event.set()
+        self.__gestionnaire_services_docker.arreter()
 
         try:
             self.__contexte.message_dao.deconnecter()
