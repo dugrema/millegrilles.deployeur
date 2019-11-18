@@ -338,7 +338,7 @@ class MonitorMilleGrille:
             except Exception as e:
                 self.__logger.exception("Erreur traitement cedule: %s" % str(e))
 
-            self.__action_event.wait(60)
+            self.__action_event.wait(5)
 
         self.__logger.info("Fin execution thread %s" % self.__nom_millegrille)
 
@@ -386,7 +386,7 @@ class MonitorMilleGrille:
                 self.__cedule_redemarrage = None
 
                 # Verifier que tous les modules de la MilleGrille sont demarres
-                self.__gestionnaire_services_docker.demarrage_services(self.__nom_millegrille)
+                self.__gestionnaire_services_docker.demarrage_services(self.__nom_millegrille, self.__node_name)
 
     def get_liste_service(self):
         docker = self.__monitor.docker
