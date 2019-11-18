@@ -12,7 +12,7 @@ from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles, Constante
 from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
 from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
 from mgdeployeur.GestionExterne import GestionnairePublique
-from mgdeployeur.ComptesCertificats import RenouvellementCertificats
+from mgdeployeur.ComptesCertificats import RenouvellementCertificats, GestionnaireComptesRabbitMQ
 from mgdeployeur.GestionnaireServices import  GestionnairesServicesDocker
 
 from threading import Thread, Event
@@ -221,6 +221,8 @@ class MonitorMilleGrille:
         self.__message_handler = None
         self.__renouvellement_certificats = None
         self.__gestionnaire_services_docker = gestionnaire_services_docker
+        self.__gestionnaire_comptes_rabbitmq = GestionnaireComptesRabbitMQ(
+            nom_millegrille, self.__gestionnaire_services_docker.docker_facade, node_name)
 
         # Threading
         self.__stop_event = Event()
@@ -260,7 +262,7 @@ class MonitorMilleGrille:
 
         # Configurer le deployeur de MilleGrilles
         self.__renouvellement_certificats = RenouvellementCertificats(
-            self.__nom_millegrille, self.__gestionnaire_services_docker, self.node_name, self.generateur_transactions, self.__mq_info)
+            self.__nom_millegrille, self.__gestionnaire_services_docker, self.node_name, self.generateur_transactions, self.__mq_info, self.__gestionnaire_comptes_rabbitmq)
 
         # Message handler et Q pour monitor
         self.__message_handler = MonitorMessageHandler(self.__contexte, self.__renouvellement_certificats, self)
@@ -389,14 +391,12 @@ class MonitorMilleGrille:
                 self.__gestionnaire_services_docker.demarrage_services(self.__nom_millegrille, self.__node_name)
 
     def get_liste_service(self):
-        docker = self.__monitor.docker
-        liste = docker.liste_services_millegrille(nom_millegrille=self.__nom_millegrille)
-        return liste
+        liste = self.__gestionnaire_services_docker.liste_services()
+        return [s.attrs for s in liste]
 
     def get_liste_nodes(self):
-        docker = self.__monitor.docker
-        liste = docker.liste_nodes()
-        return liste
+        nodes = self.__gestionnaire_services_docker.liste_nodes()
+        return [n.attrs for n in nodes]
 
     def executer_commandes_routeur(self):
         while len(self.__commandes_routeur) > 0:

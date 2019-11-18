@@ -92,7 +92,7 @@ class GestionnaireComptesRabbitMQ:
 
         return mq_pret
 
-    def ajouter_compte(self, enveloppe):
+    def ajouter_compte(self, enveloppe: EnveloppeCertificat):
         nom_millegrille = self.__constantes.nom_millegrille
         subject = enveloppe.subject_rfc4514_string_mq()
 
@@ -446,13 +446,15 @@ class GestionnaireCertificats:
         """
         liste_configs = self.__docker_facade
 
-
 class RenouvellementCertificats:
     """
     Sauvegarde les certificats pour qu'ils soient accessibles aux services docker.
     """
 
-    def __init__(self, nom_millegrille, gestionnaire_services_docker: GestionnairesServicesDocker, docker_nodename: str, generateur_transactions: GenerateurTransaction, mq_info: dict):
+    def __init__(
+            self, nom_millegrille, gestionnaire_services_docker: GestionnairesServicesDocker, docker_nodename: str,
+            generateur_transactions: GenerateurTransaction, mq_info: dict,
+            gestionnaire_comptes_rabbitmq: GestionnaireComptesRabbitMQ):
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
         self.__nom_millegrille = nom_millegrille
@@ -460,6 +462,7 @@ class RenouvellementCertificats:
         self.__generateur_transactions = generateur_transactions
         self.__mq_info = mq_info
         self.__gestionnaire_services_docker = gestionnaire_services_docker
+        self.__gestionnaire_comptes_rabbitmq = gestionnaire_comptes_rabbitmq
 
         self.__liste_demandes = dict()  # Key=Role, Valeur={clecert,datedemande,property}
         self.__constantes = VariablesEnvironnementMilleGrilles(self.__nom_millegrille)
@@ -565,10 +568,16 @@ class RenouvellementCertificats:
             fullchain = message['fullchain']
             clecert.chaine = fullchain
 
+            # Preparer enveloppe pour rabbitmq
+            enveloppe = EnveloppeCertificat(certificat_pem=cert_pem)
+
             # Verifier que la cle et le nouveau cert correspondent
             correspondance = clecert.cle_correspondent()
             if not correspondance:
                 raise Exception("La cle et le certificat ne correspondent pas pour: %s" % role)
+
+            # S'assurer que le compte existe dans RabbitMQ
+            self.__gestionnaire_comptes_rabbitmq.ajouter_compte(enveloppe)
 
             # On a maintenant une cle et son certificat correspondant. Il faut la sauvegarder dans
             # docker puis redeployer le service pour l'utiliser.

@@ -97,3 +97,9 @@ class GestionnairesServicesDocker:
     @property
     def docker_facade(self):
         return self.__docker_facade
+
+    def liste_nodes(self):
+        return self.__docker_facade.liste_nodes()
+
+    def liste_services(self):
+        return self.__docker_facade.liste_services()
