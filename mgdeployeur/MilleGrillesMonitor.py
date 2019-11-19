@@ -145,7 +145,7 @@ class DeployeurMonitor:
                 monitor.arreter()
 
     def __demarrer_monitoring(self, nom_millegrille, config):
-        self.__logger.info("Demarrage monitoring des MilleGrilles")
+        self.__logger.info("Demarrage monitoring de la MilleGrille %s" % nom_millegrille)
 
         millegrille_monitor = MonitorMilleGrille(
             self, nom_millegrille, self.__args.node, config, self.__gestionnaire_services_docker)
@@ -156,10 +156,12 @@ class DeployeurMonitor:
 
         try:
             os.mkfifo(VariablesEnvironnementMilleGrilles.FIFO_COMMANDES)
+            self.__logger.info("Fifo cree %s" % VariablesEnvironnementMilleGrilles.FIFO_COMMANDES)
         except FileExistsError:
+            self.__logger.info("Utilisation fifo existant %s" % VariablesEnvironnementMilleGrilles.FIFO_COMMANDES)
             self.__pipe_thread = Thread(name="FifoCmd", target=self.pipe_commands)
         except OSError:
-            self.__logger.exception("Erreur creation fifo pipe")
+            self.__logger.exception("Erreur creation fifo pipe %s" % VariablesEnvironnementMilleGrilles.FIFO_COMMANDES)
         else:
             self.__pipe_thread = Thread(name="FifoCmd", target=self.pipe_commands)
 
@@ -175,6 +177,7 @@ class DeployeurMonitor:
                 "Erreur demarrage gestionnaire publique, fonctionnalite non disponible\n%s" % str(e))
             self.__gestionnaire_publique = None
 
+        self.__logger.info("Demarrage monitor %s" % nom_millegrille)
         millegrille_monitor.start()
 
     def __charger_liste_millegrilles(self):
@@ -202,13 +205,16 @@ class DeployeurMonitor:
 
     def transmettre_etat_upnp(self, generateur_transactions):
         if self.__gestionnaire_publique is not None:
-            etat = self.__gestionnaire_publique.get_etat_upnp()
-            self.__logger.debug("Transmettre etat uPnP:\n%s" % json.dumps(etat, indent=2))
-            self.__etat_upnp = etat
-            generateur_transactions.soumettre_transaction(
-                etat,
-                ConstantesParametres.TRANSACTION_ETAT_ROUTEUR
-            )
+            try:
+                etat = self.__gestionnaire_publique.get_etat_upnp()
+                self.__logger.debug("Transmettre etat uPnP:\n%s" % json.dumps(etat, indent=2))
+                self.__etat_upnp = etat
+                generateur_transactions.soumettre_transaction(
+                    etat,
+                    ConstantesParametres.TRANSACTION_ETAT_ROUTEUR
+                )
+            except Exception as e:
+                self.__logger.warning("Erreur upnp: %s" % str(e))
 
     def pipe_commands(self):
 
@@ -301,12 +307,18 @@ class MonitorMilleGrille:
             self.__logger.info("Erreur fermeture MQ: %s" % str(e))
 
     def _initialiser_contexte(self):
+        self.__logger.info("Demarrage contexte MilleGrille %s" % self.__nom_millegrille)
         nom_fichier_configuration_millegrille = os.path.join(self.__constantes.rep_etc_mg, self.__constantes.MONITOR_CONFIG_JSON)
+        self.__logger.debug("Chargement fichier configuration %s" % nom_fichier_configuration_millegrille)
         with open(nom_fichier_configuration_millegrille, 'r') as fichier:
             config_additionnelle = json.load(fichier)
+            self.__logger.debug("Configuration\n%s" % json.dumps(config_additionnelle, indent=4))
 
         self.__contexte = ContexteRessourcesMilleGrilles(additionals=[config_additionnelle])
+        self.__logger.debug("Contexte Init")
         self.__contexte.initialiser(init_document=False, connecter=True)
+
+        self.__logger.debug("Contexte initialise")
 
         # Configurer le deployeur de MilleGrilles
         self.__renouvellement_certificats = RenouvellementCertificats(
@@ -321,8 +333,15 @@ class MonitorMilleGrille:
         self.__certificat_event_handler.initialiser()
 
         # Attendre que la Q de reponse soit prete
+        self.__logger.debug("Attente connexion MQ pour %s" % self.__nom_millegrille)
         self.__action_event.wait(30)
+        if self.__action_event.is_set():
+            self.__logger.debug("Connexion MQ pour %s reussie" % self.__nom_millegrille)
+        else:
+            self.__logger.debug("Probleme connexion MQ pour %s, on va tenter de se reconnecter plus tard" % self.__nom_millegrille)
         self.__action_event.clear()
+
+        self.__logger.info("Contexte MilleGrille %s prepare" % self.__nom_millegrille)
 
     def register_mq_handler(self, queue):
         nom_queue = queue.method.queue
@@ -354,6 +373,9 @@ class MonitorMilleGrille:
         channel.queue_declare(queue='', exclusive=True, callback=self.register_mq_handler)
 
     def __on_channel_close(self, channel=None, code=None, reason=None):
+        if not self.__stop_event.is_set():
+            self.__logger.warning("Channel MQ ferme")
+
         self.__channel = None
 
     def executer(self):
@@ -365,6 +387,7 @@ class MonitorMilleGrille:
         # Verification initiale pour renouveller les certificats
         self.__renouvellement_certificats.trouver_certs_a_renouveller()
 
+        self.__logger.info("Debut execution entretien MilleGrille %s" % self.__nom_millegrille)
         while not self.__stop_event.is_set():
             try:
                 self.__action_event.clear()  # Reset action event
@@ -389,7 +412,7 @@ class MonitorMilleGrille:
 
             self.__action_event.wait(20)
 
-        self.__logger.info("Fin execution thread %s" % self.__nom_millegrille)
+        self.__logger.info("Fin execution thread MilleGrille %s" % self.__nom_millegrille)
 
     def ceduler_redemarrage(self, delai=30, nom_service=None):
         delta = datetime.timedelta(seconds=delai)
@@ -521,10 +544,9 @@ class MonitorMilleGrille:
         self.__action_event.set()  # Declenche execution immediatement
 
     def emetre_etat_noeuds_docker(self):
-        pass
-        # liste = self.get_liste_nodes()
-        # domaine = 'noeuds.monitor.docker.nodes'
-        # self.generateur_transactions.emettre_message({'noeuds': liste}, domaine)
+        liste = self.get_liste_nodes()
+        domaine = 'noeuds.monitor.docker.nodes'
+        self.generateur_transactions.emettre_message({'noeuds': liste}, domaine)
 
     def fermer_millegrilles(self, commande):
         resultat = subprocess.call(['sudo', '/sbin/shutdown', '-h', 'now'])

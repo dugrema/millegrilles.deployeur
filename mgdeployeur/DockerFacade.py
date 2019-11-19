@@ -217,7 +217,7 @@ class DockerFacade:
             service_id = service_deploye['ID']
             version_service = service_deploye['Version']['Index']
             mode = '%s/update?version=%s' % (service_id, version_service)
-            self.__logger.warning("Service %s va etre mis a jour sur %s" % (nom_service_complet, nom_millegrille))
+            self.__logger.info("Service %s va etre mis a jour sur %s" % (nom_service_complet, nom_millegrille))
 
         if mode is not None:
             docker_secrets = self.get('secrets').json()
