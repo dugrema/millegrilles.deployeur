@@ -6,6 +6,8 @@ Type=simple
 PIDFile=/var/run/millegrilles/mg-noeud.pid
 ExecStart=/opt/millegrilles/bin/noeud.sh start
 ExecStop=/opt/millegrilles/bin/noeud.sh stop
+Restart=on-failure
+RestartSec=30s
 
 [Install]
 WantedBy=multi-user.target

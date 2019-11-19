@@ -6,6 +6,8 @@ After=docker.service
 Type=simple
 ExecStart=/opt/millegrilles/bin/DockerIPv6mapper.py --info
 User=mg_deployeur
+Restart=on-failure
+RestartSec=30s
 
 [Install]
 WantedBy=multi-user.target
