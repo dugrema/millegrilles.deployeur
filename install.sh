@@ -62,9 +62,9 @@ installer_deployeur() {
   sudo systemctl enable dockerIPv6mapper
   sudo systemctl start dockerIPv6mapper
 
-  sudo mkdir /run/millegrilles /var/log/millegrilles
+  sudo mkdir -p /run/millegrilles /var/log/millegrilles
 
-  sudo mkfifo /run/millegrilles/mg_monitor.pipe
+  if [ ! -e /run/millegrilles/mg_monitor.pipe]; then sudo mkfifo /run/millegrilles/mg_monitor.pipe; fi
   sudo chmod 770 /run/millegrilles/mg_monitor.pipe
   sudo chown -R mg_deployeur:millegrilles /run/millegrilles
   sudo chown mg_deployeur:millegrilles /run/millegrilles/mg_monitor.pipe
