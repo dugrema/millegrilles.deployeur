@@ -55,8 +55,11 @@ class GestionnairesServicesDocker:
 
     def arret_total_services(self, nom_millegrille, docker_nodename: str):
         self.__logger.info("Arret des services de la millegrille")
+        self.__phase_execution = '2'
         self.arreter_phase('3', nom_millegrille, docker_nodename)
+        self.__phase_execution = '1'
         self.arreter_phase('2', nom_millegrille, docker_nodename)
+        self.__phase_execution = '0'
         self.arreter_phase('1', nom_millegrille, docker_nodename)
         self.__logger.info("Services de la millegrille arretes")
 
@@ -80,10 +83,23 @@ class GestionnairesServicesDocker:
 
     def arreter_phase(self, phase: str, nom_millegrille: str, docker_nodename: str):
         # Indiquer qu'on est rendu a cette phase d'execution
-        self.__phase_execution = phase
+        dict_services = dict()
+        services = self.liste_services(nom_millegrille)
+        for service in services:
+            nom = service.name
+            nom_simple = nom.split('_')[1]
+            dict_services[nom_simple] = service
 
         # Arreter les services en ordre inverse d'activation
-        noms_services = self.__noms_services_phases[phase].reverse()
+        noms_services = self.__noms_services_phases[phase].copy()
+        noms_services.reverse()
+
+        for info_service in noms_services:
+            nom_service = info_service['nom']
+            self.__logger.info("Arreter %s" % nom_service)
+            service_inst = dict_services.get(nom_service)
+            if service_inst is not None:
+                service_inst.remove()
 
     def redemarrer_services_inactifs(self, nom_millegrille: str):
         if self.__phase_execution == '3':
@@ -166,5 +182,5 @@ class GestionnairesServicesDocker:
     def liste_nodes(self):
         return self.__docker_facade.liste_nodes()
 
-    def liste_services(self):
-        return self.__docker_facade.liste_services()
+    def liste_services(self, nom_millegrille: str = None):
+        return self.__docker_facade.liste_services(nom_millegrille)

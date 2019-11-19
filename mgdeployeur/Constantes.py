@@ -12,6 +12,9 @@ class ConstantesMonitor:
     COMMANDE_MAJ_CERTIFICATS_PAR_ROLE = 'commande.monitor.maj.certificatsParRole'
     COMMANDE_AJOUTER_COMPTE_MQ = 'commande.monitor.ajouterCompteMq'
     COMMANDE_FERMER_MILLEGRILLES = 'commande.monitor.fermerMilleGrilles'
+    COMMANDE_ARRETER_TRAITEMENT = 'commande.monitor.arretertraitement'
+    COMMANDE_ARRETER_SERVICES = 'commande.monitor.arreterservices'
+    COMMANDE_DEMARRER_SERVICES = 'commande.monitor.demarrerservices'
 
     REPONSE_DOCUMENT_CLEWEB = 'reponse.document.clesWeb'
     REPONSE_CLE_CLEWEB = 'reponse.cle.clesWeb'
