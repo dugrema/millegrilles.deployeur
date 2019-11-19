@@ -113,8 +113,8 @@ installer() {
   # Au besoin, preparer l'environnement du RPi avant le reste. Ajoute swapfile et autres dependances
   preparer_rpi
 
-  preparer_opt
   preparer_comptes
+  preparer_opt
 
   installer_docker
   installer_autres_deps
@@ -130,11 +130,13 @@ creer_millegrille() {
   if [ ! -z $NOM_MILLEGRILLE ]; then
     $MILLEGRILLES_BIN/creer_millegrille.sh $NOM_MILLEGRILLE
 
-    echo "[INFO] Deployer le monitor et demarrer les services docker"
+    echo "[INFO] Telecharger les images docker"
+    # Note: Utilise le compte docker de l'usager courant (docker login)
+    sudo /opt/millegrilles/bin/deployer.py --info --download_only installer $NOM_MILLEGRILLE
+    # Certains fichiers de config peuvent etre crees, s'assurer de les assigner au bon usager
+    sudo chown mg_deployeur:millegrilles /opt/millegrilles/etc/*
 
-    # On attend 20 secondes pour permettre au maitre des cles de se connecter
-    # Necessaire pour la creation initiale des certs
-    sleep 20
+    echo "[INFO] Deployer le monitor et demarrer les services docker"
     sudo -i -u mg_deployeur /opt/millegrilles/bin/deployer.py --info installer $NOM_MILLEGRILLE
 
   else

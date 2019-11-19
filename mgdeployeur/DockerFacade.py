@@ -351,8 +351,11 @@ class GestionnaireImagesDocker:
                     else:
                         # Le registre '' represente une image docker officielle
                         nom_image_reg = nom_image
+
+                    self.__logger.info("Telecharger image %s:%s" % (nom_image, tag))
                     image = self.pull(nom_image_reg, tag)
                     if image is not None:
+                        self.__logger.info("Image %s:%s sauvegardee avec succes" % (nom_image, tag))
                         break
                 if image is None:
                     images_non_trouvees.append('%s:%s' % (nom_image, tag))

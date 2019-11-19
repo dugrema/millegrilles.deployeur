@@ -565,9 +565,10 @@ class MonitorMilleGrille:
         self.__action_event.set()  # Declenche execution immediatement
 
     def emetre_etat_noeuds_docker(self):
-        liste = self.get_liste_nodes()
-        domaine = 'noeuds.monitor.docker.nodes'
-        self.generateur_transactions.emettre_message({'noeuds': liste}, domaine)
+        pass
+        # liste = self.get_liste_nodes()
+        # domaine = 'noeuds.monitor.docker.nodes'
+        # self.generateur_transactions.emettre_message({'noeuds': liste}, domaine)
 
     def fermer_millegrilles(self, commande):
         resultat = subprocess.call(['sudo', '/sbin/shutdown', '-h', 'now'])

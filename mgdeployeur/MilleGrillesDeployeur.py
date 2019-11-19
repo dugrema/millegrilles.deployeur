@@ -18,6 +18,7 @@ import datetime
 import argparse
 import socket
 import subprocess
+import time
 
 
 class DeployeurMilleGrilles:
@@ -116,16 +117,17 @@ class DeployeurMilleGrilles:
         if commande == 'installer' is not None:
             # Configurer docker
 
-            deployeur.installer()
-            if not self.__args.download_only:
+            if self.__args.download_only:
+                deployeur.telecharger_images_docker()
+                self.__logger.info("Mode download_only, traitement complete")
+            else:
+                deployeur.installer()
+
                 # Installer les services
                 deployeur.installer_phase1(configuration_millegrille)
 
                 if not self.__args.no_monitor:
                     self.demarrer_monitor()
-
-            else:
-                self.__logger.info("Mode download_only, traitement complete")
 
         elif commande == 'maj' is not None:
             deployeur.maj_versions_images()
@@ -159,6 +161,7 @@ class DeployeurMilleGrilles:
 
     def demarrer_monitor(self):
         self.__logger.info("Demarrer monitor")
+        time.sleep(20)  # Attendre 20 secondes pour que le maitre des cles soit pret
         resultat = subprocess.run(['sudo', 'systemctl', 'start', 'millegrilles'])
         resultat.check_returncode()
 
@@ -210,10 +213,13 @@ class DeployeurDockerMilleGrille:
         # Genere certificats essentiels pour demarrer la nouvelle MilleGrille
         self.__generateur_certificats.generer_certificats_initiaux(self.__node_name)
 
-        # Telecharge les images docker requises pour le middleware et les services
-        self.__gestionnaire_images.telecharger_images_docker()
+        self.telecharger_images_docker()
 
         self.__logger.debug("Environnement docker pour millegrilles est pret")
+
+    def telecharger_images_docker(self):
+        # Telecharge les images docker requises pour le middleware et les services
+        self.__gestionnaire_images.telecharger_images_docker()
 
     def demarrer(self):
         self.__logger.info("Demarrer millegrille ; %s" % self.__nom_millegrille)

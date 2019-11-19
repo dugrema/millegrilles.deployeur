@@ -24,7 +24,13 @@ echo "[INFO] Desinstaller swarm docker"
 docker swarm leave --force
 docker volume prune -f
 
+echo "[INFO] Supprimer usagers et groupes pour MilleGrilles"
+sudo userdel mg_deployeur
+sudo userdel mg_python
+sudo userdel mg_maitredescles
+sudo groupdel millegrilles
+
 echo
 echo "------------------------"
 echo "MilleGrilles desinstalle"
-echo
+echo "Note: les images Docker n'ont pas ete supprimees"
