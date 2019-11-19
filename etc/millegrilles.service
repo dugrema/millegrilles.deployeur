@@ -10,6 +10,8 @@ ExecStop=/opt/millegrilles/bin/monitor.sh stop
 ExecStartPre=+/opt/millegrilles/bin/prestart_monitor.sh
 User=mg_deployeur
 Group=millegrilles
+Restart=on-failure
+RestartSec=30s
 
 [Install]
 WantedBy=multi-user.target
