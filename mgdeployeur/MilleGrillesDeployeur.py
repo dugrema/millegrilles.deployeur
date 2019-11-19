@@ -126,8 +126,8 @@ class DeployeurMilleGrilles:
                 # Installer les services
                 deployeur.installer_phase1(configuration_millegrille)
 
-                if not self.__args.no_monitor:
-                    self.demarrer_monitor()
+                # if not self.__args.no_monitor:
+                #     self.demarrer_monitor()
 
         elif commande == 'maj' is not None:
             deployeur.maj_versions_images()
@@ -159,11 +159,11 @@ class DeployeurMilleGrilles:
 
         self.__logger.info("Execution terminee")
 
-    def demarrer_monitor(self):
-        self.__logger.info("Demarrer monitor")
-        time.sleep(20)  # Attendre 20 secondes pour que le maitre des cles soit pret
-        resultat = subprocess.run(['sudo', 'systemctl', 'start', 'millegrilles'])
-        resultat.check_returncode()
+    # def demarrer_monitor(self):
+    #     self.__logger.info("Demarrer monitor")
+    #     time.sleep(20)  # Attendre 20 secondes pour que le maitre des cles soit pret
+    #     resultat = subprocess.run(['sudo', 'systemctl', 'start', 'millegrilles'])
+    #     resultat.check_returncode()
 
     def main(self):
         self.__parse()

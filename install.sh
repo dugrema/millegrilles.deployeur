@@ -138,6 +138,12 @@ creer_millegrille() {
 
     echo "[INFO] Deployer le monitor et demarrer les services docker"
     sudo -i -u mg_deployeur /opt/millegrilles/bin/deployer.py --info installer $NOM_MILLEGRILLE
+    if [ $? -eq 0 ]; then
+      echo "[INFO] Demarrer le monitor"
+      # Donner le temps au systeme de demarrer les services deja lances (transaction, maitredescles)
+      sleep 20
+      sudo systemctl start millegrilles
+    fi
 
   else
     echo
