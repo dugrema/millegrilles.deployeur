@@ -70,6 +70,11 @@ class DeployeurMilleGrilles:
         )
 
         self.__parser.add_argument(
+            '--service', type=str,
+            help="Nom du service a demarrer/arreter"
+        )
+
+        self.__parser.add_argument(
             'commande', type=str, choices=['installer', 'maj', 'demarrer', 'arreter', 'force-reload'],
             help="Commande a executer"
         )
@@ -78,6 +83,7 @@ class DeployeurMilleGrilles:
             'nom_millegrille', type=str,
             help="Nom de la millegrille"
         )
+
 
         self.__args = self.__parser.parse_args()
 
@@ -211,20 +217,37 @@ class DeployeurDockerMilleGrille:
 
     def demarrer(self):
         self.__logger.info("Demarrer millegrille ; %s" % self.__nom_millegrille)
-        commande = {
-            'routing': ConstantesMonitor.COMMANDE_DEMARRER_SERVICES,
-            'commande': {}
-        }
+
+        if self.__args.service is None:
+            commande = {
+                'routing': ConstantesMonitor.COMMANDE_DEMARRER_SERVICES,
+                'commande': {}
+            }
+        else:
+            commande = {
+                'routing': ConstantesMonitor.COMMANDE_DEPLOYER_SERVICE,
+                'commande': {'nom': self.__args.service}
+            }
+
         with open(self.variables_env.FIFO_COMMANDES, 'w') as pipe:
-            json.dump(pipe, commande)
+            json.dump(commande, pipe)
 
     def arreter(self):
-        self.__logger.info("Arreter millegrille ; %s" % self.__nom_millegrille)
-        liste_services = self.__docker_facade.liste_services_millegrille(self.__nom_millegrille)
-        for service in liste_services:
-            id_service = service['ID']
-            self.__logger.info("Suppression service: %s" % service['Spec']['Name'])
-            self.__docker_facade.supprimer_service(id_service)
+        if self.__args.service is None:
+            self.__logger.info("Arreter millegrille ; %s" % self.__nom_millegrille)
+            liste_services = self.__docker_facade.liste_services_millegrille(self.__nom_millegrille)
+            for service in liste_services:
+                id_service = service['ID']
+                self.__logger.info("Suppression service: %s" % service['Spec']['Name'])
+                self.__docker_facade.supprimer_service(id_service)
+        else:
+            self.__logger.info("Arreter service ; %s" % self.__args.service)
+            commande = {
+                'routing': ConstantesMonitor.COMMANDE_SUPPRIMER_SERVICE,
+                'commande': {'nom': self.__args.service}
+            }
+            with open(self.variables_env.FIFO_COMMANDES, 'w') as pipe:
+                json.dump(commande, pipe)
 
     def maj_versions_images(self):
         # La commande demarrer met a jour la configuration (docker service update)

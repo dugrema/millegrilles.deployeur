@@ -151,6 +151,7 @@ class GestionnairesServicesDocker:
         :return:
         """
         self.__docker_facade.installer_service(nom_millegrille, nom_service)
+        self.__wait_event.wait(2)  # Introduire delai pour eviter de faire force update
 
     def demarrer_service_blocking(self, nom_millegrille, nom_service):
 
