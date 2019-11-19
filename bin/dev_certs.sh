@@ -1,17 +1,28 @@
+SECRETS=`docker secret ls | awk '{print $2}'`
+CONFIG=`docker config ls | awk '{print $2}'`
+
+PARAMS=
+for SECRET in ${SECRETS[@]}; do
+  if [ $SECRET != 'NAME' ]; then
+    PARAMS="${PARAMS} --secret ${SECRET}"
+  fi
+done
+
+for CONFIG in ${CONFIG[@]}; do
+  if [ $CONFIG != 'NAME' ]; then
+    PARAMS="${PARAMS} --config ${CONFIG}"
+  fi
+done
+
+echo $PARAMS
+
 docker service create \
   --name mon_secret \
-  --secret dev3.pki.ca.passwords.20191010233823 \
-  --config dev3.pki.ca.root.cert.20191010233823 \
-  --secret dev3.pki.ca.root.key.20191010233823 \
-  --config dev3.pki.ca.millegrille.cert.20191010233823 \
-  --secret dev3.pki.ca.millegrille.key.20191010233823 \
-  --secret dev3.passwd.python.maitredescles.json.20191010233823 \
-  --config dev3.pki.maitredescles.cert.20191010233823 \
-  --secret dev3.pki.maitredescles.key.20191010233823 \
-  --secret dev3.pki.maitredescles.key_cert.20191010233823 \
-  --config dev3.pki.nginx.fullchain.20191010233823 \
-  --secret dev3.pki.nginx.key.20191010233823 \
-  --config dev3.pki.ca.millegrille.fullchain.20191010233823 \
+  $PARAMS \
   --mount type=bind,source=/home/mathieu/mgdev/certs,target=/opt/millegrilles/dist/ \
-  --entrypoint "sleep 10000" \
+  --entrypoint "/bin/sleep 10000" \
   ubuntu
+
+CID=`docker container ls | grep mon_secret | awk '{print $1}'`
+docker exec -it $CID bash
+docker service rm mon_secret
