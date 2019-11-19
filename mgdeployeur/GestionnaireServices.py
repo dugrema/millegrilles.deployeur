@@ -53,6 +53,13 @@ class GestionnairesServicesDocker:
         self.demarrer_phase('3', nom_millegrille, docker_nodename)
         self.__logger.info("Services de la millegrille demarres")
 
+    def arret_traitement(self, nom_millegrille, docker_nodename: str):
+        self.__logger.info("Arret de traitement sur la millegrille")
+        self.__phase_execution = '2'
+        self.arreter_phase('3', nom_millegrille, docker_nodename)
+        self.__phase_execution = '1'
+        self.arreter_phase('2', nom_millegrille, docker_nodename)
+
     def arret_total_services(self, nom_millegrille, docker_nodename: str):
         self.__logger.info("Arret des services de la millegrille")
         self.__phase_execution = '2'

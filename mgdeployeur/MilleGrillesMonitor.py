@@ -465,11 +465,13 @@ class MonitorMilleGrille:
             elif routing == ConstantesMonitor.COMMANDE_AJOUTER_COMPTE_MQ:
                 self.__renouvellement_certificats.ajouter_compte_mq(commande['commande'])
             elif routing == ConstantesMonitor.COMMANDE_DEMARRER_SERVICES:
-                self.ceduler_redemarrage(delai=1)
+                self.ceduler_redemarrage(delai=0)
             elif routing == ConstantesMonitor.COMMANDE_ARRETER_TRAITEMENT:
-                self.__gestionnaire_services_docker.arret_total_services(
+                self.__cedule_redemarrage = None
+                self.__gestionnaire_services_docker.arret_traitement(
                     nom_millegrille=self.__nom_millegrille, docker_nodename=self.__node_name)
             elif routing == ConstantesMonitor.COMMANDE_ARRETER_SERVICES:
+                self.__cedule_redemarrage = None
                 self.__gestionnaire_services_docker.arret_total_services(
                     nom_millegrille=self.__nom_millegrille, docker_nodename=self.__node_name)
             elif routing == ConstantesMonitor.COMMANDE_FERMER_MILLEGRILLES:
