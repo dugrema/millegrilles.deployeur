@@ -15,6 +15,8 @@ class ConstantesMonitor:
     COMMANDE_ARRETER_TRAITEMENT = 'commande.monitor.arretertraitement'
     COMMANDE_ARRETER_SERVICES = 'commande.monitor.arreterservices'
     COMMANDE_DEMARRER_SERVICES = 'commande.monitor.demarrerservices'
+    COMMANDE_DEPLOYER_SERVICE = 'commande.monitor.deployerservice'
+    COMMANDE_SUPPRIMER_SERVICE = 'commande.monitor.supprimerservice'
 
     REPONSE_DOCUMENT_CLEWEB = 'reponse.document.clesWeb'
     REPONSE_CLE_CLEWEB = 'reponse.cle.clesWeb'

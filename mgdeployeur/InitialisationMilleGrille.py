@@ -211,7 +211,7 @@ class InitialisationMilleGrille:
         """
         S'assure que les liens compte-certificat sont configures dans MQ
         """
-        labels = {'netzone.private': 'true', 'millegrilles.mq': 'true'}
+        labels = {'netzone.private': 'true', 'millegrilles.mq': 'true', 'millegrilles.console': 'true'}
         self.__docker_facade.deployer_nodelabels(self.__docker_nodename, labels)
 
         # Demarrer le service MQ. Ne fait rien si le service est deja en marche.

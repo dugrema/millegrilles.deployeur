@@ -1,5 +1,6 @@
 # Gestion des services dans Docker
 import logging
+import json
 from threading import Event
 
 from mgdeployeur.DockerFacade import DockerFacade, GestionnaireImagesDocker
@@ -132,6 +133,7 @@ class GestionnairesServicesDocker:
                 if len(running) == 0:
                     # Redemarrer
                     self.__logger.info("Redemarrer service %s" % service_name)
+                    self.__logger.debug("Service\n%s" % json.dumps(service.attrs, indent=4))
                     service.force_update()
 
     def pull_image(self, nom_service, force=False):
@@ -141,14 +143,14 @@ class GestionnairesServicesDocker:
         """
         pass
 
-    def demarrer_service(self, nom_service, redemarrer=False):
+    def demarrer_service(self, nom_millegrille: str, nom_service, redemarrer=False):
         """
         Demarre un service - si le service existe mais qu'il est arrete, le redemarre.
         :param nom_service:
         :param redemarrer: Si True, force le redemarrage du service meme s'il est deja actif (running).
         :return:
         """
-        pass
+        self.__docker_facade.installer_service(nom_millegrille, nom_service)
 
     def demarrer_service_blocking(self, nom_millegrille, nom_service):
 
@@ -179,8 +181,10 @@ class GestionnairesServicesDocker:
             self.__wait_event.clear()
         self.__docker_facade.clear_event_callbacks()  # Enlever tous les listeners
 
-    def arreter_service(self, nom_service):
-        pass
+    def arreter_service(self, nom_millegrille: str, nom_service):
+        services = self.liste_services(nom_service='%s_%s' % (nom_millegrille, nom_service))
+        for service in services:
+            service.remove()
 
     @property
     def docker_facade(self):
@@ -189,5 +193,5 @@ class GestionnairesServicesDocker:
     def liste_nodes(self):
         return self.__docker_facade.liste_nodes()
 
-    def liste_services(self, nom_millegrille: str = None):
-        return self.__docker_facade.liste_services(nom_millegrille)
+    def liste_services(self, nom_millegrille: str = None, nom_service: str = None):
+        return self.__docker_facade.liste_services(nom_millegrille, nom_service)

@@ -218,6 +218,7 @@ class DeployeurMonitor:
 
     def pipe_commands(self):
 
+        self.__logger.info("Ecoute message sur pipe %s " % VariablesEnvironnementMilleGrilles.FIFO_COMMANDES)
         while not self.__stop_event.is_set():
 
             with open(VariablesEnvironnementMilleGrilles.FIFO_COMMANDES, 'r') as pipe:
@@ -230,11 +231,12 @@ class DeployeurMonitor:
                         for monitor in self.__millegrilles_monitors.values():
                             monitor.ajouter_commande(commande['routing'], commande['commande'])
 
-                    except json.JSONDecodeError:
+                    except json.JSONDecodeError as e:
                         # Pipe probablement ferme cote ecriture, on ouvre a nouveau pour bloquer
+                        self.__logger.debug("Erreur JSON: %s" % str(e))
                         break
-                    except Exception:
-                        self.__logger.exception("Erreur")
+                    except Exception as e:
+                        self.__logger.exception("Erreur: %s" % str(e))
                         break
 
                     self.__stop_event.wait(0.1)
@@ -478,30 +480,49 @@ class MonitorMilleGrille:
 
             if routing == ConstantesMonitor.COMMANDE_EXPOSER_PORTS:
                 self.exposer_ports(commande['commande'])
+
             elif routing == ConstantesMonitor.COMMANDE_RETIRER_PORTS:
                 self.retirer_ports(commande['commande'])
+
             elif routing == ConstantesMonitor.COMMANDE_PUBLIER_NOEUD_DOCKER:
                 self.deployer_noeud_public(commande['commande'])
+
             elif routing == ConstantesMonitor.COMMANDE_PRIVATISER_NOEUD_DOCKER:
                 self.privatiser_noeud(commande['commande'])
+
             elif routing == ConstantesMonitor.COMMANDE_MAJ_CERTIFICATS_WEB:
                 self.__renouvellement_certificats.maj_certificats_web_requetes(commande['commande'])
+
             elif routing == ConstantesMonitor.COMMANDE_MAJ_CERTIFICATS_PAR_ROLE:
                 self.__renouvellement_certificats.executer_commande_renouvellement(commande['commande'])
+
             elif routing == ConstantesMonitor.COMMANDE_AJOUTER_COMPTE_MQ:
                 self.__renouvellement_certificats.ajouter_compte_mq(commande['commande'])
+
+            elif routing == ConstantesMonitor.COMMANDE_DEPLOYER_SERVICE:
+                nom_service = commande['commande']['nom']
+                self.__gestionnaire_services_docker.demarrer_service(self.__nom_millegrille, nom_service)
+
+            elif routing == ConstantesMonitor.COMMANDE_SUPPRIMER_SERVICE:
+                nom_service = commande['commande']['nom']
+                self.__gestionnaire_services_docker.arreter_service(self.__nom_millegrille, nom_service)
+
             elif routing == ConstantesMonitor.COMMANDE_DEMARRER_SERVICES:
                 self.ceduler_redemarrage(delai=0)
+
             elif routing == ConstantesMonitor.COMMANDE_ARRETER_TRAITEMENT:
                 self.__cedule_redemarrage = None
                 self.__gestionnaire_services_docker.arret_traitement(
                     nom_millegrille=self.__nom_millegrille, docker_nodename=self.__node_name)
+
             elif routing == ConstantesMonitor.COMMANDE_ARRETER_SERVICES:
                 self.__cedule_redemarrage = None
                 self.__gestionnaire_services_docker.arret_total_services(
                     nom_millegrille=self.__nom_millegrille, docker_nodename=self.__node_name)
+
             elif routing == ConstantesMonitor.COMMANDE_FERMER_MILLEGRILLES:
                 self.fermer_millegrilles(commande['commande'])
+
             else:
                 self.__logger.error("Commande inconnue, routing: %s" % routing)
 
