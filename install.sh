@@ -62,6 +62,11 @@ installer_deployeur() {
   sudo systemctl enable dockerIPv6mapper
   sudo systemctl start dockerIPv6mapper
 
+  sudo mkdir /run/millegrilles /var/log/millegrilles
+  sudo mkfifo /run/millegrilles/mg_monitor.pipe
+  sudo chown -R mg_deployeur:millegrilles /run/millegrilles
+  sudo chown mg_deployeur:millegrilles /var/log/millegrilles
+
   echo "[OK] Deployeur Python et dependances installes"
 }
 
@@ -121,7 +126,8 @@ creer_millegrille() {
   if [ ! -z $NOM_MILLEGRILLE ]; then
     $MILLEGRILLES_BIN/creer_millegrille.sh $NOM_MILLEGRILLE
 
-    # sudo -u mg_deployeur /opt/millegrilles/bin/deployer --info --creer $NOM_MILLEGRILLE
+    echo "[INFO] Deployer le monitor et demarrer les services docker"
+    sudo -u mg_deployeur /opt/millegrilles/bin/deployer.py --info installer $NOM_MILLEGRILLE
   else
     echo
     echo "[INFO] Installation de la base millegrilles completee, il faut maintenant creer votre millegrilles"

@@ -64,5 +64,5 @@ echo "*************"
 echo "[OK] La millegrille $NOM_MILLEGRILLE est prete pour le deploiement"
 echo "*************"
 echo
-echo "Utiliser: sudo -u mg_deployeur ./deployer.py --creer NOM_MILLEGRILLE"
-echo
+# echo "Utiliser: sudo -u mg_deployeur ./deployer.py --creer NOM_MILLEGRILLE"
+# echo
