@@ -335,11 +335,22 @@ class GestionnaireImagesDocker:
             nom_image = config['image']
             tag = config['version']
 
+            # Il est possible de definir des registre specifiquement pour un service
+            service_registries = config.get('registry')
+            if service_registries is None:
+                service_registries = registries
+            else:
+                service_registries.extend(registries)
+
             image_locale = self.get_image_locale(nom_image, tag)
             if image_locale is None:
                 image = None
-                for registry in registries:
-                    nom_image_reg = '%s/%s' % (registry, nom_image)
+                for registry in service_registries:
+                    if registry != '':
+                        nom_image_reg = '%s/%s' % (registry, nom_image)
+                    else:
+                        # Le registre '' represente une image docker officielle
+                        nom_image_reg = nom_image
                     image = self.pull(nom_image_reg, tag)
                     if image is not None:
                         break

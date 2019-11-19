@@ -1,10 +1,10 @@
 {
     "registries": [
-        "dugremat",
-        "docker.maceroc.com"
+        "docker.maceroc.com",
+        "dugremat"
     ],
     "images": {
-        "mongo": {"image": "mongo", "version": "4.0"},
+        "mongo": {"registry": ["docker.maceroc.com",""], "image": "mongo", "version": "4.0"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_3"},
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.15.8"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"},

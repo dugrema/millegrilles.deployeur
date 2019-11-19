@@ -43,7 +43,10 @@
             "Mode": 292
           }
         }
-      ]
+      ],
+      "Labels": {
+        "ipv6.mapper.network": "mg_ipv6"
+      }
     },
     "Placement": {
       "Constraints": [
