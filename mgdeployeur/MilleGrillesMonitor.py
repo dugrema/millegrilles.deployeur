@@ -32,7 +32,7 @@ import os
 class DeployeurDaemon(Daemon):
 
     def __init__(self):
-        self.__pidfile = '/var/run/monitor.pid'
+        self.__pidfile = '/var/run/millegrilles/monitor.pid'
         self.__stdout = '/var/log/millegrilles/monitor.log'
         self.__stderr = '/var/log/millegrilles/monitor.err'
 
@@ -102,7 +102,6 @@ class DeployeurMonitor:
 
         self.__gestionnaire_services_docker = GestionnairesServicesDocker(DockerFacade())
 
-        self.__pipe_file = '/run/millegrilles/mg_monitor.pipe'
         self.__pipe_thread = None
 
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
@@ -156,7 +155,7 @@ class DeployeurMonitor:
         self.__gestionnaire_services_docker.demarrer()
 
         try:
-            os.mkfifo(self.__pipe_file)
+            os.mkfifo(VariablesEnvironnementMilleGrilles.FIFO_COMMANDES)
         except FileExistsError:
             self.__pipe_thread = Thread(name="FifoCmd", target=self.pipe_commands)
         except OSError:
@@ -215,7 +214,7 @@ class DeployeurMonitor:
 
         while not self.__stop_event.is_set():
 
-            with open(self.__pipe_file, 'r') as pipe:
+            with open(VariablesEnvironnementMilleGrilles.FIFO_COMMANDES, 'r') as pipe:
                 while True:
                     try:
                         # Bloque jusqu'a ouverture du pipe
@@ -302,7 +301,11 @@ class MonitorMilleGrille:
             self.__logger.info("Erreur fermeture MQ: %s" % str(e))
 
     def _initialiser_contexte(self):
-        self.__contexte = ContexteRessourcesMilleGrilles()
+        nom_fichier_configuration_millegrille = os.path.join(self.__constantes.rep_etc_mg, self.__constantes.MONITOR_CONFIG_JSON)
+        with open(nom_fichier_configuration_millegrille, 'r') as fichier:
+            config_additionnelle = json.load(fichier)
+
+        self.__contexte = ContexteRessourcesMilleGrilles(additionals=[config_additionnelle])
         self.__contexte.initialiser(init_document=False, connecter=True)
 
         # Configurer le deployeur de MilleGrilles

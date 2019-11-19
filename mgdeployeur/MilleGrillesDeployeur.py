@@ -5,7 +5,7 @@
 
 from millegrilles import Constantes
 from millegrilles.domaines.Parametres import ConstantesParametres
-from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
+from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles, ConstantesMonitor
 from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration, GestionnaireImagesDocker
 from mgdeployeur.InitialisationMilleGrille import InitialisationMilleGrille
 from mgdeployeur.ComptesCertificats import GestionnaireCertificats
@@ -17,6 +17,7 @@ import os
 import datetime
 import argparse
 import socket
+import subprocess
 
 
 class DeployeurMilleGrilles:
@@ -113,6 +114,10 @@ class DeployeurMilleGrilles:
             if not self.__args.download_only:
                 # Installer les services
                 deployeur.installer_phase1(configuration_millegrille)
+
+                if not self.__args.no_monitor:
+                    self.demarrer_monitor()
+
             else:
                 self.__logger.info("Mode download_only, traitement complete")
 
@@ -145,6 +150,11 @@ class DeployeurMilleGrilles:
         self.executer_millegrilles()
 
         self.__logger.info("Execution terminee")
+
+    def demarrer_monitor(self):
+        self.__logger.info("Demarrer monitor")
+        resultat = subprocess.run(['sudo', 'systemctl', 'start', 'millegrilles'])
+        resultat.check_returncode()
 
     def main(self):
         self.__parse()
@@ -201,7 +211,12 @@ class DeployeurDockerMilleGrille:
 
     def demarrer(self):
         self.__logger.info("Demarrer millegrille ; %s" % self.__nom_millegrille)
-        self.deployer_services()
+        commande = {
+            'routing': ConstantesMonitor.COMMANDE_DEMARRER_SERVICES,
+            'commande': {}
+        }
+        with open(self.variables_env.FIFO_COMMANDES, 'w') as pipe:
+            json.dump(pipe, commande)
 
     def arreter(self):
         self.__logger.info("Arreter millegrille ; %s" % self.__nom_millegrille)
@@ -212,7 +227,8 @@ class DeployeurDockerMilleGrille:
             self.__docker_facade.supprimer_service(id_service)
 
     def maj_versions_images(self):
-        raise NotImplementedError("Pas implemente")
+        # La commande demarrer met a jour la configuration (docker service update)
+        self.demarrer()
 
     def force_reload(self):
         raise NotImplementedError("Pas implemente")
@@ -230,9 +246,6 @@ class DeployeurDockerMilleGrille:
 
         self.__docker_facade.arreter_thread_event_listener()
         self.__logger.info("Phase 1 : Installation terminee")
-
-    def deployer_phase1(self):
-        raise NotImplementedError("pas implemente")
 
 
 if __name__ == '__main__':

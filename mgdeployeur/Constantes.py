@@ -66,6 +66,9 @@ class VariablesEnvironnementMilleGrilles:
 
     LOGGING_FORMAT = '%(asctime)s %(threadName)s %(levelname)s: %(message)s'
 
+    # FIFO commandes
+    FIFO_COMMANDES = '/run/millegrilles/mg_monitor.pipe'
+
     def __init__(self, nom_millegrille):
         self.nom_millegrille = nom_millegrille
         self.__mapping()
