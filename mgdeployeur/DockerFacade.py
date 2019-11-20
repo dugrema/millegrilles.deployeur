@@ -393,15 +393,23 @@ class GestionnaireImagesDocker:
         """
         self.__logger.debug("Get image locale %s:%s" % (image_name, tag))
 
-        registries = self.__versions_images['registries']
+        registries = self.__versions_images['registries'].copy()
+        registries.append('')
         for registry in registries:
-            nom_image_reg = '%s/%s:%s' % (registry, image_name, tag)
+            if registry != '':
+                nom_image_reg = '%s/%s:%s' % (registry, image_name, tag)
+            else:
+                # Verifier nom de l'image sans registre (e.g. docker.io)
+                nom_image_reg = '%s:%s' % (image_name, tag)
+
             try:
                 image = self.__docker_facade.images.get(nom_image_reg)
                 self.__logger.info("Image locale %s:%s trouvee" % (image_name, tag))
                 return image
             except APIError:
                 self.__logger.warning("Image non trouvee: %s" % nom_image_reg)
+
+        nom_image_reg = '%s:%s' % (image_name, tag)
 
         return None
 
