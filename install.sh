@@ -64,7 +64,7 @@ installer_deployeur() {
 
   sudo mkdir -p /run/millegrilles /var/log/millegrilles
 
-  if [ ! -e /run/millegrilles/mg_monitor.pipe]; then sudo mkfifo /run/millegrilles/mg_monitor.pipe; fi
+  if [ ! -e /run/millegrilles/mg_monitor.pipe ]; then sudo mkfifo /run/millegrilles/mg_monitor.pipe; fi
   sudo chmod 770 /run/millegrilles/mg_monitor.pipe
   sudo chown -R mg_deployeur:millegrilles /run/millegrilles
   sudo chown mg_deployeur:millegrilles /run/millegrilles/mg_monitor.pipe
