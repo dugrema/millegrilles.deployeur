@@ -4,9 +4,8 @@
 # Responsable de l'installation et bootstrap d'une MilleGrille.
 
 from millegrilles import Constantes
-from millegrilles.domaines.Parametres import ConstantesParametres
 from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles, ConstantesMonitor
-from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration, GestionnaireImagesDocker
+from mgdeployeur.DockerFacade import DockerFacade, GestionnaireImagesDocker
 from mgdeployeur.InitialisationMilleGrille import InitialisationMilleGrille
 from mgdeployeur.ComptesCertificats import GestionnaireCertificats
 
@@ -17,8 +16,6 @@ import os
 import datetime
 import argparse
 import socket
-import subprocess
-import time
 
 
 class DeployeurMilleGrilles:

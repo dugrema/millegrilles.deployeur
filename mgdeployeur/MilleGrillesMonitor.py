@@ -1,16 +1,12 @@
 from millegrilles.util.Daemon import Daemon
 from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
-from millegrilles.dao.MessageDAO import BaseCallback, RoutingKeyInconnue
-from millegrilles.SecuritePKI import GestionnaireEvenementsCertificat, EnveloppeCertificat
+from millegrilles.dao.MessageDAO import BaseCallback
+from millegrilles.SecuritePKI import GestionnaireEvenementsCertificat
 from millegrilles import Constantes
-from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurCertificat
 from millegrilles.domaines.MaitreDesCles import ConstantesMaitreDesCles
 from millegrilles.domaines.Parametres import ConstantesParametres
-from millegrilles.util.X509Certificate import EnveloppeCleCert, DecryptionHelper
-from millegrilles.domaines.Pki import ConstantesPki
 from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles, ConstantesMonitor
-from mgdeployeur.MilleGrillesDeployeur import DeployeurDockerMilleGrille
-from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration
+from mgdeployeur.DockerFacade import DockerFacade
 from mgdeployeur.GestionExterne import GestionnairePublique
 from mgdeployeur.ComptesCertificats import RenouvellementCertificats, GestionnaireComptesRabbitMQ
 from mgdeployeur.GestionnaireServices import  GestionnairesServicesDocker
@@ -24,9 +20,8 @@ import socket
 import signal
 import json
 import datetime
-import base64
-import binascii
 import os
+import psutil
 
 
 class DeployeurDaemon(Daemon):
@@ -273,6 +268,7 @@ class MonitorMilleGrille:
         self.__gestionnaire_services_docker = gestionnaire_services_docker
         self.__gestionnaire_comptes_rabbitmq = GestionnaireComptesRabbitMQ(
             nom_millegrille, self.__gestionnaire_services_docker.docker_facade, node_name)
+        self.limiter_entretien = False  # True indique une activite elevee
 
         # Threading
         self.__stop_event = Event()
@@ -392,22 +388,27 @@ class MonitorMilleGrille:
         self.__logger.info("Debut execution entretien MilleGrille %s" % self.__nom_millegrille)
         while not self.__stop_event.is_set():
             try:
+                self.verifier_load()
                 self.__action_event.clear()  # Reset action event
 
                 self.executer_commandes_routeur()
 
-                self.entretien_services()
+                if not self.limiter_entretien:
+                    self.entretien_services()
 
-                if self.__transmettre_etat_upnp:
-                    self.__transmettre_etat_upnp = False
-                    self.__monitor.transmettre_etat_upnp(self.generateur_transactions)
+                    if self.__transmettre_etat_upnp:
+                        self.__transmettre_etat_upnp = False
+                        self.__monitor.transmettre_etat_upnp(self.generateur_transactions)
 
-                if self.__emettre_etat_noeuds_docker:
-                    self.emetre_etat_noeuds_docker()
+                    if self.__emettre_etat_noeuds_docker:
+                        self.emetre_etat_noeuds_docker()
 
-                if self.__renouveller_certs_web:
-                    self.__renouveller_certs_web = False
-                    self.__renouvellement_certificats.renouveller_certs_web()
+                    if self.__renouveller_certs_web:
+                        self.__renouveller_certs_web = False
+                        self.__renouvellement_certificats.renouveller_certs_web()
+
+                else:
+                    self.__logger.info("Charge de travail elevee, entretien limite")
 
             except Exception as e:
                 self.__logger.exception("Erreur traitement cedule: %s" % str(e))
@@ -415,6 +416,14 @@ class MonitorMilleGrille:
             self.__action_event.wait(20)
 
         self.__logger.info("Fin execution thread MilleGrille %s" % self.__nom_millegrille)
+
+    def verifier_load(self):
+        cpu_load = psutil.getloadavg()[0]
+        if cpu_load > 3.0:
+            self.limiter_entretien = True
+            self.__logger.warning("Charge de travail elevee %s, entretien limite" % cpu_load)
+        else:
+            self.limiter_entretien = False
 
     def ceduler_redemarrage(self, delai=30, nom_service=None):
         delta = datetime.timedelta(seconds=delai)
