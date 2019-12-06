@@ -5,13 +5,13 @@
     ],
     "images": {
         "mongo": {"registry": ["docker.maceroc.com",""], "image": "mongo", "version": "4.0"},
+        "transmission": {"registry": ["linuxserver"], "image": "transmission", "version": "2.94-r2-ls35"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_3"},
-        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.15.9"},
-        "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"},
         "nginx": {"image": "mg_nginx", "version": "1.17_7"},
-        "consignationfichiers": {"image": "consignationfichiers", "version": "1.15.1"},
-        "coupdoeilreact": {"image": "coupdoeil_react", "version": "1.15.2"},
-        "vitrinereact": {"image": "vitrine_react", "version": "1.15.1"},
-        "transmission": {"registry": ["linuxserver"], "image": "transmission", "version": "2.94-r2-ls35"}
+        "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"},
+        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.16.0"},
+        "consignationfichiers": {"image": "consignationfichiers", "version": "1.16.0"},
+        "coupdoeilreact": {"image": "coupdoeil_react", "version": "1.16.0"},
+        "vitrinereact": {"image": "vitrine_react", "version": "1.16.0"}
     }
 }
