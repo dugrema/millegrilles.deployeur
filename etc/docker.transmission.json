@@ -1,0 +1,78 @@
+{
+  "Name": "transmission",
+  "TaskTemplate": {
+    "ContainerSpec": {
+      "Image": "${transmission}",
+      "Hostname": "${DOMAIN_PUBLIC}",
+      "Env": [
+        "PGID=980",
+        "TZ=America/Toronto",
+        "USER=millegrilles",
+        "PASS=bwahahah1202"
+      ],
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation/torrents/downloads",
+          "Target": "/downloads"
+        },{
+          "Type": "bind",
+          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation/torrents",
+          "Target": "/torrents"
+        }
+
+      ],
+      "Labels": {
+        "ipv6.mapper.network": "mg_ipv6"
+      }
+    },
+    "Placement": {
+      "Constraints": [
+        "node.labels.netzone.private == true",
+        "node.labels.millegrilles.coupdoeil == true"
+      ]
+    },
+    "Resources": {
+      "Limits": {
+        "NanoCPUs": 500000000,
+        "MemoryBytes": 52428800
+      }
+    },
+    "RestartPolicy": {
+      "Condition": "on-failure",
+      "Delay": 30000000000,
+      "MaxAttempts": 3
+    },
+    "Mode": {
+      "Replicated": {
+        "Replicas": 1
+      }
+    },
+    "Networks": [
+        {
+          "Target": "mg_${NOM_MILLEGRILLE}_net",
+          "Aliases": ["transmission"]
+        }
+    ]
+  },
+ "EndpointSpec": {
+    "Mode": "vip",
+    "Ports": [
+      {
+        "Protocol": "tcp",
+        "PublishedPort": 51413,
+        "TargetPort": 51413,
+        "PublishMode": "host"
+      },
+      {
+        "Protocol": "udp",
+        "PublishedPort": 51413,
+        "TargetPort": 51413,
+        "PublishMode": "host"
+      }
+    ]
+  },
+  "Labels": {
+    "millegrille": "${NOM_MILLEGRILLE}"
+  }
+}
