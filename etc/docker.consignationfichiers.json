@@ -12,7 +12,8 @@
         "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
         "CERT=/run/secrets/pki.millegrilles.ssl.fullchain",
         "PRIVKEY=/run/secrets/pki.millegrilles.ssl.key",
-        "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation"
+        "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation",
+        "TRANSMISSION_HOST=transmission"
       ],
       "Mounts": [
         {
