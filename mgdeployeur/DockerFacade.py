@@ -531,12 +531,13 @@ class ServiceDockerConfiguration:
                 secret['SecretID'] = secret_dict['Id']
         # /TaskTemplate/ContainerSpec/Secrets
         configs = container_spec.get('Configs')
-        for config in configs:
-            self.__logger.debug("Mapping configs %s" % config)
-            config_name = config['ConfigName']
-            config_dict = self.trouver_config(config_name)
-            config['ConfigName'] = config_dict['Name']
-            config['ConfigID'] = config_dict['Id']
+        if configs is not None:
+            for config in configs:
+                self.__logger.debug("Mapping configs %s" % config)
+                config_name = config['ConfigName']
+                config_dict = self.trouver_config(config_name)
+                config['ConfigName'] = config_dict['Name']
+                config['ConfigID'] = config_dict['Id']
         # /TaskTemplate/Networks/Target
         networks = task_template.get('Networks')
         if networks is not None:
