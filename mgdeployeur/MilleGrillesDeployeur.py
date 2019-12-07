@@ -82,7 +82,6 @@ class DeployeurMilleGrilles:
             help="Nom de la millegrille"
         )
 
-
         self.__args = self.__parser.parse_args()
 
     def _configurer_logging(self):
@@ -180,9 +179,11 @@ class DeployeurDockerMilleGrille:
         self.__args = args
 
         self.variables_env = VariablesEnvironnementMilleGrilles(nom_millegrille)
-        self.__initialisation_millegrille = InitialisationMilleGrille(self.variables_env, self.__docker_facade, self.__node_name)
+        self.__initialisation_millegrille = InitialisationMilleGrille(
+            self.variables_env, self.__docker_facade, self.__node_name)
         self.__gestionnaire_images = GestionnaireImagesDocker(self.__docker_facade)
-        self.__generateur_certificats = GestionnaireCertificats(self.variables_env, self.__docker_facade, self.__node_name)
+        self.__generateur_certificats = GestionnaireCertificats(
+            self.variables_env, self.__docker_facade, self.__node_name)
 
         # Version des secrets a utiliser
         self.__certificats = dict()
