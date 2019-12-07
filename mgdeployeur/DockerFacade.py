@@ -3,9 +3,10 @@ import requests_unixsocket
 import json
 import docker
 from docker.errors import APIError
-from threading import Thread, Event
+from threading import Thread
 
 from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles
+
 
 class DockerConstantes:
 
@@ -386,7 +387,6 @@ class GestionnaireImagesDocker:
     def get_image_locale(self, image_name, tag):
         """
         Verifie si une image existe deja localement. Cherche dans tous les registres.
-        :param registries:
         :param image_name:
         :param tag:
         :return:
@@ -522,12 +522,13 @@ class ServiceDockerConfiguration:
 
         # /TaskTemplate/ContainerSpec/Secrets
         secrets = container_spec.get('Secrets')
-        for secret in secrets:
-            self.__logger.debug("Mapping secret %s" % secret)
-            secret_name = secret['SecretName']
-            secret_dict = self.trouver_secret(secret_name)
-            secret['SecretName'] = secret_dict['Name']
-            secret['SecretID'] = secret_dict['Id']
+        if secrets is not None:
+            for secret in secrets:
+                self.__logger.debug("Mapping secret %s" % secret)
+                secret_name = secret['SecretName']
+                secret_dict = self.trouver_secret(secret_name)
+                secret['SecretName'] = secret_dict['Name']
+                secret['SecretID'] = secret_dict['Id']
         # /TaskTemplate/ContainerSpec/Secrets
         configs = container_spec.get('Configs')
         for config in configs:
@@ -611,87 +612,3 @@ class ServiceDockerConfiguration:
             return configs[config_date]
 
         return None
-
-
-class ServicesMilleGrillesHelper:
-
-    def __init__(self, docker_facade: DockerFacade):
-        self.__docker_facade = docker_facade
-
-    def activer_mongo(self):
-        self.__docker_facade.installer_service('mongo')
-
-    def activer_mq(self):
-        self.__docker_facade.installer_service('mq')
-
-    def activer_maitredescles(self):
-        self.__docker_facade.installer_service('maitredescles')
-        labels = {'millegrilles.maitredescles': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-
-    def activer_consignateur_transactions(self):
-        self.__docker_facade.installer_service('transaction')
-        labels = {'netzone.private': 'true', 'millegrilles.python': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-
-    def activer_ceduleur(self):
-        self.__docker_facade.installer_service('ceduleur')
-        labels = {'netzone.private': 'true', 'millegrilles.python': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-
-    def activer_domaines(self):
-        self.__docker_facade.installer_service('domaines')
-        labels = {'netzone.private': 'true', 'millegrilles.python': 'true', 'millegrilles.domaines': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-
-    def activer_coupdoeilreact(self):
-        self.__docker_facade.installer_service('coupdoeilreact')
-        labels = {'netzone.private': 'true', 'millegrilles.coupdoeil': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-
-    def activer_consignationfichiers(self):
-        self.__docker_facade.installer_service('consignationfichiers')
-        labels = {'netzone.private': 'true', 'millegrilles.consignationfichiers': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-
-    def activer_vitrine(self):
-        self.__docker_facade.installer_service('vitrinereact')
-        labels = {'millegrilles.vitrine': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-
-    def activer_nginx_local(self):
-        self.__docker_facade.installer_service('nginxlocal')
-        labels = {'netzone.private': 'true', 'millegrilles.nginx': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-
-    def activer_publicateur_local(self):
-        self.__docker_facade.installer_service('publicateurlocal')
-
-    def activer_nginx_public(self):
-        # Charger configuration de nginx
-        configuration_url = self.charger_configuration_web()
-        self.__docker_facade.installer_service('nginxpublic', mappings=configuration_url)
-        labels = {'millegrilles.nginx': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-
-    def activer_mongoexpress(self):
-        self.__docker_facade.installer_service('mongoexpress')
-        labels = {'netzone.private': 'true', 'millegrilles.consoles': 'true'}
-        self.deployer_labels(self.__node_name, labels)
-
-    def charger_configuration_web(self, default=True):
-        fichier_configuration_url = self.constantes.fichier_etc_mg(
-            ConstantesEnvironnementMilleGrilles.FICHIER_CONFIG_URL_PUBLIC)
-
-        configuration_url = None
-        if os.path.isfile(fichier_configuration_url):
-            with open(fichier_configuration_url, 'r') as fichier:
-                configuration_url = json.load(fichier)
-        elif default:
-            # Configuraiton initiale, on met des valeurs dummy
-            configuration_url = {
-                ConstantesParametres.DOCUMENT_PUBLIQUE_URL_WEB: 'mg_public',
-                ConstantesParametres.DOCUMENT_PUBLIQUE_URL_COUPDOEIL: 'coupdoeil_public',
-            }
-
-        return configuration_url
