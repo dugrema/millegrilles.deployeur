@@ -27,7 +27,9 @@ creer_repertoires() {
     $REP_NGINX $REP_PKI $REP_MONGO_SCRIPTS $REP_MONGO_DATA $REP_MQ_ACCOUNTS
 
   sudo -u $MILLEGRILLES_USER_DEPLOYEUR mkdir -p \
-    $REP_CONSIGNATION_LOCAL/torrent/downloads $REP_CONSIGNATION_LOCAL/seeding $REP_CONSIGNATION_LOCAL/torrentfiles
+    $REP_CONSIGNATION_LOCAL/torrent/downloads \
+    $REP_CONSIGNATION_LOCAL/torrent/seeding \
+    $REP_CONSIGNATION_LOCAL/torrent/torrentfiles
 
   sudo -u $MILLEGRILLES_USER_DEPLOYEUR chmod 2755 $REP_MILLEGRILLE
   sudo chown -R $MILLEGRILLES_USER_MONGO:root $REP_MONGO_DATA
