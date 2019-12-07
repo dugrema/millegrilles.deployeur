@@ -3,7 +3,7 @@
   "TaskTemplate": {
     "ContainerSpec": {
       "Image": "${transmission}",
-      "Hostname": "${DOMAIN_PUBLIC}",
+      "Hostname": "transmission",
       "Env": [
         "PGID=980",
         "TZ=America/Toronto",
@@ -61,14 +61,12 @@
       {
         "Protocol": "tcp",
         "PublishedPort": 51413,
-        "TargetPort": 51413,
-        "PublishMode": "host"
+        "TargetPort": 51413
       },
       {
         "Protocol": "udp",
         "PublishedPort": 51413,
-        "TargetPort": 51413,
-        "PublishMode": "host"
+        "TargetPort": 51413
       }
     ]
   },

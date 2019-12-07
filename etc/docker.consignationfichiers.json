@@ -3,7 +3,7 @@
   "TaskTemplate": {
     "ContainerSpec": {
       "Image": "${consignationfichiers}",
-      "Hostname": "coupdoeil.local",
+      "Hostname": "consignationfichiers",
       "Env": [
         "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
         "MG_MQ_URL=amqps://mq:5673/${NOM_MILLEGRILLE}",
