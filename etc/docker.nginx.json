@@ -26,6 +26,9 @@
           "Target": "/usr/share/nginx/html"
         }
       ],
+      "Labels": {
+        "ipv6.mapper.network": "mg_ipv6"
+      },
       "Secrets": [
         {
           "SecretName": "pki.millegrilles.web.key;pki.nginx.key",
