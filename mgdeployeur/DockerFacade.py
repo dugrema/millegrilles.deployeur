@@ -337,11 +337,9 @@ class GestionnaireImagesDocker:
             tag = config['version']
 
             # Il est possible de definir des registre specifiquement pour un service
-            service_registries = config.get('registry')
+            service_registries = config.get('registries')
             if service_registries is None:
                 service_registries = registries
-            else:
-                service_registries.extend(registries)
 
             image_locale = self.get_image_locale(nom_image, tag)
             if image_locale is None:
@@ -407,9 +405,7 @@ class GestionnaireImagesDocker:
                 self.__logger.info("Image locale %s:%s trouvee" % (image_name, tag))
                 return image
             except APIError:
-                self.__logger.warning("Image non trouvee: %s" % nom_image_reg)
-
-        nom_image_reg = '%s:%s' % (image_name, tag)
+                self.__logger.debug("Image non trouvee: %s" % nom_image_reg)
 
         return None
 

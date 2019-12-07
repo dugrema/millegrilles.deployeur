@@ -4,8 +4,8 @@
         "dugremat"
     ],
     "images": {
-        "mongo": {"registry": ["docker.maceroc.com",""], "image": "mongo", "version": "4.0"},
-        "transmission": {"registry": ["linuxserver"], "image": "transmission", "version": "2.94-r2-ls35"},
+        "mongo": {"registries": ["docker.maceroc.com",""], "image": "mongo", "version": "4.0"},
+        "transmission": {"registries": ["docker.maceroc.com", "linuxserver"], "image": "transmission", "version": "2.94-r2-ls35"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_3"},
         "nginx": {"image": "mg_nginx", "version": "1.17_8"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"},
