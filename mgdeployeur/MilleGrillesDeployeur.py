@@ -4,9 +4,8 @@
 # Responsable de l'installation et bootstrap d'une MilleGrille.
 
 from millegrilles import Constantes
-from millegrilles.domaines.Parametres import ConstantesParametres
 from mgdeployeur.Constantes import VariablesEnvironnementMilleGrilles, ConstantesMonitor
-from mgdeployeur.DockerFacade import DockerFacade, ServiceDockerConfiguration, GestionnaireImagesDocker
+from mgdeployeur.DockerFacade import DockerFacade, GestionnaireImagesDocker
 from mgdeployeur.InitialisationMilleGrille import InitialisationMilleGrille
 from mgdeployeur.ComptesCertificats import GestionnaireCertificats
 
@@ -17,8 +16,6 @@ import os
 import datetime
 import argparse
 import socket
-import subprocess
-import time
 
 
 class DeployeurMilleGrilles:
@@ -84,7 +81,6 @@ class DeployeurMilleGrilles:
             'nom_millegrille', type=str,
             help="Nom de la millegrille"
         )
-
 
         self.__args = self.__parser.parse_args()
 
@@ -183,9 +179,11 @@ class DeployeurDockerMilleGrille:
         self.__args = args
 
         self.variables_env = VariablesEnvironnementMilleGrilles(nom_millegrille)
-        self.__initialisation_millegrille = InitialisationMilleGrille(self.variables_env, self.__docker_facade, self.__node_name)
+        self.__initialisation_millegrille = InitialisationMilleGrille(
+            self.variables_env, self.__docker_facade, self.__node_name)
         self.__gestionnaire_images = GestionnaireImagesDocker(self.__docker_facade)
-        self.__generateur_certificats = GestionnaireCertificats(self.variables_env, self.__docker_facade, self.__node_name)
+        self.__generateur_certificats = GestionnaireCertificats(
+            self.variables_env, self.__docker_facade, self.__node_name)
 
         # Version des secrets a utiliser
         self.__certificats = dict()

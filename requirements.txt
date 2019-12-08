@@ -4,3 +4,4 @@ requests
 miniupnpc==2.0.2
 cryptography==2.7
 pika==0.12
+psutil
