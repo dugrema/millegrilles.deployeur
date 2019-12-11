@@ -6,7 +6,7 @@
       "Args": [
         "./run.sh"
       ],
-      "Hostname": "${DOMAIN_PUBLIC}",
+      "Hostname": "nginx",
       "Env": [
         "NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
         "NGINX_CONFIG_FILE=millegrilles.conf",
