@@ -39,7 +39,7 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.maitredescles.key",
+          "SecretName": "pki.maitrecles.key",
           "File": {
             "Name": "pki.millegrilles.ssl.key",
             "UID": "0",
@@ -47,7 +47,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.maitredescles.key_cert",
+          "SecretName": "pki.maitrecles.key_cert",
           "File": {
             "Name": "pki.millegrilles.ssl.key_cert",
             "UID": "0",
@@ -55,7 +55,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.ca.millegrille.key",
+          "SecretName": "pki.millegrille.key",
           "File": {
             "Name": "pki.ca.millegrille.key",
             "UID": "0",
@@ -63,7 +63,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.ca.root.key",
+          "SecretName": "pki.racine.key",
           "File": {
             "Name": "pki.ca.root.key",
             "UID": "0",
@@ -79,7 +79,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "passwd.python.maitredescles.json",
+          "SecretName": "passwd.maitrecles.json",
           "File": {
             "Name": "mg.maitredescles.json",
             "UID": "0",
@@ -90,7 +90,7 @@
       ],
       "Configs": [
         {
-          "ConfigName": "pki.maitredescles.cert",
+          "ConfigName": "pki.maitrecles.cert",
           "File": {
             "Name": "/run/secrets/pki.millegrilles.ssl.cert",
             "UID": "0",
@@ -98,7 +98,7 @@
             "Mode": 292
           }
         }, {
-          "ConfigName": "pki.ca.millegrille.fullchain",
+          "ConfigName": "pki.millegrille.fullchain",
           "File": {
             "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
             "UID": "0",
@@ -106,7 +106,7 @@
             "Mode": 292
           }
         }, {
-          "ConfigName": "pki.ca.millegrille.cert",
+          "ConfigName": "pki.millegrille.cert",
           "File": {
             "Name": "/run/secrets/pki.ca.millegrille.cert",
             "UID": "0",
@@ -114,7 +114,7 @@
             "Mode": 292
           }
         }, {
-          "ConfigName": "pki.ca.root.cert",
+          "ConfigName": "pki.racine.cert",
           "File": {
             "Name": "/run/secrets/pki.ca.root.cert",
             "UID": "0",

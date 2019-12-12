@@ -82,7 +82,7 @@ class InitialisationMilleGrille:
             attrs = event['Actor']['Attributes']
             name = attrs.get('name')
             if name.split('.')[0] == '%s_%s' % (self.__nom_millegrille, nom_service):
-                self.__logger.info("Mongo est demarre dans docker")
+                self.__logger.info("Service %s est demarre dans docker" % nom_service)
                 self.__wait_event.set()
 
         # Ajouter un callback pour etre notifie des demarrage de containers
@@ -265,7 +265,7 @@ class InitialisationMilleGrille:
         for config in docker_configs:
             if config.name.startswith('%s.pki' % self.__nom_millegrille):
                 elems = config.name.split('.')
-                if elems[3] == 'cert' and elems[2] in ('transaction', 'maitredescles'):
+                if elems[3] == 'cert' and elems[2] in ('transaction', 'maitrecles'):
                     # Charger ce certificat
                     data = config.attrs['Spec']['Data']
                     cert = base64.b64decode(data)
