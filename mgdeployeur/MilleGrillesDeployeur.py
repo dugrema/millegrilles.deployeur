@@ -100,7 +100,7 @@ class DeployeurMilleGrilles:
     def executer_millegrilles(self):
 
         commande = self.__args.commande
-        nom_millegrille = self.__args.nom_millegrille
+        nom_millegrille = self.__args.idmg
         node_name = self.__args.nodename
         configuration_millegrille = self.__configuration_deployeur.get(nom_millegrille)
         if configuration_millegrille is None:

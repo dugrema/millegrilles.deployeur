@@ -146,7 +146,7 @@ class CertbotCertificateUploader:
         :return:
         """
 
-        nom_millegrille = self.__contexte.configuration.nom_millegrille
+        nom_millegrille = self.__contexte.configuration.idmg
         repertoire = self.trouver_repertoire_domaine()
         fichiers = [
             CertbotConstantes.FICHIER_CERT,

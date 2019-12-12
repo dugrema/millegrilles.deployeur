@@ -423,7 +423,7 @@ class GestionnaireCertificats:
         chaine_ca = '%s/pki.ca.fullchain.pem' % self.variables_env.rep_secrets_deployeur
 
         config = {
-            ('MG_%s' % Constantes.CONFIG_NOM_MILLEGRILLE).upper(): self.__nom_millegrille,
+            ('MG_%s' % Constantes.CONFIG_IDMG).upper(): self.__nom_millegrille,
             ('MG_%s' % Constantes.CONFIG_MQ_HOST).upper(): self.__docker_nodename,
             ('MG_%s' % Constantes.CONFIG_MQ_PORT).upper(): '5673',
             ('MG_%s' % Constantes.CONFIG_MQ_SSL).upper(): 'on',
