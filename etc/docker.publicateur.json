@@ -23,7 +23,7 @@
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx",
+          "Source": "/var/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx",
           "Target": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx"
         }
       ],

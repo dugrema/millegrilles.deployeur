@@ -13,11 +13,11 @@
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation/torrents/downloads",
+          "Source": "/var/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation/torrents/downloads",
           "Target": "/downloads"
         },{
           "Type": "bind",
-          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation/torrents",
+          "Source": "/var/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation/torrents",
           "Target": "/torrents"
         }
 

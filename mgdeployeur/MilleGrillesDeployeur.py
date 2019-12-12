@@ -188,7 +188,7 @@ class DeployeurDockerMilleGrille:
         # Version des secrets a utiliser
         self.__certificats = dict()
         self.__wait_event = Event()
-        self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d') + 'a'
 
         self.__contexte = None  # Le contexte est initialise une fois que MQ actif
 

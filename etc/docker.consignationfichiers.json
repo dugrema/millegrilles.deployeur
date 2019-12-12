@@ -19,7 +19,7 @@
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation",
+          "Source": "/var/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation",
           "Target": "/opt/millegrilles/consignation"
         }
       ],

@@ -43,7 +43,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "passwd.python.domaines.json",
+          "SecretName": "passwd.domaines.json",
           "File": {
             "Name": "mg.domaines.json",
             "UID": "0",

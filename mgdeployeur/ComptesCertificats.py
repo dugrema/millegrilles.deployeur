@@ -245,7 +245,7 @@ class GestionnaireCertificats:
 
     def deployer_clecert(self, id_secret: str, clecert: EnveloppeCleCert, combiner_cle_cert=False, datetag=None):
         if datetag is None:
-            datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+            datetag = datetime.datetime.utcnow().strftime('%Y%m%d') + 'a'
 
         contenu_cle = base64.encodebytes(clecert.private_key_bytes).decode('utf-8')
         contenu_cert = base64.encodebytes(clecert.cert_bytes).decode('utf-8')
@@ -687,7 +687,7 @@ class RenouvellementCertificats:
 
         # Demander deploiement du clecert
         date_debut = clecert_certbot.not_valid_before
-        datetag = date_debut.strftime('%Y%m%d%H%M%S')
+        datetag = date_debut.strftime('%Y%m%d') + 'a'
         self.__deployeur.deployer_clecert('pki.web', clecert_certbot, datetag=datetag)
 
         # Ceduler redemarrage de nginx pour utiliser le nouveau certificat
