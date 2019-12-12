@@ -27,6 +27,7 @@ class VariablesEnvironnementMilleGrilles:
 
     # Globaux pour toutes les millegrilles
     REPERTOIRE_MILLEGRILLES = '/opt/millegrilles'
+    REPERTOIRE_MILLEGRILLES_VAR = '/var/opt/millegrilles'
     REPERTOIRE_MILLEGRILLES_ETC = '%s/etc' % REPERTOIRE_MILLEGRILLES
     REPERTOIRE_MILLEGRILLES_BIN = '%s/bin' % REPERTOIRE_MILLEGRILLES
     REPERTOIRE_MILLEGRILLES_CACERTS = '%s/cacerts' % REPERTOIRE_MILLEGRILLES
@@ -88,7 +89,7 @@ class VariablesEnvironnementMilleGrilles:
     @property
     def rep_mounts(self):
         return '%s/%s/%s' % (
-            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
             self.nom_millegrille,
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MOUNTS
         )
@@ -96,7 +97,7 @@ class VariablesEnvironnementMilleGrilles:
     @property
     def rep_certs(self):
         return '%s/%s/%s' % (
-            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
             self.nom_millegrille,
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_CERTS
         )
@@ -104,7 +105,7 @@ class VariablesEnvironnementMilleGrilles:
     @property
     def rep_cles(self):
         return '%s/%s/%s' % (
-            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
             self.nom_millegrille,
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_KEYS
         )
@@ -112,7 +113,7 @@ class VariablesEnvironnementMilleGrilles:
     @property
     def rep_secrets_deployeur(self):
         return '%s/%s/%s' % (
-            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
             self.nom_millegrille,
             VariablesEnvironnementMilleGrilles.MILLEGRILLES_DEPLOYEUR_SECRETS
         )
@@ -120,7 +121,7 @@ class VariablesEnvironnementMilleGrilles:
     @property
     def fichier_mq_admin_password(self):
         return '%s/%s/%s/%s' % (
-            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
             self.nom_millegrille,
             VariablesEnvironnementMilleGrilles.MILLEGRILLES_DEPLOYEUR_SECRETS,
             VariablesEnvironnementMilleGrilles.FICHIER_MQ_ADMIN_MOTDEPASSE
@@ -128,7 +129,7 @@ class VariablesEnvironnementMilleGrilles:
 
     def rep_mq_accounts(self, fichier):
         return '%s/%s/%s/%s' % (
-            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
             self.nom_millegrille,
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MQ_ACCOUNTS,
             fichier
@@ -136,7 +137,7 @@ class VariablesEnvironnementMilleGrilles:
 
     def rep_mongo_scripts(self, fichier):
         return '%s/%s/%s/%s' % (
-            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES,
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
             self.nom_millegrille,
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MONGO_SCRIPTS,
             fichier

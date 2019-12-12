@@ -51,7 +51,7 @@
           }
         },
         {
-          "ConfigName": "pki.ca.millegrille.fullchain",
+          "ConfigName": "pki.millegrille.fullchain",
           "File": {
             "Name": "/opt/rabbitmq/dist/certs/calist.cert.pem",
             "UID": "0",

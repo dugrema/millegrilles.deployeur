@@ -19,7 +19,7 @@ class InitialisationMilleGrille:
         self.__docker_nodename = docker_nodename
         self.variables_env = variables_env
         self.__nom_millegrille = variables_env.nom_millegrille
-        self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d')
+        self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d') + 'a'
 
         self.__gestionnaire_certificats = GestionnaireCertificats(self.variables_env, self.__docker_facade, self.__docker_nodename)
         self.__gestionnaire_rabbitmq = GestionnaireComptesRabbitMQ(self.__nom_millegrille, self.__docker_facade, self.__docker_nodename)
