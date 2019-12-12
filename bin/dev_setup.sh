@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-NOM_MILLEGRILLE=$1
+IDMG=$1
 
 CURRENT_USER=`whoami`
 
@@ -8,7 +8,7 @@ source /opt/millegrilles/etc/paths.env
 
 sudo adduser $CURRENT_USER millegrilles || true
 
-REP_MILLEGRILLE=$MILLEGRILLES_PATH/$NOM_MILLEGRILLE
+REP_MILLEGRILLE=$MILLEGRILLES_PATH/$IDMG
 sudo mkdir -p $MILLEGRILLES_PATH/dist/secure/maitredescles
 sudo mkdir -p $MILLEGRILLES_PATH/dist/secure/pki
 sudo chown -R $CURRENT_USER:millegrilles $MILLEGRILLES_PATH/dist

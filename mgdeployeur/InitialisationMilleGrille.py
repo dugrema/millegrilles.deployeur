@@ -18,12 +18,12 @@ class InitialisationMilleGrille:
         self.__docker_facade = docker_facade
         self.__docker_nodename = docker_nodename
         self.variables_env = variables_env
-        self.__nom_millegrille = variables_env.nom_millegrille
+        self.__idmg = variables_env.idmg
         self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d') + 'a'
 
         self.__gestionnaire_certificats = GestionnaireCertificats(self.variables_env, self.__docker_facade, self.__docker_nodename)
-        self.__gestionnaire_rabbitmq = GestionnaireComptesRabbitMQ(self.__nom_millegrille, self.__docker_facade, self.__docker_nodename)
-        self.__gestionnaire_mongo = GestionnaireComptesMongo(self.__nom_millegrille)
+        self.__gestionnaire_rabbitmq = GestionnaireComptesRabbitMQ(self.__idmg, self.__docker_facade, self.__docker_nodename)
+        self.__gestionnaire_mongo = GestionnaireComptesMongo(self.__idmg)
 
         self.__wait_event = Event()
 
@@ -37,7 +37,7 @@ class InitialisationMilleGrille:
             self.__logger.info("Docker swarm initialise %s" % str(resultat))
 
     def preparer_reseau(self):
-        nom_reseau = 'mg_%s_net' % self.__nom_millegrille
+        nom_reseau = 'mg_%s_net' % self.__idmg
         self.__docker_facade.configurer_reseau(nom_reseau)
 
     def installer_mongo(self):
@@ -57,9 +57,9 @@ class InitialisationMilleGrille:
         # Verifier si on doit configurer de nouveaux secrets
         if etat_mongo.get('comptesInitiaux') is None:
             datetag = self.__datetag
-            nom_millegrille = self.__nom_millegrille
+            idmg = self.__idmg
 
-            messages = self.__gestionnaire_mongo.creer_comptes_mongo(datetag, nom_millegrille)
+            messages = self.__gestionnaire_mongo.creer_comptes_mongo(datetag, idmg)
 
             for message in messages:
                 resultat = self.__docker_facade.post('secrets/create', message)
@@ -81,7 +81,7 @@ class InitialisationMilleGrille:
         def callback_start_confirm(event):
             attrs = event['Actor']['Attributes']
             name = attrs.get('name')
-            if name.split('.')[0] == '%s_%s' % (self.__nom_millegrille, nom_service):
+            if name.split('.')[0] == '%s_%s' % (self.__idmg, nom_service):
                 self.__logger.info("Service %s est demarre dans docker" % nom_service)
                 self.__wait_event.set()
 
@@ -96,7 +96,7 @@ class InitialisationMilleGrille:
         )
 
         # Demarrer le service Mongo sur docker et attendre qu'il soit pret pour poursuivre
-        mode = self.__docker_facade.installer_service(self.__nom_millegrille, nom_service)
+        mode = self.__docker_facade.installer_service(self.__idmg, nom_service)
 
         if mode == 'create':
             self.__wait_event.wait(120)
@@ -129,7 +129,7 @@ class InitialisationMilleGrille:
                 os.chmod(dest, 750)
 
             # Executer le script
-            nom_container = '%s_mongo' % self.__nom_millegrille
+            nom_container = '%s_mongo' % self.__idmg
             # self.__logger.debug("Liste de containers: %s" % liste_containers)
 
             container_mongo = None
@@ -182,7 +182,7 @@ class InitialisationMilleGrille:
 
                 self.__wait_event.wait(5)  # Attendre que MongoDB redevienne Primaire
 
-                commande = '/opt/mongodb/scripts/mongo_run_script_mg.sh %s /run/secrets/mongo.accounts.js' % self.__nom_millegrille
+                commande = '/opt/mongodb/scripts/mongo_run_script_mg.sh %s /run/secrets/mongo.accounts.js' % self.__idmg
                 commande = commande.split(' ')
                 self.__logger.debug("Commande a transmettre: %s" % commande)
 
@@ -263,7 +263,7 @@ class InitialisationMilleGrille:
         # Charger certs dans docker config
         docker_configs = self.__docker_facade.configs.list()
         for config in docker_configs:
-            if config.name.startswith('%s.pki' % self.__nom_millegrille):
+            if config.name.startswith('%s.pki' % self.__idmg):
                 elems = config.name.split('.')
                 if elems[3] == 'cert' and elems[2] in ('transaction', 'maitrecles'):
                     # Charger ce certificat

@@ -2,9 +2,9 @@
 
 if [ -z $1 ]; then echo "Il faut fournir le nom de la MilleGrille en parametres"; fi
 
-export NOM_MILLEGRILLE=$1
+export IDMG=$1
 MILLEGRILLES_BIN=/opt/millegrilles/bin
-CERT_FOLDER=/opt/millegrilles/$NOM_MILLEGRILLE/pki/certs/
+CERT_FOLDER=/opt/millegrilles/$IDMG/pki/certs/
 
 preparer_requete_csr() {
   echo "[INFO] Creation d'une requete de certificat"
@@ -13,11 +13,11 @@ preparer_requete_csr() {
     PARAMS_CSR="$PARAMS_CSR URL_PUBLIC=$URL_PUBLIC"
   fi
 
-  sudo $PARAMS_CSR $MILLEGRILLES_BIN/creer_csr_noeud.sh $NOM_MILLEGRILLE
+  sudo $PARAMS_CSR $MILLEGRILLES_BIN/creer_csr_noeud.sh $IDMG
 
   HOSTNAME=`hostname`
-  CERT_NAME=${HOSTNAME}.noeud.${NOM_MILLEGRILLE}.cert.pem
-  WEB_CERT=mg-$NOM_MILLEGRILLE.local/certs/$CERT_NAME
+  CERT_NAME=${HOSTNAME}.noeud.${IDMG}.cert.pem
+  WEB_CERT=$IDMG.local/certs/$CERT_NAME
 
   if [ -z $INSTALLATION_MANUELLE ]; then
     echo "[INFO] Telechargement du CA Cert"
@@ -25,7 +25,7 @@ preparer_requete_csr() {
     echo "Appuyer sur ENTREE pour tenter de telecharger le certificat."
     read
 
-    sudo wget -O $CERT_FOLDER/${NOM_MILLEGRILLE}.CA.cert.pem http://mg-$NOM_MILLEGRILLE.local/certs/${NOM_MILLEGRILLE}.CA.cert.pem
+    sudo wget -O $CERT_FOLDER/${IDMG}.CA.cert.pem http://$IDMG.local/certs/${IDMG}.CA.cert.pem
 
     set +e
     for essai in {1..20}; do
@@ -51,12 +51,12 @@ preparer_requete_csr() {
   fi
 
   if [ -f $CERT_FOLDER/$CERT_NAME ]; then
-    sudo ln -sf $CERT_FOLDER/$CERT_NAME $CERT_FOLDER/${NOM_MILLEGRILLE}_noeud.cert.pem
+    sudo ln -sf $CERT_FOLDER/$CERT_NAME $CERT_FOLDER/${IDMG}_noeud.cert.pem
   else
     echo "[FAIL] Echec, le certificat doit etre installe manuellement dans le fichier $CERT_FOLDER/$CERT_NAME"
   fi
 }
 
-echo "Renouvellement du certificat du noeud pour la MilleGrille $NOM_MILLEGRILLE"
+echo "Renouvellement du certificat du noeud pour la MilleGrille $IDMG"
 
 preparer_requete_csr

@@ -139,12 +139,12 @@ class DeployeurMonitor:
             for monitor in self.__millegrilles_monitors.values():
                 monitor.arreter()
 
-    def __demarrer_monitoring(self, nom_millegrille, config):
-        self.__logger.info("Demarrage monitoring de la MilleGrille %s" % nom_millegrille)
+    def __demarrer_monitoring(self, idmg, config):
+        self.__logger.info("Demarrage monitoring de la MilleGrille %s" % idmg)
 
         millegrille_monitor = MonitorMilleGrille(
-            self, nom_millegrille, self.__args.node, config, self.__gestionnaire_services_docker)
-        self.__millegrilles_monitors[nom_millegrille] = millegrille_monitor
+            self, idmg, self.__args.node, config, self.__gestionnaire_services_docker)
+        self.__millegrilles_monitors[idmg] = millegrille_monitor
 
         # Commence a ecouter evenements sur docker
         self.__gestionnaire_services_docker.demarrer()
@@ -172,7 +172,7 @@ class DeployeurMonitor:
                 "Erreur demarrage gestionnaire publique, fonctionnalite non disponible\n%s" % str(e))
             self.__gestionnaire_publique = None
 
-        self.__logger.info("Demarrage monitor %s" % nom_millegrille)
+        self.__logger.info("Demarrage monitor %s" % idmg)
         millegrille_monitor.start()
 
     def __charger_liste_millegrilles(self):
@@ -183,8 +183,8 @@ class DeployeurMonitor:
         node_name = self.__args.node
         self.__logger.info("Node name, utilisation de : %s" % node_name)
         config_millegrilles = self.__configuration_deployeur
-        for nom_millegrille, config in config_millegrilles.items():
-            self.__demarrer_monitoring(nom_millegrille, config)
+        for idmg, config in config_millegrilles.items():
+            self.__demarrer_monitoring(idmg, config)
 
     def executer_monitoring(self):
         self.__config_logging()
@@ -250,13 +250,13 @@ class DeployeurMonitor:
 
 class MonitorMilleGrille:
 
-    def __init__(self, monitor: DeployeurMonitor, nom_millegrille: str, node_name: str, config: dict,
+    def __init__(self, monitor: DeployeurMonitor, idmg: str, node_name: str, config: dict,
                  gestionnaire_services_docker: GestionnairesServicesDocker):
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
         # Config et constantes
-        self.__nom_millegrille = nom_millegrille
-        self.__constantes = VariablesEnvironnementMilleGrilles(self.__nom_millegrille)
+        self.__idmg = idmg
+        self.__constantes = VariablesEnvironnementMilleGrilles(self.__idmg)
         self.__node_name = node_name
         self.__config = config
 
@@ -267,7 +267,7 @@ class MonitorMilleGrille:
         self.__renouvellement_certificats = None
         self.__gestionnaire_services_docker = gestionnaire_services_docker
         self.__gestionnaire_comptes_rabbitmq = GestionnaireComptesRabbitMQ(
-            nom_millegrille, self.__gestionnaire_services_docker.docker_facade, node_name)
+            idmg, self.__gestionnaire_services_docker.docker_facade, node_name)
         self.limiter_entretien = False  # True indique une activite elevee
 
         # Threading
@@ -290,7 +290,7 @@ class MonitorMilleGrille:
         self.__commandes_routeur = list()
 
     def start(self):
-        self.__thread = Thread(target=self.executer, name=self.__nom_millegrille)
+        self.__thread = Thread(target=self.executer, name=self.__idmg)
         self.__thread.start()
         self.__gestionnaire_services_docker.demarrer()
 
@@ -305,7 +305,7 @@ class MonitorMilleGrille:
             self.__logger.info("Erreur fermeture MQ: %s" % str(e))
 
     def _initialiser_contexte(self):
-        self.__logger.info("Demarrage contexte MilleGrille %s" % self.__nom_millegrille)
+        self.__logger.info("Demarrage contexte MilleGrille %s" % self.__idmg)
         nom_fichier_configuration_millegrille = os.path.join(self.__constantes.rep_etc_mg, self.__constantes.MONITOR_CONFIG_JSON)
         self.__logger.debug("Chargement fichier configuration %s" % nom_fichier_configuration_millegrille)
         with open(nom_fichier_configuration_millegrille, 'r') as fichier:
@@ -320,7 +320,7 @@ class MonitorMilleGrille:
 
         # Configurer le deployeur de MilleGrilles
         self.__renouvellement_certificats = RenouvellementCertificats(
-            self.__nom_millegrille, self.__gestionnaire_services_docker, self.node_name, self.generateur_transactions, self.__mq_info, self.__gestionnaire_comptes_rabbitmq)
+            self.__idmg, self.__gestionnaire_services_docker, self.node_name, self.generateur_transactions, self.__mq_info, self.__gestionnaire_comptes_rabbitmq)
 
         # Message handler et Q pour monitor
         self.__message_handler = MonitorMessageHandler(self.__contexte, self.__renouvellement_certificats, self)
@@ -331,15 +331,15 @@ class MonitorMilleGrille:
         self.__certificat_event_handler.initialiser()
 
         # Attendre que la Q de reponse soit prete
-        self.__logger.debug("Attente connexion MQ pour %s" % self.__nom_millegrille)
+        self.__logger.debug("Attente connexion MQ pour %s" % self.__idmg)
         self.__action_event.wait(30)
         if self.__action_event.is_set():
-            self.__logger.debug("Connexion MQ pour %s reussie" % self.__nom_millegrille)
+            self.__logger.debug("Connexion MQ pour %s reussie" % self.__idmg)
         else:
-            self.__logger.debug("Probleme connexion MQ pour %s, on va tenter de se reconnecter plus tard" % self.__nom_millegrille)
+            self.__logger.debug("Probleme connexion MQ pour %s, on va tenter de se reconnecter plus tard" % self.__idmg)
         self.__action_event.clear()
 
-        self.__logger.info("Contexte MilleGrille %s prepare" % self.__nom_millegrille)
+        self.__logger.info("Contexte MilleGrille %s prepare" % self.__idmg)
 
     def register_mq_handler(self, queue):
         nom_queue = queue.method.queue
@@ -377,7 +377,7 @@ class MonitorMilleGrille:
         self.__channel = None
 
     def executer(self):
-        self.__logger.info("Debut execution thread %s" % self.__nom_millegrille)
+        self.__logger.info("Debut execution thread %s" % self.__idmg)
         self._initialiser_contexte()
 
         self.ceduler_redemarrage(15)
@@ -385,7 +385,7 @@ class MonitorMilleGrille:
         # Verification initiale pour renouveller les certificats
         self.__renouvellement_certificats.trouver_certs_a_renouveller()
 
-        self.__logger.info("Debut execution entretien MilleGrille %s" % self.__nom_millegrille)
+        self.__logger.info("Debut execution entretien MilleGrille %s" % self.__idmg)
         while not self.__stop_event.is_set():
             try:
                 self.verifier_load()
@@ -415,7 +415,7 @@ class MonitorMilleGrille:
 
             self.__action_event.wait(20)
 
-        self.__logger.info("Fin execution thread MilleGrille %s" % self.__nom_millegrille)
+        self.__logger.info("Fin execution thread MilleGrille %s" % self.__idmg)
 
     def verifier_load(self):
         cpu_load = psutil.getloadavg()[0]
@@ -469,10 +469,10 @@ class MonitorMilleGrille:
                 self.__cedule_redemarrage = None
 
                 # Verifier que tous les modules de la MilleGrille sont demarres
-                self.__gestionnaire_services_docker.demarrage_services(self.__nom_millegrille, self.__node_name)
+                self.__gestionnaire_services_docker.demarrage_services(self.__idmg, self.__node_name)
         else:
             # Pas de redemarrage. On fait juste s'assurer que tous les services de la millegrille sont actifs.
-            self.__gestionnaire_services_docker.redemarrer_services_inactifs(self.__nom_millegrille)
+            self.__gestionnaire_services_docker.redemarrer_services_inactifs(self.__idmg)
 
     def get_liste_service(self):
         liste = self.__gestionnaire_services_docker.liste_services()
@@ -510,11 +510,11 @@ class MonitorMilleGrille:
 
             elif routing == ConstantesMonitor.COMMANDE_DEPLOYER_SERVICE:
                 nom_service = commande['commande']['nom']
-                self.__gestionnaire_services_docker.demarrer_service(self.__nom_millegrille, nom_service)
+                self.__gestionnaire_services_docker.demarrer_service(self.__idmg, nom_service)
 
             elif routing == ConstantesMonitor.COMMANDE_SUPPRIMER_SERVICE:
                 nom_service = commande['commande']['nom']
-                self.__gestionnaire_services_docker.arreter_service(self.__nom_millegrille, nom_service)
+                self.__gestionnaire_services_docker.arreter_service(self.__idmg, nom_service)
 
             elif routing == ConstantesMonitor.COMMANDE_DEMARRER_SERVICES:
                 self.ceduler_redemarrage(delai=0)
@@ -522,12 +522,12 @@ class MonitorMilleGrille:
             elif routing == ConstantesMonitor.COMMANDE_ARRETER_TRAITEMENT:
                 self.__cedule_redemarrage = None
                 self.__gestionnaire_services_docker.arret_traitement(
-                    nom_millegrille=self.__nom_millegrille, docker_nodename=self.__node_name)
+                    idmg=self.__idmg, docker_nodename=self.__node_name)
 
             elif routing == ConstantesMonitor.COMMANDE_ARRETER_SERVICES:
                 self.__cedule_redemarrage = None
                 self.__gestionnaire_services_docker.arret_total_services(
-                    nom_millegrille=self.__nom_millegrille, docker_nodename=self.__node_name)
+                    idmg=self.__idmg, docker_nodename=self.__node_name)
 
             elif routing == ConstantesMonitor.COMMANDE_FERMER_MILLEGRILLES:
                 self.fermer_millegrilles(commande['commande'])

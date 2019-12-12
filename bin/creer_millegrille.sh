@@ -55,7 +55,6 @@ ajuster_access_rights() {
 
 setup_fichier_config() {
   echo "IDMG=$IDMG" | sudo -u mg_deployeur tee /opt/millegrilles/etc/variables.env
-  echo "NOM_MILLEGRILLE=$IDMG" | sudo -u mg_deployeur tee -a /opt/millegrilles/etc/variables.env
 }
 
 creer_certificat_racine() {
@@ -86,5 +85,5 @@ echo "*************"
 echo "[OK] La millegrille $IDMG est prete pour le deploiement"
 echo "*************"
 echo
-# echo "Utiliser: sudo -u mg_deployeur ./deployer.py --creer NOM_MILLEGRILLE"
+# echo "Utiliser: sudo -u mg_deployeur ./deployer.py --creer IDMG"
 # echo

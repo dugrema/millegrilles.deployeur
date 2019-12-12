@@ -1,10 +1,10 @@
 {
-  "MG_NOM_MILLEGRILLE": "${NOM_MILLEGRILLE}",
-  "MG_MQ_HOST": "mg-${NOM_MILLEGRILLE}.local",
+  "MG_IDMG": "${IDMG}",
+  "MG_MQ_HOST": "${IDMG}.local",
   "MG_MQ_PORT": "5673",
   "MG_MQ_SSL": "on",
   "MG_MQ_AUTH_CERT": "on",
-  "MG_MQ_KEYFILE": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki/keys/${NOM_MILLEGRILLE}_noeud.key.pem",
-  "MG_MQ_CERTFILE": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki/certs/${NOM_MILLEGRILLE}_noeud.cert.pem",
-  "MG_MQ_CA_CERTS": "/opt/millegrilles/${NOM_MILLEGRILLE}/pki/certs/${NOM_MILLEGRILLE}.CA.cert.pem"
+  "MG_MQ_KEYFILE": "/opt/millegrilles/${IDMG}/pki/keys/${IDMG}_noeud.key.pem",
+  "MG_MQ_CERTFILE": "/opt/millegrilles/${IDMG}/pki/certs/${IDMG}_noeud.cert.pem",
+  "MG_MQ_CA_CERTS": "/opt/millegrilles/${IDMG}/pki/certs/${IDMG}.CA.cert.pem"
 }

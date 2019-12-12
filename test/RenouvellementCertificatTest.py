@@ -56,12 +56,12 @@ class RenouvellerCertifcatTestStruct:
         self.logger = logging.getLogger('__main__')
         self.monitor = MonitorStub()
         self.deployeur = DeployeurStub()
-        self.nom_millegrille = 'test1'
+        self.idmg = 'test1'
 
         self.role = 'deployeur'
         self.node = 'mg-dev3'
 
-        self.renouvellement = RenouvellementCertificats(self.nom_millegrille, self.monitor, self.deployeur)
+        self.renouvellement = RenouvellementCertificats(self.idmg, self.monitor, self.deployeur)
 
     def trouver_certs_a_renouveller(self):
         self.renouvellement.trouver_certs_a_renouveller()
@@ -94,7 +94,7 @@ class RenouvellerCertifcatTestStruct:
 
         clecert_millegrille.from_files(fichier_millegrille_cle, fichier_millegrille_cert, mot_de_passe.encode('utf-8'))
 
-        generateur = GenererDeployeur(self.nom_millegrille, self.role, self.node, dict(), autorite=clecert_millegrille)
+        generateur = GenererDeployeur(self.idmg, self.role, self.node, dict(), autorite=clecert_millegrille)
         certificat = generateur.signer(csr)
 
         clecert = EnveloppeCleCert()

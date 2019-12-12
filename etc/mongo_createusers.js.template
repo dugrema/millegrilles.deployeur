@@ -5,7 +5,7 @@ db.createUser(
      pwd: "${PWD_TRANSACTION}",
      roles:
        [
-         { role: "readWrite", db: "${NOM_MILLEGRILLE}" }
+         { role: "readWrite", db: "${IDMG}" }
        ]
    }
 )
@@ -17,7 +17,7 @@ db.createUser(
      pwd: "${PWD_MGDOMAINES}",
      roles:
        [
-         { role: "readWrite", db: "${NOM_MILLEGRILLE}" }
+         { role: "readWrite", db: "${IDMG}" }
        ]
    }
 )
@@ -29,7 +29,7 @@ db.createUser(
      pwd: "${PWD_MAITREDESCLES}",
      roles:
        [
-         { role: "readWrite", db: "${NOM_MILLEGRILLE}" }
+         { role: "readWrite", db: "${IDMG}" }
        ]
    }
 )

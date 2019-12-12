@@ -72,8 +72,8 @@ class VariablesEnvironnementMilleGrilles:
     # FIFO commandes
     FIFO_COMMANDES = '/run/millegrilles/mg_monitor.pipe'
 
-    def __init__(self, nom_millegrille):
-        self.nom_millegrille = nom_millegrille
+    def __init__(self, idmg):
+        self.idmg = idmg
         self.__mapping()
 
     def __mapping(self):
@@ -81,7 +81,7 @@ class VariablesEnvironnementMilleGrilles:
         Liste de champs qui seront remplaces dans la configuration json des services
         """
         self.mapping = {
-            "NOM_MILLEGRILLE": self.nom_millegrille,
+            "NOM_MILLEGRILLE": self.idmg,
             "MOUNTS": self.rep_mounts,
             "MONGO_INITDB_ROOT_USERNAME": VariablesEnvironnementMilleGrilles.MONGO_INITDB_ROOT_USERNAME,
         }
@@ -90,7 +90,7 @@ class VariablesEnvironnementMilleGrilles:
     def rep_mounts(self):
         return '%s/%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
-            self.nom_millegrille,
+            self.idmg,
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MOUNTS
         )
 
@@ -98,7 +98,7 @@ class VariablesEnvironnementMilleGrilles:
     def rep_certs(self):
         return '%s/%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
-            self.nom_millegrille,
+            self.idmg,
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_CERTS
         )
 
@@ -106,7 +106,7 @@ class VariablesEnvironnementMilleGrilles:
     def rep_cles(self):
         return '%s/%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
-            self.nom_millegrille,
+            self.idmg,
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_KEYS
         )
 
@@ -114,7 +114,7 @@ class VariablesEnvironnementMilleGrilles:
     def rep_secrets_deployeur(self):
         return '%s/%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
-            self.nom_millegrille,
+            self.idmg,
             VariablesEnvironnementMilleGrilles.MILLEGRILLES_DEPLOYEUR_SECRETS
         )
 
@@ -122,7 +122,7 @@ class VariablesEnvironnementMilleGrilles:
     def fichier_mq_admin_password(self):
         return '%s/%s/%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
-            self.nom_millegrille,
+            self.idmg,
             VariablesEnvironnementMilleGrilles.MILLEGRILLES_DEPLOYEUR_SECRETS,
             VariablesEnvironnementMilleGrilles.FICHIER_MQ_ADMIN_MOTDEPASSE
         )
@@ -130,7 +130,7 @@ class VariablesEnvironnementMilleGrilles:
     def rep_mq_accounts(self, fichier):
         return '%s/%s/%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
-            self.nom_millegrille,
+            self.idmg,
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MQ_ACCOUNTS,
             fichier
         )
@@ -138,14 +138,14 @@ class VariablesEnvironnementMilleGrilles:
     def rep_mongo_scripts(self, fichier):
         return '%s/%s/%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
-            self.nom_millegrille,
+            self.idmg,
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_MONGO_SCRIPTS,
             fichier
         )
 
     @property
     def rep_etc_mg(self):
-        return '%s/%s' % (VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC, self.nom_millegrille)
+        return '%s/%s' % (VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC, self.idmg)
 
     @property
     def cert_ca_chain(self):
@@ -153,11 +153,11 @@ class VariablesEnvironnementMilleGrilles:
 
     @property
     def cert_ca_fullchain(self):
-        return '%s/%s_fullchain.cert.pem' % (self.rep_certs, self.nom_millegrille)
+        return '%s/%s_fullchain.cert.pem' % (self.rep_certs, self.idmg)
 
     def fichier_etc_mg(self, path):
         return '%s/%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
-            self.nom_millegrille,
+            self.idmg,
             path
         )

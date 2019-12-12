@@ -45,34 +45,34 @@ class GestionnairesServicesDocker:
     def arreter(self):
         self.__docker_facade.arreter_thread_event_listener()
 
-    def demarrage_services(self, nom_millegrille: str, docker_nodename: str):
+    def demarrage_services(self, idmg: str, docker_nodename: str):
         # Tenter de telecharger tous les images requises
         self.__gestionnaire_images.telecharger_images_docker()
 
         self.__logger.info("Demarrage des services de la millegrille")
-        self.demarrer_phase('1', nom_millegrille, docker_nodename)
-        self.demarrer_phase('2', nom_millegrille, docker_nodename)
-        self.demarrer_phase('3', nom_millegrille, docker_nodename)
+        self.demarrer_phase('1', idmg, docker_nodename)
+        self.demarrer_phase('2', idmg, docker_nodename)
+        self.demarrer_phase('3', idmg, docker_nodename)
         self.__logger.info("Services de la millegrille demarres")
 
-    def arret_traitement(self, nom_millegrille, docker_nodename: str):
+    def arret_traitement(self, idmg, docker_nodename: str):
         self.__logger.info("Arret de traitement sur la millegrille")
         self.__phase_execution = '2'
-        self.arreter_phase('3', nom_millegrille, docker_nodename)
+        self.arreter_phase('3', idmg, docker_nodename)
         self.__phase_execution = '1'
-        self.arreter_phase('2', nom_millegrille, docker_nodename)
+        self.arreter_phase('2', idmg, docker_nodename)
 
-    def arret_total_services(self, nom_millegrille, docker_nodename: str):
+    def arret_total_services(self, idmg, docker_nodename: str):
         self.__logger.info("Arret des services de la millegrille")
         self.__phase_execution = '2'
-        self.arreter_phase('3', nom_millegrille, docker_nodename)
+        self.arreter_phase('3', idmg, docker_nodename)
         self.__phase_execution = '1'
-        self.arreter_phase('2', nom_millegrille, docker_nodename)
+        self.arreter_phase('2', idmg, docker_nodename)
         self.__phase_execution = '0'
-        self.arreter_phase('1', nom_millegrille, docker_nodename)
+        self.arreter_phase('1', idmg, docker_nodename)
         self.__logger.info("Services de la millegrille arretes")
 
-    def demarrer_phase(self, phase: str, nom_millegrille: str, docker_nodename: str):
+    def demarrer_phase(self, phase: str, idmg: str, docker_nodename: str):
         """
         Demarre tous les services de la phase
         :return:
@@ -85,15 +85,15 @@ class GestionnairesServicesDocker:
 
             # Installer le service
             self.__docker_facade.ajouter_nodelabels(docker_nodename, labels)
-            self.demarrer_service_blocking(nom_millegrille, nom_service)
+            self.demarrer_service_blocking(idmg, nom_service)
 
         # Conserver la phase confirmee comme active
         self.__phase_execution = phase
 
-    def arreter_phase(self, phase: str, nom_millegrille: str, docker_nodename: str):
+    def arreter_phase(self, phase: str, idmg: str, docker_nodename: str):
         # Indiquer qu'on est rendu a cette phase d'execution
         dict_services = dict()
-        services = self.liste_services(nom_millegrille)
+        services = self.liste_services(idmg)
         for service in services:
             nom = service.name
             nom_simple = nom.split('_')[1]
@@ -110,9 +110,9 @@ class GestionnairesServicesDocker:
             if service_inst is not None:
                 service_inst.remove()
 
-    def redemarrer_services_inactifs(self, nom_millegrille: str):
+    def redemarrer_services_inactifs(self, idmg: str):
         if self.__phase_execution == '3':
-            services = self.docker_facade.liste_services(nom_millegrille)
+            services = self.docker_facade.liste_services(idmg)
             for service in services:
                 service_name = service.attrs['Spec']['Name']
 
@@ -144,22 +144,22 @@ class GestionnairesServicesDocker:
         """
         pass
 
-    def demarrer_service(self, nom_millegrille: str, nom_service, redemarrer=False):
+    def demarrer_service(self, idmg: str, nom_service, redemarrer=False):
         """
         Demarre un service - si le service existe mais qu'il est arrete, le redemarre.
         :param nom_service:
         :param redemarrer: Si True, force le redemarrage du service meme s'il est deja actif (running).
         :return:
         """
-        self.__docker_facade.installer_service(nom_millegrille, nom_service)
+        self.__docker_facade.installer_service(idmg, nom_service)
         self.__wait_event.wait(2)  # Introduire delai pour eviter de faire force update
 
-    def demarrer_service_blocking(self, nom_millegrille, nom_service):
+    def demarrer_service_blocking(self, idmg, nom_service):
 
         def callback_start_confirm(event):
             attrs = event['Actor']['Attributes']
             name = attrs.get('name')
-            if name.split('.')[0] == '%s_%s' % (nom_millegrille, nom_service):
+            if name.split('.')[0] == '%s_%s' % (idmg, nom_service):
                 self.__logger.info("Mongo est demarre dans docker")
                 self.__wait_event.set()
 
@@ -174,7 +174,7 @@ class GestionnairesServicesDocker:
         )
 
         # Demarrer le service Mongo sur docker et attendre qu'il soit pret pour poursuivre
-        mode = self.__docker_facade.installer_service(nom_millegrille, nom_service)
+        mode = self.__docker_facade.installer_service(idmg, nom_service)
 
         if mode == 'create':
             self.__wait_event.wait(120)
@@ -183,8 +183,8 @@ class GestionnairesServicesDocker:
             self.__wait_event.clear()
         self.__docker_facade.clear_event_callbacks()  # Enlever tous les listeners
 
-    def arreter_service(self, nom_millegrille: str, nom_service):
-        services = self.liste_services(nom_service='%s_%s' % (nom_millegrille, nom_service))
+    def arreter_service(self, idmg: str, nom_service):
+        services = self.liste_services(nom_service='%s_%s' % (idmg, nom_service))
         for service in services:
             service.remove()
 
@@ -195,5 +195,5 @@ class GestionnairesServicesDocker:
     def liste_nodes(self):
         return self.__docker_facade.liste_nodes()
 
-    def liste_services(self, nom_millegrille: str = None, nom_service: str = None):
-        return self.__docker_facade.liste_services(nom_millegrille, nom_service)
+    def liste_services(self, idmg: str = None, nom_service: str = None):
+        return self.__docker_facade.liste_services(idmg, nom_service)

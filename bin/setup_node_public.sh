@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
-if [ -z $NOM_MILLEGRILLE ]; then
+if [ -z $IDMG ]; then
   if [ -z $1 ]; then
     echo
-    echo "[FAIL] Il faut definir NOM_MILLEGRILLE ou fournir le nom en parametre"
+    echo "[FAIL] Il faut definir IDMG ou fournir le nom en parametre"
     echo
     exit 1
   else
-    export NOM_MILLEGRILLE=$1
+    export IDMG=$1
   fi
 fi
 
 source /opt/millegrilles/etc/paths.env
-REP_MILLEGRILLE=$MILLEGRILLES_PATH/$NOM_MILLEGRILLE
+REP_MILLEGRILLE=$MILLEGRILLES_PATH/$IDMG
 
 creer_repertoires() {
   set -e

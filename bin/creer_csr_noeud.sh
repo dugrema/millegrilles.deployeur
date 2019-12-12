@@ -7,9 +7,9 @@ if [ -z $1 ]; then
   exit 1
 fi
 
-export NOM_MILLEGRILLE=$1
+export IDMG=$1
 
-REP_MILLEGRILLE=$MILLEGRILLES_PATH/$NOM_MILLEGRILLE
+REP_MILLEGRILLE=$MILLEGRILLES_PATH/$IDMG
 CURDATE=`date +%Y%m%d%H%M%S`
 
 REP_CERTS=$REP_MILLEGRILLE/$MILLEGRILLES_CERTS
@@ -38,9 +38,9 @@ creer_cert_noeud() {
 
   echo "[INFO] Creation certificat $TYPE_NOEUD"
 
-  KEY=$REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.key.pem
-  REQ=$REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.req.pem
-  SUBJECT="/O=$NOM_MILLEGRILLE/OU=$TYPE_NOEUD/CN=$HOSTNAME"
+  KEY=$REP_KEYS/${IDMG}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.key.pem
+  REQ=$REP_CERTS/${IDMG}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.req.pem
+  SUBJECT="/O=$IDMG/OU=$TYPE_NOEUD/CN=$HOSTNAME"
 
   NOM_NOEUD=$HOSTNAME \
   URL_PUBLIC=$URL_PUBLIC \
@@ -50,7 +50,7 @@ creer_cert_noeud() {
               -reqexts noeud_req_public_extensions \
               -subj $SUBJECT
 
-  ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}.key.pem
+  ln -sf $KEY $REP_KEYS/${IDMG}_${TYPE_NOEUD}.key.pem
 
   echo "[OK] Creation requete $TYPE_NOEUD complet"
   echo "Coller la valeur suivante dans CoupDOeil / PKI / Signer un certificat de noeud"

@@ -9,7 +9,7 @@ if [ -z $1 ]; then
   exit 1
 fi
 
-export NOM_MILLEGRILLE=$1
+export IDMG=$1
 export REP_INSTALL=$PWD
 
 installer_autres_deps() {
@@ -81,7 +81,7 @@ preparer_service() {
 
 creer_configuration_json() {
   echo "[INFO] Creation du fichier de configuration /opt/millegrilles/etc/noeud_cle.json"
-  cat etc/noeud_cle.json.template | sed s/\$\{NOM_MILLEGRILLE\}/dev3/g | sudo tee /opt/millegrilles/etc/noeud_cles.json
+  cat etc/noeud_cle.json.template | sed s/\$\{IDMG\}/$IDMG/g | sudo tee /opt/millegrilles/etc/noeud_cles.json
   echo "[OK] Fichier de configuration cree"
 }
 
@@ -107,7 +107,7 @@ installer() {
 
   echo "[INFO] Installation des composantes terminee. On commence la configuration."
   creer_configuration_json
-  $REP_INSTALL/bin/renouveller_cert_noeud.sh $NOM_MILLEGRILLE
+  $REP_INSTALL/bin/renouveller_cert_noeud.sh $IDMG
 
   preparer_service
   # demarrer_service

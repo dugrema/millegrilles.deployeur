@@ -100,15 +100,15 @@ class DeployeurMilleGrilles:
     def executer_millegrilles(self):
 
         commande = self.__args.commande
-        nom_millegrille = self.__args.idmg
+        idmg = self.__args.idmg
         node_name = self.__args.nodename
-        configuration_millegrille = self.__configuration_deployeur.get(nom_millegrille)
+        configuration_millegrille = self.__configuration_deployeur.get(idmg)
         if configuration_millegrille is None:
             configuration_millegrille = {}
-            self.__configuration_deployeur[nom_millegrille] = configuration_millegrille
-        self.__logger.debug("Deployeur MilleGrille %s, docker node name : %s" % (nom_millegrille, node_name))
+            self.__configuration_deployeur[idmg] = configuration_millegrille
+        self.__logger.debug("Deployeur MilleGrille %s, docker node name : %s" % (idmg, node_name))
 
-        deployeur = DeployeurDockerMilleGrille(nom_millegrille, node_name, self.__docker_facade, self.__args)
+        deployeur = DeployeurDockerMilleGrille(idmg, node_name, self.__docker_facade, self.__args)
 
         if commande == 'installer' is not None:
             # Configurer docker
@@ -172,13 +172,13 @@ class DeployeurDockerMilleGrille:
     S'occupe d'une MilleGrille configuree sur docker.
     """
 
-    def __init__(self, nom_millegrille, node_name, docker_facade: DockerFacade, args):
-        self.__nom_millegrille = nom_millegrille
+    def __init__(self, idmg, node_name, docker_facade: DockerFacade, args):
+        self.__idmg = idmg
         self.__node_name = node_name
         self.__docker_facade = docker_facade
         self.__args = args
 
-        self.variables_env = VariablesEnvironnementMilleGrilles(nom_millegrille)
+        self.variables_env = VariablesEnvironnementMilleGrilles(idmg)
         self.__initialisation_millegrille = InitialisationMilleGrille(
             self.variables_env, self.__docker_facade, self.__node_name)
         self.__gestionnaire_images = GestionnaireImagesDocker(self.__docker_facade)
@@ -220,7 +220,7 @@ class DeployeurDockerMilleGrille:
         self.__gestionnaire_images.telecharger_images_docker()
 
     def demarrer(self):
-        self.__logger.info("Demarrer millegrille ; %s" % self.__nom_millegrille)
+        self.__logger.info("Demarrer millegrille ; %s" % self.__idmg)
 
         if self.__args.service is None:
             commande = {
@@ -238,8 +238,8 @@ class DeployeurDockerMilleGrille:
 
     def arreter(self):
         if self.__args.service is None:
-            self.__logger.info("Arreter millegrille ; %s" % self.__nom_millegrille)
-            liste_services = self.__docker_facade.liste_services_millegrille(self.__nom_millegrille)
+            self.__logger.info("Arreter millegrille ; %s" % self.__idmg)
+            liste_services = self.__docker_facade.liste_services_millegrille(self.__idmg)
             for service in liste_services:
                 id_service = service['ID']
                 self.__logger.info("Suppression service: %s" % service['Spec']['Name'])

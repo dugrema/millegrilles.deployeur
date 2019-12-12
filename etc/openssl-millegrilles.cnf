@@ -1,13 +1,5 @@
 HOME            = ../etc
 RANDFILE        = $ENV::HOME/.rnd
-#NOM_MILLEGRILLE = $ENV::NOM_MILLEGRILLE
-#NOM_NOEUD       = $ENV::NOM_NOEUD
-#URL_PUBLIC      = $ENV::URL_PUBLIC
-#base_dir        = /opt/millegrilles/$NOM_MILLEGRILLE/pki
-#CERTS           = $base_dir/certs
-#KEYS            = $base_dir/keys
-#DB_SSROOT       = $base_dir/dbs/${NOM_MILLEGRILLE}_root
-#DB              = $base_dir/dbs/${NOM_MILLEGRILLE}_millegrille
 
 ####################################################################
 [ ca ]
@@ -24,13 +16,6 @@ x509_extensions = ca_extensions # The extensions to add to the cert
 
 email_in_dn     = no            # Don't concat the email in the DN
 copy_extensions = copy          # Required to copy SANs from CSR to cert
-
-# base_dir      = .
-#certificate   = $CERTS/${NOM_MILLEGRILLE}_ssroot.cert.pem   # The CA certifcate
-#private_key   = $KEYS/${NOM_MILLEGRILLE}_ssroot.key.pem     # The CA private key
-#new_certs_dir = $DB_SSROOT/certs        # Location for new certs after signing
-#database      = $DB_SSROOT/index.txt    # Database index file
-#serial        = $DB_SSROOT/serial.txt   # The current serial number
 
 unique_subject = no  # Set to 'no' to allow creation of
                      # several certificates with same subject.

@@ -23,9 +23,9 @@ from mgdeployeur.GestionnaireServices import GestionnairesServicesDocker
 
 class GestionnaireComptesRabbitMQ:
 
-    def __init__(self, nom_millegrille: str, docker: DockerFacade, docker_nodename: str):
+    def __init__(self, idmg: str, docker: DockerFacade, docker_nodename: str):
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-        self.__constantes = VariablesEnvironnementMilleGrilles(nom_millegrille)
+        self.__constantes = VariablesEnvironnementMilleGrilles(idmg)
         self.__docker = docker
         self.__docker_nodename = docker_nodename
         self._admin_api = None
@@ -59,7 +59,7 @@ class GestionnaireComptesRabbitMQ:
             self._admin_api.delete_user('guest')
 
     def get_container_rabbitmq(self):
-        container_resp = self.__docker.info_container('%s_mq' % self.__constantes.nom_millegrille)
+        container_resp = self.__docker.info_container('%s_mq' % self.__constantes.idmg)
         if container_resp.status_code == 200:
             liste_containers = container_resp.json()
             if len(liste_containers) == 1:
@@ -93,18 +93,18 @@ class GestionnaireComptesRabbitMQ:
         return mq_pret
 
     def ajouter_compte(self, enveloppe: EnveloppeCertificat):
-        nom_millegrille = self.__constantes.nom_millegrille
+        idmg = self.__constantes.idmg
         subject = enveloppe.subject_rfc4514_string_mq()
 
         self._admin_api.create_user(subject)
-        self._admin_api.create_user_permission(subject, nom_millegrille)
-        self._admin_api.create_user_topic(subject, nom_millegrille, 'millegrilles.middleware')
-        self._admin_api.create_user_topic(subject, nom_millegrille, 'millegrilles.inter')
-        self._admin_api.create_user_topic(subject, nom_millegrille, 'millegrilles.noeuds')
-        self._admin_api.create_user_topic(subject, nom_millegrille, 'millegrilles.public')
+        self._admin_api.create_user_permission(subject, idmg)
+        self._admin_api.create_user_topic(subject, idmg, 'millegrilles.middleware')
+        self._admin_api.create_user_topic(subject, idmg, 'millegrilles.inter')
+        self._admin_api.create_user_topic(subject, idmg, 'millegrilles.noeuds')
+        self._admin_api.create_user_topic(subject, idmg, 'millegrilles.public')
 
     def ajouter_vhost(self):
-        self._admin_api.create_vhost(self.__constantes.nom_millegrille)
+        self._admin_api.create_vhost(self.__constantes.idmg)
 
     def __executer_commande(self, commande:str):
         commande = commande.split(' ')
@@ -124,10 +124,10 @@ class GestionnaireComptesRabbitMQ:
 
 class GestionnaireComptesMongo:
 
-    def __init__(self, nom_millegrille):
-        self.constantes = VariablesEnvironnementMilleGrilles(nom_millegrille)
+    def __init__(self, idmg):
+        self.constantes = VariablesEnvironnementMilleGrilles(idmg)
 
-    def creer_comptes_mongo(self, datetag, nom_millegrille):
+    def creer_comptes_mongo(self, datetag, idmg):
         with open(VariablesEnvironnementMilleGrilles.FICHIER_MONGO_SCRIPT_TEMPLATE, 'r') as fichier:
             script_js = fichier.read()
         with open(VariablesEnvironnementMilleGrilles.FICHIER_JSON_COMPTES_TEMPLATE, 'r') as fichier:
@@ -139,7 +139,7 @@ class GestionnaireComptesMongo:
         mot_passe_maitredescles = secrets.token_hex(16)
         mot_passe_root_mongo = secrets.token_hex(16)
         mot_passe_web_mongoexpress = secrets.token_hex(16)
-        script_js = script_js.replace('${NOM_MILLEGRILLE}', nom_millegrille)
+        script_js = script_js.replace('${NOM_MILLEGRILLE}', idmg)
         script_js = script_js.replace('${PWD_TRANSACTION}', mot_passe_transaction)
         script_js = script_js.replace('${PWD_MGDOMAINES}', mot_passe_domaines)
         script_js = script_js.replace('${PWD_MAITREDESCLES}', mot_passe_maitredescles)
@@ -150,37 +150,37 @@ class GestionnaireComptesMongo:
         # Inserer secrets dans docker
         messages = [
             {
-                "Name": '%s.passwd.mongo.root.%s' % (nom_millegrille, datetag),
+                "Name": '%s.passwd.mongo.root.%s' % (idmg, datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(mot_passe_root_mongo.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.mongo.scriptinit.%s' % (nom_millegrille, datetag),
+                "Name": '%s.passwd.mongo.scriptinit.%s' % (idmg, datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(script_js.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.domaines.json.%s' % (nom_millegrille, datetag),
+                "Name": '%s.passwd.domaines.json.%s' % (idmg, datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(compte_domaines.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.transactions.json.%s' % (nom_millegrille, datetag),
+                "Name": '%s.passwd.transactions.json.%s' % (idmg, datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(compte_transaction.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.maitrecles.json.%s' % (nom_millegrille, datetag),
+                "Name": '%s.passwd.maitrecles.json.%s' % (idmg, datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(compte_maitredescles.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.mongoexpress.web.%s' % (nom_millegrille, datetag),
+                "Name": '%s.passwd.mongoexpress.web.%s' % (idmg, datetag),
                 "Labels": {
                     "password": "individuel",
                 },
@@ -199,7 +199,7 @@ class GestionnaireCertificats:
 
     def __init__(self, variables_env: VariablesEnvironnementMilleGrilles, docker_facade: DockerFacade, docker_nodename: str):
         self.variables_env = variables_env
-        self.__nom_millegrille = variables_env.nom_millegrille
+        self.__idmg = variables_env.idmg
         self.__docker_facade = docker_facade
         self.__docker_nodename = docker_nodename
         self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d') + 'a'
@@ -250,7 +250,7 @@ class GestionnaireCertificats:
         contenu_cle = base64.encodebytes(clecert.private_key_bytes).decode('utf-8')
         contenu_cert = base64.encodebytes(clecert.cert_bytes).decode('utf-8')
 
-        id_secret_key_formatte = '%s.%s.key.%s' % (self.__nom_millegrille, id_secret, datetag)
+        id_secret_key_formatte = '%s.%s.key.%s' % (self.__idmg, id_secret, datetag)
         message_key = {
             "Name": id_secret_key_formatte,
             "Labels": {
@@ -263,7 +263,7 @@ class GestionnaireCertificats:
             raise Exception(
                 "Ajout key status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
 
-        id_secret_cert_formatte = '%s.%s.cert.%s' % (self.__nom_millegrille, id_secret, datetag)
+        id_secret_cert_formatte = '%s.%s.cert.%s' % (self.__idmg, id_secret, datetag)
         message_cert = {
             "Name": id_secret_cert_formatte,
             "Labels": {
@@ -278,7 +278,7 @@ class GestionnaireCertificats:
 
         if clecert.chaine is not None:
             contenu_fullchain = base64.b64encode(''.join(clecert.chaine).encode('utf-8')).decode('utf-8')
-            id_secret_fullchain_formatte = '%s.%s.fullchain.%s' % (self.__nom_millegrille, id_secret, datetag)
+            id_secret_fullchain_formatte = '%s.%s.fullchain.%s' % (self.__idmg, id_secret, datetag)
             message_fullchain = {
                 "Name": id_secret_fullchain_formatte,
                 "Labels": {
@@ -298,7 +298,7 @@ class GestionnaireCertificats:
             cle_cert_combine = '%s\n%s' % (cle, cert)
             cle_cert_combine = base64.encodebytes(cle_cert_combine.encode('utf-8')).decode('utf-8')
 
-            id_secret_cle_cert_formatte = '%s.%s.key_cert.%s' % (self.__nom_millegrille, id_secret, datetag)
+            id_secret_cle_cert_formatte = '%s.%s.key_cert.%s' % (self.__idmg, id_secret, datetag)
             message_cert = {
                 "Name": id_secret_cle_cert_formatte,
                 "Labels": {
@@ -328,7 +328,7 @@ class GestionnaireCertificats:
 
         if etat.get('certificats_ok') is None:
             self.__logger.info("Generer certificat root, millegrille, mongo, mq et deployeur")
-            generateur_mg_initial = GenerateurInitial(self.__nom_millegrille)
+            generateur_mg_initial = GenerateurInitial(self.__idmg)
             millegrille_clecert = generateur_mg_initial.generer()
             autorite_clecert = generateur_mg_initial.autorite
 
@@ -336,7 +336,7 @@ class GestionnaireCertificats:
                 autorite_clecert.skid: autorite_clecert.cert,
                 millegrille_clecert.skid: millegrille_clecert.cert,
             }
-            renouvelleur = RenouvelleurCertificat(self.__nom_millegrille, dict_ca, millegrille_clecert, autorite_clecert)
+            renouvelleur = RenouvelleurCertificat(self.__idmg, dict_ca, millegrille_clecert, autorite_clecert)
 
             deployeur_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_DEPLOYEUR, docker_nodename)
             self.sauvegarder_clecert_deployeur(deployeur_clecert, millegrille_clecert)
@@ -363,7 +363,7 @@ class GestionnaireCertificats:
             }
             contenu = base64.encodebytes(json.dumps(contenu).encode('utf-8')).decode('utf-8')
             message_cert = {
-                "Name": '%s.pki.ca.passwords.%s' % (self.__nom_millegrille, self.__datetag),
+                "Name": '%s.pki.ca.passwords.%s' % (self.__idmg, self.__datetag),
                 "Labels": {
                     "password": "init",
                 },
@@ -423,7 +423,7 @@ class GestionnaireCertificats:
         chaine_ca = '%s/pki.ca.fullchain.pem' % self.variables_env.rep_secrets_deployeur
 
         config = {
-            ('MG_%s' % Constantes.CONFIG_IDMG).upper(): self.__nom_millegrille,
+            ('MG_%s' % Constantes.CONFIG_IDMG).upper(): self.__idmg,
             ('MG_%s' % Constantes.CONFIG_MQ_HOST).upper(): self.__docker_nodename,
             ('MG_%s' % Constantes.CONFIG_MQ_PORT).upper(): '5673',
             ('MG_%s' % Constantes.CONFIG_MQ_SSL).upper(): 'on',
@@ -439,7 +439,7 @@ class GestionnaireCertificats:
 
     def nettoyer_pki(self):
         """
-        Faire le menage dans les secrets et configs. Les noms qui commencent pas NOM_MILLEGRILLE.pki vont etre
+        Faire le menage dans les secrets et configs. Les noms qui commencent pas IDMG.pki vont etre
         listes et toutes les valeurs avec une date anterieure au plus recent cert vont etre supprimees.
 
         Format recherche: test1.pki.vitrine.cert.20190930140405
@@ -454,12 +454,12 @@ class RenouvellementCertificats:
     """
 
     def __init__(
-            self, nom_millegrille, gestionnaire_services_docker: GestionnairesServicesDocker, docker_nodename: str,
+            self, idmg, gestionnaire_services_docker: GestionnairesServicesDocker, docker_nodename: str,
             generateur_transactions: GenerateurTransaction, mq_info: dict,
             gestionnaire_comptes_rabbitmq: GestionnaireComptesRabbitMQ):
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
-        self.__nom_millegrille = nom_millegrille
+        self.__idmg = idmg
         self.__docker_nodename = docker_nodename
         self.__generateur_transactions = generateur_transactions
         self.__mq_info = mq_info
@@ -467,7 +467,7 @@ class RenouvellementCertificats:
         self.__gestionnaire_comptes_rabbitmq = gestionnaire_comptes_rabbitmq
 
         self.__liste_demandes = dict()  # Key=Role, Valeur={clecert,datedemande,property}
-        self.__constantes = VariablesEnvironnementMilleGrilles(self.__nom_millegrille)
+        self.__constantes = VariablesEnvironnementMilleGrilles(self.__idmg)
         self.__gestionnaire_certificats = GestionnaireCertificats(
             self.__constantes,  gestionnaire_services_docker.docker_facade, docker_nodename)
         self.__fichier_etat_certificats = self.__constantes.fichier_etc_mg(
@@ -528,7 +528,7 @@ class RenouvellementCertificats:
         self.transmettre_demande_renouvellement(role, urls_publics=urls)
 
     def transmettre_demande_renouvellement(self, role, urls_publics: list = None):
-        generateur_csr = GenerateurCertificat(self.__nom_millegrille)
+        generateur_csr = GenerateurCertificat(self.__idmg)
 
         clecert = generateur_csr.preparer_key_request(role, self.__docker_nodename, alt_names=urls_publics)
 

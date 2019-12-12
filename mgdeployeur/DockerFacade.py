@@ -131,17 +131,17 @@ class DockerFacade:
             }
             self.post('networks/create', config_reseau)
 
-    def liste_services(self, filtre_nom_millegrille: str = None, filtre_nom_service: str = None):
+    def liste_services(self, filtre_idmg: str = None, filtre_nom_service: str = None):
         params = dict()
-        if filtre_nom_millegrille is not None:
-            params['label'] = 'millegrille=%s' % filtre_nom_millegrille
+        if filtre_idmg is not None:
+            params['label'] = 'millegrille=%s' % filtre_idmg
         if filtre_nom_service is not None:
             params['name'] = filtre_nom_service
         liste = self.__docker_client.services.list(filters=params)
         return liste
 
-    def liste_services_millegrille(self, nom_millegrille):
-        liste_services = self.get('services?filters={"label": ["millegrille=%s"]}' % nom_millegrille)
+    def liste_services_millegrille(self, idmg):
+        liste_services = self.get('services?filters={"label": ["millegrille=%s"]}' % idmg)
         if liste_services.status_code != 200:
             self.__logger.info("Liste services, code:%s, message:\n%s" % (
             liste_services.status_code, json.dumps(liste_services.json(), indent=4)))
@@ -199,10 +199,10 @@ class DockerFacade:
 
             node.update(spec)
 
-    def installer_service(self, nom_millegrille, nom_service: str, force=False, mappings: dict = None):
+    def installer_service(self, idmg, nom_service: str, force=False, mappings: dict = None):
         """
         Installe un nouveau service de millegrille
-        :param nom_millegrille:
+        :param idmg:
         :param nom_service:
         :param force:
         :param mappings:
@@ -210,23 +210,23 @@ class DockerFacade:
         """
 
         # Verifier que le service MQ est en fonction - sinon le deployer
-        nom_service_complet = '%s_%s' % (nom_millegrille, nom_service)
+        nom_service_complet = '%s_%s' % (idmg, nom_service)
         etat_service_resp = self.info_service(nom_service_complet)
         if len(etat_service_resp) == 0:
             mode = 'create'
-            self.__logger.warning("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, nom_millegrille))
+            self.__logger.warning("Service %s non deploye sur %s, on le deploie" % (nom_service_complet, idmg))
         else:
             service_deploye = etat_service_resp[0].attrs
             service_id = service_deploye['ID']
             version_service = service_deploye['Version']['Index']
             mode = '%s/update?version=%s' % (service_id, version_service)
-            self.__logger.info("Service %s va etre mis a jour sur %s" % (nom_service_complet, nom_millegrille))
+            self.__logger.info("Service %s va etre mis a jour sur %s" % (nom_service_complet, idmg))
 
         if mode is not None:
             docker_secrets = self.get('secrets').json()
             docker_configs = self.get('configs').json()
             configurateur = ServiceDockerConfiguration(
-                nom_millegrille, nom_service, docker_secrets, docker_configs, self.__service_images, mappings)
+                idmg, nom_service, docker_secrets, docker_configs, self.__service_images, mappings)
             service_json = configurateur.formatter_service()
             etat_service_resp = self.post('services/%s' % mode, service_json)
             status_code = etat_service_resp.status_code
@@ -243,18 +243,18 @@ class DockerFacade:
 
         return mode
 
-    def maj_versions_images(self, nom_millegrille):
+    def maj_versions_images(self, idmg):
         """
         Met a jour la version des images de la millegrille. Ne deploie pas de nouveaux services.
         :return:
         """
         versions_images = GestionnaireImagesDocker.charger_versions()
 
-        liste_services = self.liste_services_millegrille(nom_millegrille)
+        liste_services = self.liste_services_millegrille(idmg)
         self.__logger.info("Services deployes: %s" % str(liste_services))
         for service in liste_services:
             name = service['Spec']['Name']
-            name = name.replace('%s_' % nom_millegrille)  # Enlever prefixe (nom de la millegrille)
+            name = name.replace('%s_' % idmg)  # Enlever prefixe (nom de la millegrille)
             image = service['Spect']['TaskTemplate']['ContainerSpec']['Image']
             version_deployee = image.split('/')
             version_deployee = version_deployee[-1]  # Conserver derniere partie du nom d'image
@@ -262,7 +262,7 @@ class DockerFacade:
             image_config = versions_images.get(name)
             if image_config != version_deployee:
                 self.__logger.info("Mise a jour version service %s" % name)
-                self.installer_service(nom_millegrille, name)
+                self.installer_service(idmg, name)
 
     def deployer_nodelabels(self, node_name, labels):
         nodes_list = self.get('nodes').json()
@@ -418,10 +418,10 @@ class GestionnaireImagesDocker:
 
 class ServiceDockerConfiguration:
 
-    def __init__(self, nom_millegrille, nom_service, docker_secrets, docker_configs, gestionnaire_images: GestionnaireImagesDocker, mappings: dict = None):
+    def __init__(self, idmg, nom_service, docker_secrets, docker_configs, gestionnaire_images: GestionnaireImagesDocker, mappings: dict = None):
         """
 
-        :param nom_millegrille:
+        :param idmg:
         :param nom_service:
         :param docker_secrets:
         :param docker_configs:
@@ -429,7 +429,7 @@ class ServiceDockerConfiguration:
         """
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
-        self.__nom_millegrille = nom_millegrille
+        self.__idmg = idmg
         self.__nom_service = nom_service
         self.__secrets = docker_secrets
         self.__configs = docker_configs
@@ -438,7 +438,7 @@ class ServiceDockerConfiguration:
         self.__configs_par_nom = dict()
         self.__gestionnaire_images = gestionnaire_images
 
-        self.constantes = VariablesEnvironnementMilleGrilles(nom_millegrille)
+        self.constantes = VariablesEnvironnementMilleGrilles(idmg)
 
         config_json_filename = '/opt/millegrilles/etc/docker.%s.json' % nom_service
         with open(config_json_filename, 'r') as fichier:
@@ -460,7 +460,7 @@ class ServiceDockerConfiguration:
 
         config_path = '%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
-            self.__nom_millegrille
+            self.__idmg
         )
         config_filename = '%s/docker.%s.json' % (config_path,self.__nom_service)
         with open(config_filename, 'wb') as fichier:
@@ -548,7 +548,7 @@ class ServiceDockerConfiguration:
                         network['Aliases'] = mapped_aliases
 
             # /Labels
-            config_service['Labels']['millegrille'] = self.__nom_millegrille
+            config_service['Labels']['millegrille'] = self.__idmg
         except TypeError as te:
             self.__logger.error("Erreur mapping %s" % self.__nom_service)
             raise te
@@ -566,12 +566,12 @@ class ServiceDockerConfiguration:
         return valeur
 
     def formatter_nom_service(self):
-        return '%s_%s' % (self.__nom_millegrille, self.__nom_service)
+        return '%s_%s' % (self.__idmg, self.__nom_service)
 
     def trouver_secret(self, nom_secret):
         secrets = {}  # Date, {key,cert,key_cert: Id)
         for nom_secret_opt in nom_secret.split(';'):
-            prefixe_secret = '%s.%s' % (self.__nom_millegrille, nom_secret_opt)
+            prefixe_secret = '%s.%s' % (self.__idmg, nom_secret_opt)
             for secret_name, secret_id in self.__secrets_par_nom.items():
 
                 # Le nom du secret peut fournir plusieurs options, separees par un ';'
@@ -596,7 +596,7 @@ class ServiceDockerConfiguration:
     def trouver_config(self, nom_config):
         configs = {}  # Date, {key,cert,key_cert: Id)
         for nom_config_opt in nom_config.split(';'):
-            prefixe_config = '%s.%s' % (self.__nom_millegrille, nom_config_opt)
+            prefixe_config = '%s.%s' % (self.__idmg, nom_config_opt)
             for config_name, config_id in self.__configs_par_nom.items():
                 if config_name.startswith(prefixe_config):
                     config_name_list = config_name.split('.')
