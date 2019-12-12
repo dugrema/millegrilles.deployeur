@@ -49,9 +49,9 @@ ajuster_access_rights() {
   sudo chown $MILLEGRILLES_USER_PYTHON:$MILLEGRILLES_GROUP $REP_NGINX
 }
 
-setup_fichier_config() {
-  echo "IDMG=$IDMG" | sudo -u mg_deployeur tee /opt/millegrilles/etc/variables.env
-}
+#setup_fichier_config() {
+#  echo "IDMG=$IDMG" | sudo -u mg_deployeur tee /opt/millegrilles/etc/variables.env
+#}
 
 creer_certificat_racine() {
   echo "[INFO] Creer certificat racine, generer IDMG"

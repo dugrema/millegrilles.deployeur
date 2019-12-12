@@ -112,7 +112,7 @@ preparer_opt() {
 download_images_docker() {
   echo "[INFO] Telecharger les images docker"
   # Note: Utilise le compte docker de l'usager courant (docker login)
-  sudo /opt/millegrilles/bin/deployer.py --info --download_only installer $IDMG
+  sudo /opt/millegrilles/bin/deployer.py --info --download_only installer pas_important
 }
 
 redemarrer_monitor() {
@@ -132,19 +132,23 @@ installer() {
   installer_autres_deps
   installer_deployeur
 
-  # download_images_docker
+  download_images_docker
 }
 
 creer_millegrille() {
+
   echo "[INFO] Creer une millegrille initiale"
   # Faire un hook vers la creation d'une millegrille si le parametre est inclus
   $MILLEGRILLES_BIN/creer_millegrille.sh
+
+  # Charger IDMG
+  source tmp/idmg.txt
 
   # Certains fichiers de config peuvent etre crees, s'assurer de les assigner au bon usager
   sudo chown mg_deployeur:millegrilles /opt/millegrilles/etc/*
 
   echo "[INFO] Deployer le monitor et demarrer les services docker"
-  sudo -i -u mg_deployeur /opt/millegrilles/bin/deployer.py --info installer $IDMG
+  sudo -u mg_deployeur /opt/millegrilles/bin/deployer.py --info installer $IDMG
   if [ $? -eq 0 ]; then
     echo "[INFO] Demarrer le monitor - attendre 20 secondes"
     # Donner le temps au systeme de demarrer les services deja lances (transaction, maitredescles)
