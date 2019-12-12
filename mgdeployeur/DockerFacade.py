@@ -473,81 +473,85 @@ class ServiceDockerConfiguration:
     def remplacer_variables(self):
         self.__logger.debug("Remplacer variables %s" % self.__nom_service)
 
-        # Mounts
-        config_service = self.__configuration_json
+        try:
+            # Mounts
+            config_service = self.__configuration_json
 
-        # /TaskTemplate
-        task_template = config_service['TaskTemplate']
+            # /TaskTemplate
+            task_template = config_service['TaskTemplate']
 
-        # /TaskTemplate/ContainerSpec
-        container_spec = task_template['ContainerSpec']
+            # /TaskTemplate/ContainerSpec
+            container_spec = task_template['ContainerSpec']
 
-        # /TaskTemplate/ContainerSpec/Image
-        # for image_name, image_docker in self.__versions_images.items():
-        #     image_tag = '${%s}' % image_name
-        #     if image_tag in container_spec['Image']:
-        #         container_spec['Image'] = container_spec['Image'].replace(image_tag, image_docker)
-        # container_spec['Image'] = '%s/%s' % (self.__repository, container_spec['Image'])
-        nom_image = container_spec['Image']
-        if nom_image.startswith('${'):
-            nom_image = nom_image.replace('${', '').replace('}', '')
-            container_spec['Image'] = self.__gestionnaire_images.get_image_parconfig(nom_image)
+            # /TaskTemplate/ContainerSpec/Image
+            # for image_name, image_docker in self.__versions_images.items():
+            #     image_tag = '${%s}' % image_name
+            #     if image_tag in container_spec['Image']:
+            #         container_spec['Image'] = container_spec['Image'].replace(image_tag, image_docker)
+            # container_spec['Image'] = '%s/%s' % (self.__repository, container_spec['Image'])
+            nom_image = container_spec['Image']
+            if nom_image.startswith('${'):
+                nom_image = nom_image.replace('${', '').replace('}', '')
+                container_spec['Image'] = self.__gestionnaire_images.get_image_parconfig(nom_image)
 
-        # /TaskTemplate/ContainerSpec/Args
-        if container_spec.get('Args') is not None:
-            args_list = list()
-            for arg in container_spec.get('Args'):
-                args_list.append(self.mapping(arg))
-            container_spec['Args'] = args_list
+            # /TaskTemplate/ContainerSpec/Args
+            if container_spec.get('Args') is not None:
+                args_list = list()
+                for arg in container_spec.get('Args'):
+                    args_list.append(self.mapping(arg))
+                container_spec['Args'] = args_list
 
-        # /TaskTemplate/ContainerSpec/Env
-        env_list = container_spec.get('Env')
-        if env_list is not None:
-            # Appliquer param mapping aux parametres
-            updated_env = list()
-            for env_param in env_list:
-                updated_env.append(self.mapping(env_param))
-            container_spec['Env'] = updated_env
+            # /TaskTemplate/ContainerSpec/Env
+            env_list = container_spec.get('Env')
+            if env_list is not None:
+                # Appliquer param mapping aux parametres
+                updated_env = list()
+                for env_param in env_list:
+                    updated_env.append(self.mapping(env_param))
+                container_spec['Env'] = updated_env
 
-        # /TaskTemplate/ContainerSpec/Mounts
-        mounts = container_spec.get('Mounts')
-        if mounts is not None:
-            for mount in mounts:
-                mount['Source'] = self.mapping(mount['Source'])
-                mount['Target'] = self.mapping(mount['Target'])
+            # /TaskTemplate/ContainerSpec/Mounts
+            mounts = container_spec.get('Mounts')
+            if mounts is not None:
+                for mount in mounts:
+                    mount['Source'] = self.mapping(mount['Source'])
+                    mount['Target'] = self.mapping(mount['Target'])
 
-        # /TaskTemplate/ContainerSpec/Secrets
-        secrets = container_spec.get('Secrets')
-        if secrets is not None:
-            for secret in secrets:
-                self.__logger.debug("Mapping secret %s" % secret)
-                secret_name = secret['SecretName']
-                secret_dict = self.trouver_secret(secret_name)
-                secret['SecretName'] = secret_dict['Name']
-                secret['SecretID'] = secret_dict['Id']
-        # /TaskTemplate/ContainerSpec/Secrets
-        configs = container_spec.get('Configs')
-        if configs is not None:
-            for config in configs:
-                self.__logger.debug("Mapping configs %s" % config)
-                config_name = config['ConfigName']
-                config_dict = self.trouver_config(config_name)
-                config['ConfigName'] = config_dict['Name']
-                config['ConfigID'] = config_dict['Id']
-        # /TaskTemplate/Networks/Target
-        networks = task_template.get('Networks')
-        if networks is not None:
-            for network in networks:
-                network['Target'] = self.mapping(network['Target'])
-                aliases = network.get('Aliases')
-                if aliases is not None:
-                    mapped_aliases = list()
-                    for alias in aliases:
-                        mapped_aliases.append(self.mapping(alias))
-                    network['Aliases'] = mapped_aliases
+            # /TaskTemplate/ContainerSpec/Secrets
+            secrets = container_spec.get('Secrets')
+            if secrets is not None:
+                for secret in secrets:
+                    self.__logger.debug("Mapping secret %s" % secret)
+                    secret_name = secret['SecretName']
+                    secret_dict = self.trouver_secret(secret_name)
+                    secret['SecretName'] = secret_dict['Name']
+                    secret['SecretID'] = secret_dict['Id']
+            # /TaskTemplate/ContainerSpec/Secrets
+            configs = container_spec.get('Configs')
+            if configs is not None:
+                for config in configs:
+                    self.__logger.debug("Mapping configs %s" % config)
+                    config_name = config['ConfigName']
+                    config_dict = self.trouver_config(config_name)
+                    config['ConfigName'] = config_dict['Name']
+                    config['ConfigID'] = config_dict['Id']
+            # /TaskTemplate/Networks/Target
+            networks = task_template.get('Networks')
+            if networks is not None:
+                for network in networks:
+                    network['Target'] = self.mapping(network['Target'])
+                    aliases = network.get('Aliases')
+                    if aliases is not None:
+                        mapped_aliases = list()
+                        for alias in aliases:
+                            mapped_aliases.append(self.mapping(alias))
+                        network['Aliases'] = mapped_aliases
 
-        # /Labels
-        config_service['Labels']['millegrille'] = self.__nom_millegrille
+            # /Labels
+            config_service['Labels']['millegrille'] = self.__nom_millegrille
+        except TypeError as te:
+            self.__logger.error("Erreur mapping %s" % self.__nom_service)
+            raise te
 
     def mapping(self, valeur):
         for cle in self.constantes.mapping:

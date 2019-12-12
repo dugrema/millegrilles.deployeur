@@ -447,6 +447,7 @@ class GestionnaireCertificats:
         """
         liste_configs = self.__docker_facade
 
+
 class RenouvellementCertificats:
     """
     Sauvegarde les certificats pour qu'ils soient accessibles aux services docker.
