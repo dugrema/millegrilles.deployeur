@@ -162,19 +162,19 @@ class GestionnaireComptesMongo:
                 },
                 "Data": base64.encodebytes(script_js.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.python.domaines.json.%s' % (nom_millegrille, datetag),
+                "Name": '%s.passwd.domaines.json.%s' % (nom_millegrille, datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(compte_domaines.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.python.transactions.json.%s' % (nom_millegrille, datetag),
+                "Name": '%s.passwd.transactions.json.%s' % (nom_millegrille, datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(compte_transaction.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.python.maitredescles.json.%s' % (nom_millegrille, datetag),
+                "Name": '%s.passwd.maitrecles.json.%s' % (nom_millegrille, datetag),
                 "Labels": {
                     "password": "individuel",
                 },
@@ -288,6 +288,7 @@ class GestionnaireCertificats:
             }
             resultat = self.__docker_facade.post('configs/create', message_fullchain)
             if resultat.status_code != 201:
+                self.__logger.error("Erreur ajout fullchain:\n%s" % message_fullchain)
                 raise Exception(
                     "Ajout fullchain status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
 
@@ -323,7 +324,7 @@ class GestionnaireCertificats:
             certificats_expiration = dict()
             etat[VariablesEnvironnementMilleGrilles.CHAMP_EXPIRATION] = certificats_expiration
 
-        datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        datetag = datetime.datetime.utcnow().strftime('%Y%m%d') + 'a'
 
         if etat.get('certificats_ok') is None:
             self.__logger.info("Generer certificat root, millegrille, mongo, mq et deployeur")
@@ -351,8 +352,8 @@ class GestionnaireCertificats:
             certificats_expiration['mq'] = int(mongo_clecert.not_valid_after.timestamp())
 
             # Conserver les nouveaux certificats et cles dans docker
-            self.deployer_clecert('pki.ca.root', autorite_clecert, datetag=datetag)
-            self.deployer_clecert('pki.ca.millegrille', millegrille_clecert, datetag=datetag)
+            self.deployer_clecert('pki.racine', autorite_clecert, datetag=datetag)
+            self.deployer_clecert('pki.millegrille', millegrille_clecert, datetag=datetag)
             self.deployer_clecert('pki.mongo', mongo_clecert, combiner_cle_cert=True, datetag=datetag)
             self.deployer_clecert('pki.mq', mq_clecert, datetag=datetag)
             # Passer les mots de passe au maitre des cles via docker secrets
@@ -686,7 +687,7 @@ class RenouvellementCertificats:
         # Demander deploiement du clecert
         date_debut = clecert_certbot.not_valid_before
         datetag = date_debut.strftime('%Y%m%d%H%M%S')
-        self.__deployeur.deployer_clecert('pki.millegrilles.web', clecert_certbot, datetag=datetag)
+        self.__deployeur.deployer_clecert('pki.web', clecert_certbot, datetag=datetag)
 
         # Ceduler redemarrage de nginx pour utiliser le nouveau certificat
         self.__monitor.ceduler_redemarrage(nom_service=VariablesEnvironnementMilleGrilles.SERVICE_NGINX)
