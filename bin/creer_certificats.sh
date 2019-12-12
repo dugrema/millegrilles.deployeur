@@ -1,223 +1,82 @@
 #!/usr/bin/env bash
 
-source /opt/mgdeployeur/etc/paths.env
+source /opt/millegrilles/etc/paths.env
 
-REP_MILLEGRILLE=$MILLEGRILLES_PATH/$NOM_MILLEGRILLE
-CURDATE=`date +%Y%m%d%H%M%S`
+TMP_FOLDER=`pwd`/tmp
 
-REP_PKI=$REP_MILLEGRILLE/$MILLEGRILLES_PKI
-REP_CERTS=$REP_MILLEGRILLE/$MILLEGRILLES_CERTS
-REP_DBS=$REP_MILLEGRILLE/$MILLEGRILLES_DBS
-REP_KEYS=$REP_MILLEGRILLE/$MILLEGRILLES_KEYS
-REP_DEPLOYEURKEYS=$REP_MILLEGRILLE/$MILLEGRILLES_DEPLOYEUR_SECRETS
-REP_PWDS=$REP_MILLEGRILLE/$MILLEGRILLES_PWDS
-HOSTNAME=`cat /etc/hostname`
+extraire_fingerprint() {
+  IDMG=`openssl x509 -noout -fingerprint -in $1 | awk 'BEGIN{FS="="}{print $2}' | sed s/':'//g | tr '[:upper:]' '[:lower:]'`
+  echo "Fingerprint de la millegrille : IDMG=$IDMG"
+  export IDMG
+}
 
-creer_repertoires() {
+deplacer_secrets() {
+  IDMG=$1
+
   set -e
-  echo "[INFO] Creation repertoires PKI"
-  mkdir -p $REP_CERTS $REP_DBS $REP_KEYS $REP_DEPLOYEURKEYS $REP_PWDS
+  echo "[INFO] Deplacement des secrets et du certificat vers repertoire de la millegrille"
 
-  chown -R $MILLEGRILLES_USER_MAITREDESCLES:$MILLEGRILLES_GROUP $REP_PKI
+  REP_MILLEGRILLE=$MILLEGRILLES_PATH/$IDMG
 
-  chmod 2755 $REP_PKI $REP_CERTS
-  chmod 2750 $REP_DBS
-  chmod 750 $REP_KEYS $REP_PWDS
-  chmod 700 $REP_DEPLOYEURKEYS
+  REP_PKI=$REP_MILLEGRILLE/pki
+  REP_CERTS=$REP_PKI/certs
+  REP_SECRETS=$REP_PKI/secrets
 
-  echo "[OK] Repertoires PKI prets"
+  sudo mkdir -p $REP_CERTS $REP_SECRETS
+
+  sudo mv $TMP_FOLDER/racine.txt $REP_SECRETS
+  sudo mv $TMP_FOLDER/racine.key.pem $REP_SECRETS
+  sudo mv $TMP_FOLDER/racine.cert.pem $REP_CERTS
+
+  sudo chown -R $MILLEGRILLES_USER_MAITREDESCLES:$MILLEGRILLES_GROUP $REP_PKI
+  sudo chmod 2755 $REP_PKI $REP_CERTS
+  sudo chmod 700 $REP_SECRETS
+
+  echo "[OK] Secrets et certificats deplaces sous $REP_PKI"
 }
 
 generer_pass_random() {
-  FICHIER_CURDATE=$1_${CURDATE}.txt
-  if [ ! -f $FICHIER_CURDATE ]; then
-    openssl rand -base64 32 > $FICHIER_CURDATE
-    chmod 400 $FICHIER_CURDATE
-    ln -sf $FICHIER_CURDATE $1.txt
+  FICHIER=$1
+  if [ ! -f $FICHIER ]; then
+    openssl rand -base64 32 | sed s/=//g > $FICHIER
+    chmod 400 $FICHIER
   fi
 }
 
-creer_rep_db() {
-  DBPATH=$1
-  if [ ! -d $DBPATH ]; then
-    # Preparer le repertoire de DB pour signature
-    mkdir -p $DBPATH/certs
-    touch $DBPATH/index.txt
-    touch $DBPATH/index.txt.attr
-    echo "01" > $DBPATH/serial.txt
-  fi
-}
-
-creer_ssrootcert() {
+creer_cert_racine() {
   # Utilise pour creer un certificat self-signed racine pour une millegrille.
   # Parametres:
   #  CURDATE
   set -e
 
-  NOMCLE=${NOM_MILLEGRILLE}_ssroot
-  SUBJECT="/O=${NOM_MILLEGRILLE}/OU=SSRoot/CN=SSRoot"
-  let "DAYS=365 * 10"  # 10 ans
+  NOMCLE=racine
+  SUBJECT="/O=MilleGrilles/CN=racine"
+  # 20 ans
+  let "DAYS=365 * 20 + 5"
 
-  KEY=$REP_KEYS/${NOM_MILLEGRILLE}_ssroot_${CURDATE}.key.pem
-  CERT=$REP_CERTS/${NOM_MILLEGRILLE}_ssroot_${CURDATE}.cert.pem
-  PWDFILE=$REP_PWDS/${NOM_MILLEGRILLE}_ssroot
+  # Creer le certificat racine en premier, va donner le IDMG.
+  mkdir -p $TMP_FOLDER
+
+  KEY=$TMP_FOLDER/$NOMCLE.key.pem
+  CERT=$TMP_FOLDER/$NOMCLE.cert.pem
+  PWDFILE=$TMP_FOLDER/$NOMCLE.txt
 
   # Generer un mot de passe (s'il n'existe pas deja - pas overwrite)
   generer_pass_random $PWDFILE
 
-  NOM_NOEUD= \
   openssl req -x509 -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-            -sha512 -days $DAYS  -out $CERT -outform PEM \
-            -keyout $KEY -keyform PEM -subj $SUBJECT \
-            -passout file:$PWDFILE.txt
+              -sha512 -days $DAYS  -out $CERT -outform PEM \
+              -keyout $KEY -keyform PEM -subj $SUBJECT \
+              -passout file:$PWDFILE
 
-  ln -sf $CERT $REP_CERTS/${NOM_MILLEGRILLE}_ssroot.cert.pem
-  ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_ssroot.key.pem
-
-  SSROOT_DBPATH=$REP_DBS/${NOM_MILLEGRILLE}_root
-  creer_rep_db $SSROOT_DBPATH
-}
-
-creer_millegrille_cert() {
-  # Utilise pour creer un certificat self-signed racine pour une millegrille.
-  # Parametres:
-  #  CURDATE
-  set -e
-
-  echo "[INFO] Creation certificat millegrille $NOM_MILLEGRILLE"
-
-  NOMCLE=${NOM_MILLEGRILLE}_millegrille
-  SUBJECT="/O=${NOM_MILLEGRILLE}/OU=MilleGrille/CN=${NOM_MILLEGRILLE}"
-
-  KEY=$REP_KEYS/${NOM_MILLEGRILLE}_millegrille_${CURDATE}.key.pem
-  CERT=$REP_CERTS/${NOM_MILLEGRILLE}_millegrille_${CURDATE}.cert.pem
-  REQ=$REP_CERTS/${NOM_MILLEGRILLE}_millegrille_${CURDATE}.req.pem
-  PWDFILE=$REP_PWDS/${NOM_MILLEGRILLE}_millegrille
-
-  # Generer un mot de passe (s'il n'existe pas deja - pas overwrite)
-  generer_pass_random $PWDFILE
-
-  NOM_NOEUD= \
-  openssl req -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-                -newkey rsa:2048 -sha512 -subj $SUBJECT \
-                -keyout $KEY -out $REQ -outform PEM -passout file:$PWDFILE.txt
-
-  SIGNING_PASSWD_FILE=$REP_PWDS/${NOM_MILLEGRILLE}_ssroot
-
-  NOM_NOEUD= \
-  openssl ca -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-             -name CA_root -batch -notext \
-             -policy ca_signing_policy -extensions ca_signing_req \
-             -passin file:$SIGNING_PASSWD_FILE.txt \
-             -out $CERT -infiles $REQ
-
-  ln -sf $CERT $REP_CERTS/${NOM_MILLEGRILLE}_millegrille.cert.pem
-  ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_millegrille.key.pem
-  rm $REQ
-
-  DBPATH=$REP_DBS/${NOM_MILLEGRILLE}_millegrille
-  creer_rep_db $DBPATH
-
-  echo "[OK] Creation certificat millegrille $NOM_MILLEGRILLE complete"
-}
-
-creer_cert_noeud() {
-  # Params
-  # - TYPE_NOEUD: maitredescles, middleware, deployeur, noeud
-  # - EXTENSION: noeud_req_extensions, middleware_req_extensions
-  # - PASSWORD: si un mot de passe doit etre genere
-  set -e
-
-  if [ -z $TYPE_NOEUD ]; then
-    TYPE_NOEUD=noeud
-  fi
-
-  if [ -z $EXTENSION ]; then
-    EXTENSION=noeud_req_extensions
-  fi
-
-  echo "[INFO] Creation certificat $TYPE_NOEUD"
-
-  KEY=$REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.key.pem
-  CERT=$REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.cert.pem
-  REQ=$REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.req.pem
-  PWDFILE_NOEUD=$REP_PWDS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}_${HOSTNAME}
-  SUBJECT="/O=$NOM_MILLEGRILLE/OU=$TYPE_NOEUD/CN=$HOSTNAME"
-
-  if [ -z $PASSWORD ]; then
-    NOM_NOEUD= \
-    openssl req -newkey rsa:2048 -sha512 -nodes \
-                -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-                -out $REQ -outform PEM -keyout $KEY -keyform PEM \
-                -subj $SUBJECT
-  else
-    generer_pass_random $PWDFILE_NOEUD
-    PWDFILE=$REP_PWDS/${NOM_MILLEGRILLE}_millegrille
-    ln -sf ${PWDFILE_NOEUD}_${CURDATE}.txt $REP_PWDS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}.txt
-
-    NOM_NOEUD= \
-    openssl req -newkey rsa:2048 -sha512 \
-                -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-                -out $REQ -outform PEM -keyout $KEY -keyform PEM \
-                -subj $SUBJECT \
-                -passout file:$PWDFILE_NOEUD.txt
-  fi
-
-  NOM_NOEUD= \
-  openssl ca -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
-             -name CA_millegrille -batch -notext \
-             -policy ca_signing_policy -extensions $EXTENSION \
-             -passin file:$PWDFILE.txt \
-             -out $CERT -infiles $REQ
-
-  rm $REQ
-  ln -sf $CERT $REP_CERTS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}.cert.pem
-  ln -sf $KEY $REP_KEYS/${NOM_MILLEGRILLE}_${TYPE_NOEUD}.key.pem
-
-  echo "[OK] Creation certificat $TYPE_NOEUD complet"
-}
-
-deplacer_cle_deployeur() {
-  KEY=$REP_KEYS/${NOM_MILLEGRILLE}_deployeur
-  mv $KEY* $REP_DEPLOYEURKEYS
-  ln -sf $REP_DEPLOYEURKEYS/${NOM_MILLEGRILLE}_deployeur_${HOSTNAME}_${CURDATE}.key.pem $REP_DEPLOYEURKEYS/${NOM_MILLEGRILLE}_deployeur.key.pem
-}
-
-preperation_acces_deployeur() {
-  # On rend la cle middleware accessibles pour inclusion dans docker secrets
-  # Idealement le deployeur les remets a 400 des que c'est fait.
-  chmod -R 440 $REP_KEYS/${NOM_MILLEGRILLE}_middleware*
-}
-
-creer_CA_files() {
-  CERT_ROOT=$REP_CERTS/${NOM_MILLEGRILLE}_ssroot_${CURDATE}.cert.pem
-  CERT_MG=$REP_CERTS/${NOM_MILLEGRILLE}_millegrille_${CURDATE}.cert.pem
-  CERT_MIDDLEWARE=$REP_CERTS/${NOM_MILLEGRILLE}_middleware_${HOSTNAME}_${CURDATE}.cert.pem
-
-  cat $CERT_MG $CERT_ROOT > $REP_MILLEGRILLE/$MILLEGRILLES_CA_CHAIN
-  cat $CERT_MIDDLEWARE $CERT_MG $CERT_ROOT > $REP_MILLEGRILLE/$MILLEGRILLES_CA_FULLCHAIN
+  chmod 400 $TMP_FOLDER/racine.*
 }
 
 executer() {
-  creer_repertoires
-  creer_ssrootcert $CURDATE
-  creer_millegrille_cert $CURDATE
-
-  # Noeuds middleware, deployeur, maitredescles
-  TYPE_NOEUD=middleware EXTENSION=middleware_req_extensions creer_cert_noeud
-  TYPE_NOEUD=maitredescles EXTENSION=noeud_req_extensions PASSWORD=true creer_cert_noeud
-  TYPE_NOEUD=deployeur EXTENSION=noeud_req_extensions creer_cert_noeud
-  TYPE_NOEUD=mq EXTENSION=mq_req_extensions creer_cert_noeud
-  TYPE_NOEUD=mongo EXTENSION=mongo_req_extensions creer_cert_noeud
-  TYPE_NOEUD=coupdoeil EXTENSION=coupdoeil_req_extensions creer_cert_noeud
-  TYPE_NOEUD=vitrine EXTENSION=vitrine_req_extensions creer_cert_noeud
-  TYPE_NOEUD=domaines EXTENSION=python_req_extensions creer_cert_noeud
-  TYPE_NOEUD=transactions EXTENSION=python_req_extensions creer_cert_noeud
-  TYPE_NOEUD=ceduleur EXTENSION=python_req_extensions creer_cert_noeud
-
-  creer_CA_files
-  deplacer_cle_deployeur
-  preperation_acces_deployeur
+  creer_cert_racine
+  extraire_fingerprint $TMP_FOLDER/racine.cert.pem
+  echo IDMG genere: $IDMG
+  deplacer_secrets $IDMG
 }
 
 executer
