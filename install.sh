@@ -27,6 +27,9 @@ installer_deployeur() {
   echo "[INFO] Installer deployeur Python et dependances"
   MG_CONSIGNATION=millegrilles.consignation.python
 
+  # Installer requirements pour deployeur
+  sudo pip3 install -r requirements.txt
+
   set -e
   mkdir -p tmp/
   cd tmp/

@@ -10,7 +10,8 @@ TMP_FOLDER=$(pwd)/tmp
 echo "TMP_FOLDER=$TMP_FOLDER"
 
 extraire_fingerprint() {
-  IDMG=`openssl x509 -noout -fingerprint -in $1 | awk 'BEGIN{FS="="}{print $2}' | sed s/':'//g | tr '[:upper:]' '[:lower:]'`
+  FINGERPRINT=`openssl x509 -noout -fingerprint -in $1 | awk 'BEGIN{FS="="}{print $2}' | sed s/':'//g | tr '[:upper:]' '[:lower:]'`
+  IDMG=`$MILLEGRILLES_BIN/base58util.py encoder $FINGERPRINT`
   echo "Fingerprint de la millegrille : IDMG=$IDMG"
   export IDMG
 }
