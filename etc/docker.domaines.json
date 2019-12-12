@@ -62,7 +62,7 @@
             "Mode": 292
           }
         }, {
-          "ConfigName": "pki.ca.millegrille.fullchain",
+          "ConfigName": "pki.millegrille.fullchain",
           "File": {
             "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
             "UID": "0",
