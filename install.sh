@@ -96,13 +96,15 @@ preparer_opt() {
   sudo mkdir -p $MILLEGRILLES_BIN
   sudo mkdir -p $MILLEGRILLES_ETC
   sudo mkdir -p $MILLEGRILLES_CACERT
+  sudo mkdir -p $MILLEGRILLES_VAR
 
   sudo chmod -R 2755 $MILLEGRILLES_PATH
+  sudo chmod -R 2750 $MILLEGRILLES_VAR
 
   sudo cp -R etc/* $MILLEGRILLES_ETC
   sudo cp -R bin/* $MILLEGRILLES_BIN
 
-  sudo chown -R $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $MILLEGRILLES_PATH
+  sudo chown -R $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $MILLEGRILLES_PATH $MILLEGRILLES_VAR
 
   echo "[OK] $MILLEGRILLES_PATH pret"
 }
@@ -130,7 +132,7 @@ installer() {
   installer_autres_deps
   installer_deployeur
 
-  download_images_docker
+  # download_images_docker
 }
 
 creer_millegrille() {
@@ -171,10 +173,14 @@ preparer_rpi() {
   fi
 }
 
+if [ ! -d $MILLEGRILLES_VAR ]; then
+  INSTALLER_PREMIERE=1
+fi
+
 #  Hook installer redemarrer
 installer
 
-if [ ! -d $MILLEGRILLES_VAR ]; then
+if [ $INSTALLER_PREMIERE -eq 1 ]; then
   creer_millegrille
 else
   redemarrer_monitor
