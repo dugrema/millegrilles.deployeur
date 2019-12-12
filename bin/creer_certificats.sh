@@ -16,7 +16,7 @@ deplacer_secrets() {
   set -e
   echo "[INFO] Deplacement des secrets et du certificat vers repertoire de la millegrille"
 
-  REP_MILLEGRILLE=$MILLEGRILLES_PATH/$IDMG
+  REP_MILLEGRILLE=$MILLEGRILLES_VAR/$IDMG
 
   REP_PKI=$REP_MILLEGRILLE/pki
   REP_CERTS=$REP_PKI/certs
@@ -27,6 +27,10 @@ deplacer_secrets() {
   sudo mv $TMP_FOLDER/racine.txt $REP_SECRETS
   sudo mv $TMP_FOLDER/racine.key.pem $REP_SECRETS
   sudo mv $TMP_FOLDER/racine.cert.pem $REP_CERTS
+
+  sudo ln $REP_SECRETS/racine.txt $REP_SECRETS/$IDMG.txt
+  sudo ln $REP_SECRETS/racine.key.pem $REP_SECRETS/$IDMG.key.pem
+  sudo ln $REP_CERTS/racine.cert.pem $REP_CERTS/$IDMG.cert.pem
 
   sudo chown -R $MILLEGRILLES_USER_MAITREDESCLES:$MILLEGRILLES_GROUP $REP_PKI
   sudo chmod 2755 $REP_PKI $REP_CERTS
@@ -69,7 +73,8 @@ creer_cert_racine() {
               -keyout $KEY -keyform PEM -subj $SUBJECT \
               -passout file:$PWDFILE
 
-  chmod 400 $TMP_FOLDER/racine.*
+  chmod 400 $TMP_FOLDER/racine.txt $TMP_FOLDER/racine.key.pem
+  chmod 444 $TMP_FOLDER/racine.cert.pem
 }
 
 executer() {
