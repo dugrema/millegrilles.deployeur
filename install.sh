@@ -21,7 +21,6 @@ installer_docker() {
 installer_autres_deps() {
   # Random number gens hardware, pip3, avahi-daemon
   sudo apt install -y rng-tools python3-pip avahi-daemon
-
 }
 
 installer_deployeur() {
@@ -108,6 +107,17 @@ preparer_opt() {
   echo "[OK] $MILLEGRILLES_PATH pret"
 }
 
+download_images_docker() {
+  echo "[INFO] Telecharger les images docker"
+  # Note: Utilise le compte docker de l'usager courant (docker login)
+  sudo /opt/millegrilles/bin/deployer.py --info --download_only installer $IDMG
+}
+
+redemarrer_monitor() {
+  echo "[INFO] Redemarrer le monitor millegrilles"
+  sudo systemctl restart millegrilles
+}
+
 # Execution de l'installation
 installer() {
   # Au besoin, preparer l'environnement du RPi avant le reste. Ajoute swapfile et autres dependances
@@ -120,36 +130,24 @@ installer() {
   installer_autres_deps
   installer_deployeur
 
+  download_images_docker
 }
 
 creer_millegrille() {
+  echo "[INFO] Creer une millegrille initiale"
   # Faire un hook vers la creation d'une millegrille si le parametre est inclus
-  if [ ! -z $1 ]; then
-    NOM_MILLEGRILLE=$1
-  fi
-  if [ ! -z $NOM_MILLEGRILLE ]; then
-    $MILLEGRILLES_BIN/creer_millegrille.sh $NOM_MILLEGRILLE
+  $MILLEGRILLES_BIN/creer_millegrille.sh
 
-    echo "[INFO] Telecharger les images docker"
-    # Note: Utilise le compte docker de l'usager courant (docker login)
-    sudo /opt/millegrilles/bin/deployer.py --info --download_only installer $NOM_MILLEGRILLE
-    # Certains fichiers de config peuvent etre crees, s'assurer de les assigner au bon usager
-    sudo chown mg_deployeur:millegrilles /opt/millegrilles/etc/*
+  # Certains fichiers de config peuvent etre crees, s'assurer de les assigner au bon usager
+  sudo chown mg_deployeur:millegrilles /opt/millegrilles/etc/*
 
-    echo "[INFO] Deployer le monitor et demarrer les services docker"
-    sudo -i -u mg_deployeur /opt/millegrilles/bin/deployer.py --info installer $NOM_MILLEGRILLE
-    if [ $? -eq 0 ]; then
-      echo "[INFO] Demarrer le monitor"
-      # Donner le temps au systeme de demarrer les services deja lances (transaction, maitredescles)
-      sleep 20
-      sudo systemctl start millegrilles
-    fi
-
-  else
-    echo
-    echo "[INFO] Installation de la base millegrilles completee, il faut maintenant creer votre millegrilles"
-    echo "[INFO] Utiliser le script: /opt/millegrilles/bin/creer_millegrille.sh NOM_NOUVELLE_MILLEGRILLE"
-    echo
+  echo "[INFO] Deployer le monitor et demarrer les services docker"
+  sudo -i -u mg_deployeur /opt/millegrilles/bin/deployer.py --info installer $IDMG
+  if [ $? -eq 0 ]; then
+    echo "[INFO] Demarrer le monitor - attendre 20 secondes"
+    # Donner le temps au systeme de demarrer les services deja lances (transaction, maitredescles)
+    sleep 20
+    redemarrer_monitor
   fi
 }
 
@@ -173,5 +171,11 @@ preparer_rpi() {
   fi
 }
 
+#  Hook installer redemarrer
 installer
-creer_millegrille $1
+
+if [ ! -d $MILLEGRILLES_VAR ]; then
+  creer_millegrille
+else
+  redemarrer_monitor
+fi

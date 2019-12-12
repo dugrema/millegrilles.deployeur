@@ -1,8 +1,13 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-source /opt/millegrilles/etc/paths.env
+if [ -n $MILLEGRILLES_PATH ]; then
+  echo "Chargement variables environnement"
+  # Les variables globales ne sont pas encore chargees
+  source /opt/millegrilles/etc/paths.env
+fi
 
-TMP_FOLDER=`pwd`/tmp
+TMP_FOLDER=$(pwd)/tmp
+echo "TMP_FOLDER=$TMP_FOLDER"
 
 extraire_fingerprint() {
   IDMG=`openssl x509 -noout -fingerprint -in $1 | awk 'BEGIN{FS="="}{print $2}' | sed s/':'//g | tr '[:upper:]' '[:lower:]'`
@@ -55,8 +60,9 @@ creer_cert_racine() {
 
   NOMCLE=racine
   SUBJECT="/O=MilleGrilles/CN=racine"
+
   # 20 ans
-  let "DAYS=365 * 20 + 5"
+  ((DAYS=365 * 20 + 5))
 
   # Creer le certificat racine en premier, va donner le IDMG.
   mkdir -p $TMP_FOLDER
@@ -66,9 +72,10 @@ creer_cert_racine() {
   PWDFILE=$TMP_FOLDER/$NOMCLE.txt
 
   # Generer un mot de passe (s'il n'existe pas deja - pas overwrite)
-  generer_pass_random $PWDFILE
+  generer_pass_random "$PWDFILE"
 
-  openssl req -x509 -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
+  echo "Configuration OpenSSL : $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES"
+  openssl req -x509 -config "$MILLEGRILLES_OPENSSL_CNFMILLEGRILLES" \
               -sha512 -days $DAYS  -out $CERT -outform PEM \
               -keyout $KEY -keyform PEM -subj $SUBJECT \
               -passout file:$PWDFILE
@@ -80,8 +87,9 @@ creer_cert_racine() {
 executer() {
   creer_cert_racine
   extraire_fingerprint $TMP_FOLDER/racine.cert.pem
-  echo IDMG genere: $IDMG
   deplacer_secrets $IDMG
 }
 
 executer
+echo IDMG genere: $IDMG
+echo "IDMG=$IDMG" > "$TMP_FOLDER/idmg.txt"
