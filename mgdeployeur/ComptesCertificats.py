@@ -202,7 +202,7 @@ class GestionnaireCertificats:
         self.__nom_millegrille = variables_env.nom_millegrille
         self.__docker_facade = docker_facade
         self.__docker_nodename = docker_nodename
-        self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        self.__datetag = datetime.datetime.utcnow().strftime('%Y%m%d') + 'a'
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
         self.__certificats = dict()
