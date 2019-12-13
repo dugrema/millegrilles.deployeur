@@ -187,8 +187,8 @@ fi
 #  Hook installer redemarrer
 installer
 
-if [ $INSTALLER_PREMIERE -eq 1 ]; then
-  creer_millegrille
-else
+if [ -z $INSTALLER_PREMIERE ]; then
   redemarrer_monitor
+else
+  creer_millegrille
 fi
