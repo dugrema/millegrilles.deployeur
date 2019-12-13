@@ -5,10 +5,11 @@ IDMG=$1
 CURRENT_USER=`whoami`
 
 source /opt/millegrilles/etc/paths.env
+source /opt/millegrilles/etc/variables.env
 
 sudo adduser $CURRENT_USER millegrilles || true
 
-REP_MILLEGRILLE=$MILLEGRILLES_PATH/$IDMG
+REP_MILLEGRILLE=$MILLEGRILLES_VAR/$IDMG
 sudo mkdir -p $MILLEGRILLES_PATH/dist/secure/maitredescles
 sudo mkdir -p $MILLEGRILLES_PATH/dist/secure/pki
 sudo chown -R $CURRENT_USER:millegrilles $MILLEGRILLES_PATH/dist
