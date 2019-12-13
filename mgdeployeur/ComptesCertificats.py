@@ -341,9 +341,10 @@ class GestionnaireCertificats:
             autorite_clecert = EnveloppeCleCert()
             autorite_clecert.from_pem_bytes(racine_private, racine_public, racine_password)
 
-            generateur_mg_initial = GenerateurInitial(self.__idmg)
+            # Generer le premier certificat de MilleGrille intermediaire
+            generateur_mg_initial = GenerateurInitial(self.__idmg, autorite_clecert)
             millegrille_clecert = generateur_mg_initial.generer()
-            autorite_clecert = generateur_mg_initial.autorite
+            # autorite_clecert = generateur_mg_initial.autorite
 
             dict_ca = {
                 autorite_clecert.skid: autorite_clecert.cert,
