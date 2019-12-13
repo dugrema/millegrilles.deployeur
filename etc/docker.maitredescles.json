@@ -57,7 +57,7 @@
         }, {
           "SecretName": "pki.millegrille.key",
           "File": {
-            "Name": "pki.ca.millegrille.key",
+            "Name": "pki.millegrille.key",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -65,7 +65,7 @@
         }, {
           "SecretName": "pki.racine.key",
           "File": {
-            "Name": "pki.ca.root.key",
+            "Name": "pki.racine.key",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -108,7 +108,7 @@
         }, {
           "ConfigName": "pki.millegrille.cert",
           "File": {
-            "Name": "/run/secrets/pki.ca.millegrille.cert",
+            "Name": "/run/secrets/pki.millegrille.cert",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -116,7 +116,7 @@
         }, {
           "ConfigName": "pki.racine.cert",
           "File": {
-            "Name": "/run/secrets/pki.ca.root.cert",
+            "Name": "/run/secrets/pki.racine.cert",
             "UID": "0",
             "GID": "0",
             "Mode": 292
