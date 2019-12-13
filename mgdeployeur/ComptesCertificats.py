@@ -328,6 +328,19 @@ class GestionnaireCertificats:
 
         if etat.get('certificats_ok') is None:
             self.__logger.info("Generer certificat root, millegrille, mongo, mq et deployeur")
+
+            # Charger le certificat racine (deja genere)
+            with open(self.variables_env.rep_certs + '/racine.cert.pem', 'rb') as fichier:
+                racine_public = fichier.read()
+            with open(self.variables_env.rep_secrets + '/racine.key.pem', 'rb') as fichier:
+                racine_private = fichier.read()
+            with open(self.variables_env.rep_secrets + '/racine.txt', 'r') as fichier:
+                racine_password = fichier.read()
+                racine_password = racine_password.strip().encode('utf-8')
+
+            autorite_clecert = EnveloppeCleCert()
+            autorite_clecert.from_pem_bytes(racine_private, racine_public, racine_password)
+
             generateur_mg_initial = GenerateurInitial(self.__idmg)
             millegrille_clecert = generateur_mg_initial.generer()
             autorite_clecert = generateur_mg_initial.autorite

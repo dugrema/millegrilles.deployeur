@@ -41,7 +41,7 @@ class VariablesEnvironnementMilleGrilles:
     REPERTOIRE_MILLEGRILLE_CERTS = '%s/certs' % REPERTOIRE_MILLEGRILLE_PKI
     MILLEGRILLES_DEPLOYEUR_SECRETS = '%s/deployeur' % REPERTOIRE_MILLEGRILLE_PKI
     REPERTOIRE_MILLEGRILLE_DBS = '%s/dbs' % REPERTOIRE_MILLEGRILLE_PKI
-    REPERTOIRE_MILLEGRILLE_KEYS = '%s/keys' % REPERTOIRE_MILLEGRILLE_PKI
+    REPERTOIRE_MILLEGRILLE_SECRETS = '%s/secrets' % REPERTOIRE_MILLEGRILLE_PKI
     REPERTOIRE_MILLEGRILLE_MQ_ACCOUNTS = '%s/mq/accounts' % REPERTOIRE_MILLEGRILLE_MOUNTS
     REPERTOIRE_MILLEGRILLE_MONGO_SCRIPTS = '%s/mongo/scripts' % REPERTOIRE_MILLEGRILLE_MOUNTS
 
@@ -103,11 +103,11 @@ class VariablesEnvironnementMilleGrilles:
         )
 
     @property
-    def rep_cles(self):
+    def rep_secrets(self):
         return '%s/%s/%s' % (
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_VAR,
             self.idmg,
-            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_KEYS
+            VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLE_SECRETS
         )
 
     @property

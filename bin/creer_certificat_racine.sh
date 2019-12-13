@@ -38,7 +38,7 @@ deplacer_secrets() {
   sudo ln $REP_SECRETS/racine.key.pem $REP_SECRETS/$IDMG.key.pem
   sudo ln $REP_CERTS/racine.cert.pem $REP_CERTS/$IDMG.cert.pem
 
-  sudo chown -R $MILLEGRILLES_USER_MAITREDESCLES:$MILLEGRILLES_GROUP $REP_PKI
+  sudo chown -R $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $REP_PKI
   sudo chmod 2755 $REP_PKI $REP_CERTS
   sudo chmod 700 $REP_SECRETS
 
