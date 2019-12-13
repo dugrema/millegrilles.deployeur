@@ -116,7 +116,7 @@
     },
     "Networks": [
         {
-          "Target": "mg_${NOM_MILLEGRILLE}_net"
+          "Target": "mg_${IDMG}_net"
         }
     ]
   },
@@ -132,6 +132,6 @@
     ]
   },
   "Labels": {
-    "millegrille": "${NOM_MILLEGRILLE}"
+    "millegrille": "${IDMG}"
   }
 }

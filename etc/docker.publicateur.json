@@ -7,11 +7,11 @@
         "demarrer_publicateur.py",
         "--info",
         "--webroot",
-        "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx"
+        "/opt/millegrilles/${IDMG}/mounts/nginx"
       ],
       "Hostname": "publicateur-python.local",
       "Env": [
-        "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
+        "MG_IDMG=${IDMG}",
         "MG_MQ_HOST=mq",
         "MG_MQ_PORT=5673",
         "MG_MQ_SSL=on",
@@ -23,8 +23,8 @@
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/var/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx",
-          "Target": "/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx"
+          "Source": "/var/opt/millegrilles/${IDMG}/mounts/nginx",
+          "Target": "/opt/millegrilles/${IDMG}/mounts/nginx"
         }
       ],
       "Secrets": [
@@ -77,11 +77,11 @@
     },
     "Networks": [
         {
-          "Target": "mg_${NOM_MILLEGRILLE}_net"
+          "Target": "mg_${IDMG}_net"
         }
     ]
   },
   "Labels": {
-    "millegrille": "${NOM_MILLEGRILLE}"
+    "millegrille": "${IDMG}"
   }
 }

@@ -5,8 +5,8 @@
       "Image": "${coupdoeilreact}",
       "Hostname": "coupdoeil.local",
       "Env": [
-        "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
-        "MG_MQ_URL=amqps://mq:5673/${NOM_MILLEGRILLE}",
+        "MG_IDMG=${IDMG}",
+        "MG_MQ_URL=amqps://mq:5673/${IDMG}",
         "MG_MQ_CAFILE=/run/secrets/pki.millegrilles.ssl.CAchain",
         "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
         "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
@@ -71,8 +71,8 @@
     },
     "Networks": [
         {
-          "Target": "mg_${NOM_MILLEGRILLE}_net",
-          "Aliases": ["coupdoeilreact", "coupdoeil-${NOM_MILLEGRILLE}.local"]
+          "Target": "mg_${IDMG}_net",
+          "Aliases": ["coupdoeilreact", "coupdoeil-${IDMG}.local"]
         }
     ]
   },
@@ -88,6 +88,6 @@
     ]
   },
   "Labels": {
-    "millegrille": "${NOM_MILLEGRILLE}"
+    "millegrille": "${IDMG}"
   }
 }

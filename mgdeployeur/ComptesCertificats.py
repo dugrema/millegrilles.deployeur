@@ -139,7 +139,7 @@ class GestionnaireComptesMongo:
         mot_passe_maitredescles = secrets.token_hex(16)
         mot_passe_root_mongo = secrets.token_hex(16)
         mot_passe_web_mongoexpress = secrets.token_hex(16)
-        script_js = script_js.replace('${NOM_MILLEGRILLE}', idmg)
+        script_js = script_js.replace('${IDMG}', idmg)
         script_js = script_js.replace('${PWD_TRANSACTION}', mot_passe_transaction)
         script_js = script_js.replace('${PWD_MGDOMAINES}', mot_passe_domaines)
         script_js = script_js.replace('${PWD_MAITREDESCLES}', mot_passe_maitredescles)

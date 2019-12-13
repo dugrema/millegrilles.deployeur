@@ -78,8 +78,8 @@ class DeployeurMilleGrilles:
         )
 
         self.__parser.add_argument(
-            'nom_millegrille', type=str,
-            help="Nom de la millegrille"
+            'idmg', type=str,
+            help="IDMG de la millegrille"
         )
 
         self.__args = self.__parser.parse_args()

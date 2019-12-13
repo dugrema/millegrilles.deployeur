@@ -81,7 +81,7 @@ class VariablesEnvironnementMilleGrilles:
         Liste de champs qui seront remplaces dans la configuration json des services
         """
         self.mapping = {
-            "NOM_MILLEGRILLE": self.idmg,
+            "IDMG": self.idmg,
             "MOUNTS": self.rep_mounts,
             "MONGO_INITDB_ROOT_USERNAME": VariablesEnvironnementMilleGrilles.MONGO_INITDB_ROOT_USERNAME,
         }

@@ -13,11 +13,11 @@
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/var/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation/torrents/downloads",
+          "Source": "/var/opt/millegrilles/${IDMG}/mounts/consignation/torrents/downloads",
           "Target": "/downloads"
         },{
           "Type": "bind",
-          "Source": "/var/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation/torrents",
+          "Source": "/var/opt/millegrilles/${IDMG}/mounts/consignation/torrents",
           "Target": "/torrents"
         }
 
@@ -50,7 +50,7 @@
     },
     "Networks": [
         {
-          "Target": "mg_${NOM_MILLEGRILLE}_net",
+          "Target": "mg_${IDMG}_net",
           "Aliases": ["transmission"]
         }
     ]
@@ -71,6 +71,6 @@
     ]
   },
   "Labels": {
-    "millegrille": "${NOM_MILLEGRILLE}"
+    "millegrille": "${IDMG}"
   }
 }

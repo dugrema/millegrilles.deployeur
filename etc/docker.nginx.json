@@ -8,7 +8,7 @@
       ],
       "Hostname": "nginx",
       "Env": [
-        "NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
+        "IDMG=${IDMG}",
         "NGINX_CONFIG_FILE=millegrilles.conf",
         "WEB_CERT=/run/secrets/pki.millegrilles.web.fullchain",
         "WEB_KEY=/run/secrets/pki.millegrilles.web.key",
@@ -16,13 +16,13 @@
         "WEB_COUPDOEIL=${URL_COUPDOEIL}",
         "LOCAL_CERT=/run/secrets/pki.millegrilles.ssl.fullchain",
         "LOCAL_KEY=/run/secrets/pki.millegrilles.ssl.key",
-        "LOCAL_URL=mg-${NOM_MILLEGRILLE}.local",
-        "LOCAL_COUPDOEIL=coupdoeil-${NOM_MILLEGRILLE}.local"
+        "LOCAL_URL=mg-${IDMG}.local",
+        "LOCAL_COUPDOEIL=coupdoeil-${IDMG}.local"
       ],
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/var/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/nginx",
+          "Source": "/var/opt/millegrilles/${IDMG}/mounts/nginx",
           "Target": "/usr/share/nginx/html"
         }
       ],
@@ -94,8 +94,8 @@
     },
     "Networks": [
         {
-          "Target": "mg_${NOM_MILLEGRILLE}_net",
-          "Aliases": ["www", "${DOMAIN_PUBLIC}", "mg-${NOM_MILLEGRILLE}.local"]
+          "Target": "mg_${IDMG}_net",
+          "Aliases": ["www", "${DOMAIN_PUBLIC}", "${IDMG}.local"]
         }
     ]
   },
@@ -116,6 +116,6 @@
     ]
   },
   "Labels": {
-    "millegrille": "${NOM_MILLEGRILLE}"
+    "millegrille": "${IDMG}"
   }
 }

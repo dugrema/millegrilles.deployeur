@@ -5,8 +5,8 @@
       "Image": "${consignationfichiers}",
       "Hostname": "consignationfichiers",
       "Env": [
-        "MG_NOM_MILLEGRILLE=${NOM_MILLEGRILLE}",
-        "MG_MQ_URL=amqps://mq:5673/${NOM_MILLEGRILLE}",
+        "MG_IDMG=${IDMG}",
+        "MG_MQ_URL=amqps://mq:5673/${IDMG}",
         "MG_MQ_CAFILE=/run/secrets/pki.millegrilles.ssl.CAchain",
         "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
         "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
@@ -19,7 +19,7 @@
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/var/opt/millegrilles/${NOM_MILLEGRILLE}/mounts/consignation",
+          "Source": "/var/opt/millegrilles/${IDMG}/mounts/consignation",
           "Target": "/opt/millegrilles/consignation"
         }
       ],
@@ -84,12 +84,12 @@
     },
     "Networks": [
         {
-          "Target": "mg_${NOM_MILLEGRILLE}_net",
+          "Target": "mg_${IDMG}_net",
           "Aliases": ["consignationfichiers", "consignationfichiers.local"]
         }
     ]
   },
   "Labels": {
-    "millegrille": "${NOM_MILLEGRILLE}"
+    "millegrille": "${IDMG}"
   }
 }

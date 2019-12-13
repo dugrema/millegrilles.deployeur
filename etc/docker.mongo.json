@@ -98,12 +98,12 @@
     },
     "Networks": [
         {
-          "Target": "mg_${NOM_MILLEGRILLE}_net",
+          "Target": "mg_${IDMG}_net",
           "Aliases": ["mongo", "mongo.local"]
         }
     ]
   },
   "Labels": {
-    "millegrille": "${NOM_MILLEGRILLE}"
+    "millegrille": "${IDMG}"
   }
 }

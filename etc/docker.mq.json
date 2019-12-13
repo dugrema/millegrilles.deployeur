@@ -11,7 +11,7 @@
       "Mounts": [
         {
           "Type": "volume",
-          "Source": "mg-middleware-rabbitmq-data-${NOM_MILLEGRILLE}",
+          "Source": "mg-middleware-rabbitmq-data-${IDMG}",
           "Target": "/var/lib/rabbitmq"
         },
         {
@@ -96,7 +96,7 @@
     },
     "Networks": [
         {
-          "Target": "mg_${NOM_MILLEGRILLE}_net",
+          "Target": "mg_${IDMG}_net",
           "Aliases": ["mq", "mq.local"]
         }
     ]
@@ -125,6 +125,6 @@
     ]
   },
   "Labels": {
-    "millegrille": "${NOM_MILLEGRILLE}"
+    "millegrille": "${IDMG}"
   }
 }
