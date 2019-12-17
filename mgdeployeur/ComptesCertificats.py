@@ -411,6 +411,7 @@ class GestionnaireCertificats:
                 ConstantesGenerateurCertificat.ROLE_VITRINE,
                 ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
                 ConstantesGenerateurCertificat.ROLE_NGINX,
+                ConstantesGenerateurCertificat.ROLE_CONNECTEUR,
             ]
 
             for role in roles_latents:
