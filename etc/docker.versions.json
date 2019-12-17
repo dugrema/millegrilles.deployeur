@@ -10,8 +10,8 @@
         "nginx": {"image": "mg_nginx", "version": "1.17_8"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"},
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.18.18"},
-        "consignationfichiers": {"image": "consignationfichiers", "version": "1.16.0"},
-        "coupdoeilreact": {"image": "coupdoeil_react", "version": "1.17.0"},
-        "vitrinereact": {"image": "vitrine_react", "version": "1.16.1"}
+        "consignationfichiers": {"image": "consignationfichiers", "version": "1.18.0"},
+        "coupdoeilreact": {"image": "coupdoeil_react", "version": "1.18.0"},
+        "vitrinereact": {"image": "vitrine_react", "version": "1.18.1"}
     }
 }
