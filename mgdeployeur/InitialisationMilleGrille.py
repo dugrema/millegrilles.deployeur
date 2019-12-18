@@ -79,11 +79,19 @@ class InitialisationMilleGrille:
     def demarrer_service_blocking(self, nom_service):
 
         def callback_start_confirm(event):
+            nom_service_en_attente = '%s_%s' % (self.variables_env.tronqer_idmg(), nom_service)
+            nom_service_en_attente.strip()
+
+            wait_event = self.__wait_event
+
             attrs = event['Actor']['Attributes']
             name = attrs.get('name')
-            if name.split('.')[0] == '%s_%s' % (self.__idmg, nom_service):
+
+            name_split = name.split('.')[0].strip()
+            self.__logger.debug("Callback demarrage confirm: %s (%s)" % (name_split, nom_service_en_attente))
+            if name_split == nom_service_en_attente:
                 self.__logger.info("Service %s est demarre dans docker" % nom_service)
-                self.__wait_event.set()
+                wait_event.set()
 
         # Ajouter un callback pour etre notifie des demarrage de containers
         self.__docker_facade.add_event_callback(
@@ -99,9 +107,11 @@ class InitialisationMilleGrille:
         mode = self.__docker_facade.installer_service(self.__idmg, nom_service)
 
         if mode == 'create':
+            self.__logger.debug("Attente demarrage")
             self.__wait_event.wait(120)
             if not self.__wait_event.is_set():
                 raise Exception("Erreur d'attente de chargement de %s" % nom_service)
+            self.__logger.debug("Demarrage")
             self.__wait_event.clear()
         self.__docker_facade.clear_event_callbacks()  # Enlever tous les listeners
 
@@ -129,7 +139,7 @@ class InitialisationMilleGrille:
                 os.chmod(dest, 750)
 
             # Executer le script
-            nom_container = '%s_mongo' % self.__idmg
+            nom_container = '%s_mongo' % self.variables_env.tronqer_idmg()
             # self.__logger.debug("Liste de containers: %s" % liste_containers)
 
             container_mongo = None

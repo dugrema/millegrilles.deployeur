@@ -161,3 +161,6 @@ class VariablesEnvironnementMilleGrilles:
             self.idmg,
             path
         )
+
+    def tronqer_idmg(self):
+        return self.idmg[0:12]

@@ -209,8 +209,10 @@ class DockerFacade:
         :return:
         """
 
+        idmg_tronque = idmg[0:12]
+
         # Verifier que le service MQ est en fonction - sinon le deployer
-        nom_service_complet = '%s_%s' % (idmg, nom_service)
+        nom_service_complet = '%s_%s' % (idmg_tronque, nom_service)
         etat_service_resp = self.info_service(nom_service_complet)
         if len(etat_service_resp) == 0:
             mode = 'create'
@@ -565,13 +567,19 @@ class ServiceDockerConfiguration:
 
         return valeur
 
+    def tronquer_idmg(self):
+        return self.__idmg[0:12]
+
     def formatter_nom_service(self):
-        return '%s_%s' % (self.__idmg, self.__nom_service)
+        """
+        Formatte le nom du service, conserver les 12 premiers chars du idmg
+        """
+        return '%s_%s' % (self.tronquer_idmg(), self.__nom_service)
 
     def trouver_secret(self, nom_secret):
         secrets = {}  # Date, {key,cert,key_cert: Id)
         for nom_secret_opt in nom_secret.split(';'):
-            prefixe_secret = '%s.%s' % (self.__idmg, nom_secret_opt)
+            prefixe_secret = '%s.%s' % (self.tronquer_idmg(), nom_secret_opt)
             for secret_name, secret_id in self.__secrets_par_nom.items():
 
                 # Le nom du secret peut fournir plusieurs options, separees par un ';'
@@ -586,7 +594,7 @@ class ServiceDockerConfiguration:
         dates = sorted(secrets.keys(), reverse=True)
 
         if len(secrets) == 0:
-            raise Exception("Secret %s non trouve" % nom_secret)
+            raise Exception("Secret %s non trouve (%s)" % nom_secret)
 
         for secret_date in dates:
             return secrets[secret_date]
@@ -596,7 +604,7 @@ class ServiceDockerConfiguration:
     def trouver_config(self, nom_config):
         configs = {}  # Date, {key,cert,key_cert: Id)
         for nom_config_opt in nom_config.split(';'):
-            prefixe_config = '%s.%s' % (self.__idmg, nom_config_opt)
+            prefixe_config = '%s.%s' % (self.tronquer_idmg(), nom_config_opt)
             for config_name, config_id in self.__configs_par_nom.items():
                 if config_name.startswith(prefixe_config):
                     config_name_list = config_name.split('.')

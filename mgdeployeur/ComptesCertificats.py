@@ -150,37 +150,37 @@ class GestionnaireComptesMongo:
         # Inserer secrets dans docker
         messages = [
             {
-                "Name": '%s.passwd.mongo.root.%s' % (idmg, datetag),
+                "Name": '%s.passwd.mongo.root.%s' % (self.constantes.tronqer_idmg(), datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(mot_passe_root_mongo.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.mongo.scriptinit.%s' % (idmg, datetag),
+                "Name": '%s.passwd.mongo.scriptinit.%s' % (self.constantes.tronqer_idmg(), datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(script_js.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.domaines.json.%s' % (idmg, datetag),
+                "Name": '%s.passwd.domaines.json.%s' % (self.constantes.tronqer_idmg(), datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(compte_domaines.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.transactions.json.%s' % (idmg, datetag),
+                "Name": '%s.passwd.transactions.json.%s' % (self.constantes.tronqer_idmg(), datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(compte_transaction.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.maitrecles.json.%s' % (idmg, datetag),
+                "Name": '%s.passwd.maitrecles.json.%s' % (self.constantes.tronqer_idmg(), datetag),
                 "Labels": {
                     "password": "individuel",
                 },
                 "Data": base64.encodebytes(compte_maitredescles.encode('utf-8')).decode('utf-8')
             }, {
-                "Name": '%s.passwd.mongoexpress.web.%s' % (idmg, datetag),
+                "Name": '%s.passwd.mongoexpress.web.%s' % (self.constantes.tronqer_idmg(), datetag),
                 "Labels": {
                     "password": "individuel",
                 },
@@ -250,7 +250,7 @@ class GestionnaireCertificats:
         contenu_cle = base64.encodebytes(clecert.private_key_bytes).decode('utf-8')
         contenu_cert = base64.encodebytes(clecert.cert_bytes).decode('utf-8')
 
-        id_secret_key_formatte = '%s.%s.key.%s' % (self.__idmg, id_secret, datetag)
+        id_secret_key_formatte = '%s.%s.key.%s' % (self.tronquer_idmg(), id_secret, datetag)
         message_key = {
             "Name": id_secret_key_formatte,
             "Labels": {
@@ -263,7 +263,7 @@ class GestionnaireCertificats:
             raise Exception(
                 "Ajout key status code: %d, erreur: %s" % (resultat.status_code, str(resultat.content)))
 
-        id_secret_cert_formatte = '%s.%s.cert.%s' % (self.__idmg, id_secret, datetag)
+        id_secret_cert_formatte = '%s.%s.cert.%s' % (self.tronquer_idmg(), id_secret, datetag)
         message_cert = {
             "Name": id_secret_cert_formatte,
             "Labels": {
@@ -278,7 +278,7 @@ class GestionnaireCertificats:
 
         if clecert.chaine is not None:
             contenu_fullchain = base64.b64encode(''.join(clecert.chaine).encode('utf-8')).decode('utf-8')
-            id_secret_fullchain_formatte = '%s.%s.fullchain.%s' % (self.__idmg, id_secret, datetag)
+            id_secret_fullchain_formatte = '%s.%s.fullchain.%s' % (self.tronquer_idmg(), id_secret, datetag)
             message_fullchain = {
                 "Name": id_secret_fullchain_formatte,
                 "Labels": {
@@ -298,7 +298,7 @@ class GestionnaireCertificats:
             cle_cert_combine = '%s\n%s' % (cle, cert)
             cle_cert_combine = base64.encodebytes(cle_cert_combine.encode('utf-8')).decode('utf-8')
 
-            id_secret_cle_cert_formatte = '%s.%s.key_cert.%s' % (self.__idmg, id_secret, datetag)
+            id_secret_cle_cert_formatte = '%s.%s.key_cert.%s' % (self.tronquer_idmg(), id_secret, datetag)
             message_cert = {
                 "Name": id_secret_cle_cert_formatte,
                 "Labels": {
@@ -342,7 +342,7 @@ class GestionnaireCertificats:
             autorite_clecert.from_pem_bytes(racine_private, racine_public, racine_password)
 
             # Generer le premier certificat de MilleGrille intermediaire
-            generateur_mg_initial = GenerateurInitial(self.__idmg, autorite_clecert)
+            generateur_mg_initial = GenerateurInitial(self.tronquer_idmg(), autorite_clecert)
             millegrille_clecert = generateur_mg_initial.generer()
             # autorite_clecert = generateur_mg_initial.autorite
 
@@ -350,7 +350,7 @@ class GestionnaireCertificats:
                 autorite_clecert.skid: autorite_clecert.cert,
                 millegrille_clecert.skid: millegrille_clecert.cert,
             }
-            renouvelleur = RenouvelleurCertificat(self.__idmg, dict_ca, millegrille_clecert, autorite_clecert)
+            renouvelleur = RenouvelleurCertificat(self.tronquer_idmg(), dict_ca, millegrille_clecert, autorite_clecert)
 
             deployeur_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_DEPLOYEUR, docker_nodename)
             self.sauvegarder_clecert_deployeur(deployeur_clecert, millegrille_clecert)
@@ -377,7 +377,7 @@ class GestionnaireCertificats:
             }
             contenu = base64.encodebytes(json.dumps(contenu).encode('utf-8')).decode('utf-8')
             message_cert = {
-                "Name": '%s.pki.ca.passwords.%s' % (self.__idmg, self.__datetag),
+                "Name": '%s.pki.ca.passwords.%s' % (self.tronquer_idmg(), self.__datetag),
                 "Labels": {
                     "password": "init",
                 },
@@ -461,6 +461,9 @@ class GestionnaireCertificats:
         :return:
         """
         liste_configs = self.__docker_facade
+
+    def tronquer_idmg(self):
+        return self.__idmg[0:12]
 
 
 class RenouvellementCertificats:
