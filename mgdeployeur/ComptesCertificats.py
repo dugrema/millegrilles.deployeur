@@ -350,7 +350,7 @@ class GestionnaireCertificats:
                 autorite_clecert.skid: autorite_clecert.cert,
                 millegrille_clecert.skid: millegrille_clecert.cert,
             }
-            renouvelleur = RenouvelleurCertificat(self.tronquer_idmg(), dict_ca, millegrille_clecert, autorite_clecert)
+            renouvelleur = RenouvelleurCertificat(self.__idmg, dict_ca, millegrille_clecert, autorite_clecert)
 
             deployeur_clecert = renouvelleur.renouveller_par_role(ConstantesGenerateurCertificat.ROLE_DEPLOYEUR, docker_nodename)
             self.sauvegarder_clecert_deployeur(deployeur_clecert, millegrille_clecert)
