@@ -273,7 +273,7 @@ class InitialisationMilleGrille:
         # Charger certs dans docker config
         docker_configs = self.__docker_facade.configs.list()
         for config in docker_configs:
-            if config.name.startswith('%s.pki' % self.__idmg):
+            if config.name.startswith('%s.pki' % self.variables_env.tronqer_idmg()):
                 elems = config.name.split('.')
                 if elems[3] == 'cert' and elems[2] in ('transaction', 'maitrecles'):
                     # Charger ce certificat
