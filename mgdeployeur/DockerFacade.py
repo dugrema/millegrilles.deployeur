@@ -464,7 +464,7 @@ class ServiceDockerConfiguration:
             VariablesEnvironnementMilleGrilles.REPERTOIRE_MILLEGRILLES_ETC,
             self.__idmg
         )
-        config_filename = '%s/docker.%s.json' % (config_path,self.__nom_service)
+        config_filename = '%s/docker.%s.json' % (config_path, self.__nom_service)
         with open(config_filename, 'wb') as fichier:
             contenu = json.dumps(service_config, indent=4)
             contenu = contenu.encode('utf-8')
@@ -594,7 +594,7 @@ class ServiceDockerConfiguration:
         dates = sorted(secrets.keys(), reverse=True)
 
         if len(secrets) == 0:
-            raise Exception("Secret %s non trouve (%s)" % nom_secret)
+            raise Exception("Secret %s non trouve" % nom_secret)
 
         for secret_date in dates:
             return secrets[secret_date]
