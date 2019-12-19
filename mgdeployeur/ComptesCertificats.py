@@ -21,6 +21,7 @@ from mgdeployeur.RabbitMQManagement import RabbitMQAPI
 from mgdeployeur.Constantes import ConstantesMonitor, VariablesEnvironnementMilleGrilles
 from mgdeployeur.GestionnaireServices import GestionnairesServicesDocker
 
+
 class GestionnaireComptesRabbitMQ:
 
     def __init__(self, idmg: str, docker: DockerFacade, docker_nodename: str):
