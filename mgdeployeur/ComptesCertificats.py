@@ -342,7 +342,7 @@ class GestionnaireCertificats:
             autorite_clecert.from_pem_bytes(racine_private, racine_public, racine_password)
 
             # Generer le premier certificat de MilleGrille intermediaire
-            generateur_mg_initial = GenerateurInitial(self.tronquer_idmg(), autorite_clecert)
+            generateur_mg_initial = GenerateurInitial(self.__idmg, autorite_clecert)
             millegrille_clecert = generateur_mg_initial.generer()
             # autorite_clecert = generateur_mg_initial.autorite
 
@@ -391,6 +391,7 @@ class GestionnaireCertificats:
             roles = [
                 ConstantesGenerateurCertificat.ROLE_TRANSACTIONS,
                 ConstantesGenerateurCertificat.ROLE_MAITREDESCLES,
+                ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
             ]
             for role in roles:
                 combiner = role in ConstantesGenerateurCertificat.ROLES_ACCES_MONGO
@@ -409,7 +410,6 @@ class GestionnaireCertificats:
                 ConstantesGenerateurCertificat.ROLE_COUPDOEIL,
                 ConstantesGenerateurCertificat.ROLE_PUBLICATEUR,
                 ConstantesGenerateurCertificat.ROLE_VITRINE,
-                ConstantesGenerateurCertificat.ROLE_MONGOEXPRESS,
                 ConstantesGenerateurCertificat.ROLE_NGINX,
                 ConstantesGenerateurCertificat.ROLE_CONNECTEUR,
             ]
