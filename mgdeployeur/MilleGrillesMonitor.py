@@ -314,7 +314,7 @@ class MonitorMilleGrille:
 
         self.__contexte = ContexteRessourcesMilleGrilles(additionals=[config_additionnelle])
         self.__logger.debug("Contexte Init")
-        self.__contexte.initialiser(init_document=False, connecter=True)
+        self.__contexte.initialiser(connecter=True)
 
         self.__logger.debug("Contexte initialise")
 
