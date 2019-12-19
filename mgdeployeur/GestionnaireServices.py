@@ -157,11 +157,19 @@ class GestionnairesServicesDocker:
     def demarrer_service_blocking(self, idmg, nom_service):
 
         def callback_start_confirm(event):
+            nom_service_en_attente = '%s_%s' % (self.tronquer_idmg(idmg), nom_service)
+            nom_service_en_attente.strip()
+
+            wait_event = self.__wait_event
+
             attrs = event['Actor']['Attributes']
             name = attrs.get('name')
-            if name.split('.')[0] == '%s_%s' % (idmg, nom_service):
-                self.__logger.info("Mongo est demarre dans docker")
-                self.__wait_event.set()
+
+            name_split = name.split('.')[0].strip()
+            self.__logger.debug("Callback demarrage confirm: %s (%s)" % (name_split, nom_service_en_attente))
+            if name_split == nom_service_en_attente:
+                self.__logger.info("Service %s est demarre dans docker" % nom_service)
+                wait_event.set()
 
         # Ajouter un callback pour etre notifie des demarrage de containers
         self.__docker_facade.add_event_callback(
@@ -197,3 +205,6 @@ class GestionnairesServicesDocker:
 
     def liste_services(self, idmg: str = None, nom_service: str = None):
         return self.__docker_facade.liste_services(idmg, nom_service)
+
+    def tronquer_idmg(self, idmg):
+        return idmg[0:12]
