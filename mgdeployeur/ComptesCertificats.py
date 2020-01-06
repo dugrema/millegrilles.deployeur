@@ -9,10 +9,8 @@ import datetime
 import os
 
 from millegrilles import Constantes
-from millegrilles.Constantes import ConstantesParametres
+from millegrilles.Constantes import ConstantesParametres, ConstantesPki, ConstantesMaitreDesCles
 from millegrilles.transaction import GenerateurTransaction
-from millegrilles.Constantes import ConstantesPki
-from millegrilles.domaines.MaitreDesCles import ConstantesMaitreDesCles
 from millegrilles.SecuritePKI import EnveloppeCertificat
 from millegrilles.util.X509Certificate import ConstantesGenerateurCertificat, GenerateurInitial, \
     EnveloppeCleCert, RenouvelleurCertificat, DecryptionHelper, GenerateurCertificat
