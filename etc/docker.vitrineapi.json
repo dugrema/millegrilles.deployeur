@@ -3,10 +3,10 @@
   "TaskTemplate": {
     "ContainerSpec": {
       "Image": "${vitrineapi}",
-      "Hostname": "vitrineapi-${IDMG}",
+      "Hostname": "vitrineapi",
       "Env": [
         "MG_IDMG=${IDMG}",
-        "WEB_URL=vitrineapi-${IDMG}.local",
+        "WEB_URL=https://vitrineapi-${IDMG}.local",
         "DATA_FOLDER=/var/opt/millegrilles/data",
         "MG_MQ_URL=amqps://mq:5673/${IDMG}",
         "MG_MQ_CAFILE=/run/secrets/pki.millegrilles.ssl.CAchain",
