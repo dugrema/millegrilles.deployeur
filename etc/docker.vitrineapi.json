@@ -84,7 +84,7 @@
     "Networks": [
         {
           "Target": "mg_${IDMG}_net",
-          "Aliases": ["vitrineapi-${IDMG}"]
+          "Aliases": ["vitrineapi-${IDMGLOWER}"]
         }
     ]
   },
