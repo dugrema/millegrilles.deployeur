@@ -2,7 +2,7 @@
   "Name": "vitrineapi",
   "TaskTemplate": {
     "ContainerSpec": {
-      "Image": "${vitrine_api}",
+      "Image": "${vitrineapi}",
       "Hostname": "vitrineapi-${IDMG}",
       "Env": [
         "MG_IDMG=${IDMG}",
@@ -13,7 +13,7 @@
         "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
         "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
         "CERT=/run/secrets/pki.millegrilles.ssl.fullchain",
-        "PRIVKEY=/run/secrets/pki.millegrilles.ssl.key",
+        "PRIVKEY=/run/secrets/pki.millegrilles.ssl.key"
       ],
       "Mounts": [
         {
@@ -24,7 +24,7 @@
       ],
       "Secrets": [
         {
-          "SecretName": "pki.vitrine.key",
+          "SecretName": "pki.vitrineapi.key",
           "File": {
             "Name": "pki.millegrilles.ssl.key",
             "UID": "0",
@@ -35,7 +35,7 @@
       ],
       "Configs": [
         {
-          "ConfigName": "pki.vitrine.cert",
+          "ConfigName": "pki.vitrineapi.cert",
           "File": {
             "Name": "/run/secrets/pki.millegrilles.ssl.cert",
             "UID": "0",
@@ -52,7 +52,7 @@
             "Mode": 292
           }
         }, {
-          "ConfigName": "pki.vitrine.fullchain",
+          "ConfigName": "pki.vitrineapi.fullchain",
           "File": {
             "Name": "/run/secrets/pki.millegrilles.ssl.fullchain",
             "UID": "0",

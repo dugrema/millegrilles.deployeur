@@ -6,12 +6,12 @@
     "images": {
         "mongo": {"registries": ["docker.maceroc.com",""], "image": "mongo", "version": "4.0"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_3"},
-        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "x86_64_1.18.28"},
+        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "x86_64_1.18.29"},
         "transmission": {"registries": ["docker.maceroc.com", "linuxserver"], "image": "transmission", "version": "2.94-r2-ls35"},
         "consignationfichiers": {"image": "consignationfichiers", "version": "1.18.1"},
         "coupdoeilreact": {"image": "coupdoeil_react", "version": "x86_64_1.18.5"},
-        "vitrinereact": {"image": "vitrine_api", "version": "x86_64_1.18.7"},
-        "vitrineweb": {"image": "vitrine_web", "version": "1.18.7"},
+        "vitrineapi": {"image": "vitrineapi", "version": "x86_64_1.18.8"},
+        "vitrineweb": {"image": "vitrineweb", "version": "x86_64_1.18.8"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
     }
 }
