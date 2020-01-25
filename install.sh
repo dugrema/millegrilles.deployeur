@@ -116,6 +116,7 @@ download_images_docker() {
   echo "[INFO] Telecharger les images docker"
   # Note: Utilise le compte docker de l'usager courant (docker login)
   sudo /opt/millegrilles/bin/deployer.py --info --download_only installer pas_important
+  sudo chown -R $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $MILLEGRILLES_ETC
 }
 
 redemarrer_monitor() {

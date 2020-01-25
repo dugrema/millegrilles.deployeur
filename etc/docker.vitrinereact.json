@@ -3,7 +3,7 @@
   "TaskTemplate": {
     "ContainerSpec": {
       "Image": "${vitrinereact}",
-      "Hostname": "vitrine-${IDMG}.local",
+      "Hostname": "vitrine-${IDMG}",
       "Env": [
         "MG_IDMG=${IDMG}",
         "MG_MQ_URL=amqps://mq:5673/${IDMG}",
