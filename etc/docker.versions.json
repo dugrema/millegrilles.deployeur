@@ -10,8 +10,8 @@
         "transmission": {"registries": ["docker.maceroc.com", "linuxserver"], "image": "transmission", "version": "2.94-r2-ls35"},
         "consignationfichiers": {"image": "consignationfichiers", "version": "1.18.1"},
         "coupdoeilreact": {"image": "coupdoeil_react", "version": "x86_64_1.18.5"},
-        "vitrineapi": {"image": "vitrineapi", "version": "x86_64_1.18.8"},
-        "vitrineweb": {"image": "vitrineweb", "version": "x86_64_1.18.10"},
+        "vitrineapi": {"image": "vitrineapi", "version": "x86_64_1.18.9"},
+        "vitrineweb": {"image": "vitrineweb", "version": "x86_64_1.18.11"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
     }
 }
