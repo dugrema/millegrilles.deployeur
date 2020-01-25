@@ -1,18 +1,26 @@
 {
-  "Name": "vitrinereact",
+  "Name": "vitrineapi",
   "TaskTemplate": {
     "ContainerSpec": {
-      "Image": "${vitrinereact}",
-      "Hostname": "vitrine-${IDMG}",
+      "Image": "${vitrine_api}",
+      "Hostname": "vitrineapi-${IDMG}",
       "Env": [
         "MG_IDMG=${IDMG}",
+        "WEB_URL=vitrineapi-${IDMG}.local",
+        "DATA_FOLDER=/var/opt/millegrilles/data",
         "MG_MQ_URL=amqps://mq:5673/${IDMG}",
         "MG_MQ_CAFILE=/run/secrets/pki.millegrilles.ssl.CAchain",
         "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
         "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
         "CERT=/run/secrets/pki.millegrilles.ssl.fullchain",
         "PRIVKEY=/run/secrets/pki.millegrilles.ssl.key",
-        "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation"
+      ],
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/var/opt/millegrilles/${IDMG}/mounts/nginx/data",
+          "Target": "/var/opt/millegrilles/data"
+        }
       ],
       "Secrets": [
         {
@@ -76,7 +84,7 @@
     "Networks": [
         {
           "Target": "mg_${IDMG}_net",
-          "Aliases": ["vitrinereact", "vitrinereact.local"]
+          "Aliases": ["vitrineapi-${IDMG}"]
         }
     ]
   },

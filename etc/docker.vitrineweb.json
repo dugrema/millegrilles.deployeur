@@ -1,12 +1,12 @@
 {
-  "Name": "nginx",
+  "Name": "vitrineweb",
   "TaskTemplate": {
     "ContainerSpec": {
-      "Image": "${nginx}",
+      "Image": "${vitrine_web}",
       "Args": [
         "./run.sh"
       ],
-      "Hostname": "nginx",
+      "Hostname": "vitrineweb",
       "Env": [
         "IDMG=${IDMG}",
         "NGINX_CONFIG_FILE=millegrilles.conf",
@@ -92,7 +92,7 @@
     "Networks": [
         {
           "Target": "mg_${IDMG}_net",
-          "Aliases": ["www", "${DOMAIN_PUBLIC}", "${IDMG}.local"]
+          "Aliases": ["vitrineweb-${IDMG}"]
         }
     ]
   },

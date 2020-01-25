@@ -34,7 +34,6 @@ class GestionnairesServicesDocker:
                 {'nom': 'coupdoeilreact',  'labels': {'millegrilles.coupdoeil': 'true'}},
                 # {'nom': 'vitrinereact',  'labels': {'millegrilles.vitrine': 'true'}},
                 # {'nom': 'nginx', 'labels': {'millegrilles.nginx': 'true'}},
-                # {'nom': 'publicateur',  'labels': {}},
                 {'nom': 'transmission', 'labels': {}},
             ]
         }
