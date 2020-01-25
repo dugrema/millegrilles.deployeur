@@ -9,7 +9,7 @@
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "x86_64_1.18.27"},
         "transmission": {"registries": ["docker.maceroc.com", "linuxserver"], "image": "transmission", "version": "2.94-r2-ls35"},
         "consignationfichiers": {"image": "consignationfichiers", "version": "1.18.1"},
-        "coupdoeilreact": {"image": "coupdoeil_react", "version": "1.18.3"},
+        "coupdoeilreact": {"image": "coupdoeil_react", "version": "x86_64_1.18.5"},
         "vitrinereact": {"image": "vitrine_api", "version": "1.18.6"},
         "vitrineweb": {"image": "vitrine_web", "version": "1.18.7"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
