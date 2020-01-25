@@ -82,6 +82,9 @@ class VariablesEnvironnementMilleGrilles:
         """
         self.mapping = {
             "IDMG": self.idmg,
+            "IDMGLOWER": self.idmg.lower(),
+            "IDMGTRUNC": self.tronqer_idmg(),
+            "IDMGTRUNCLOWER": self.tronqer_idmg().lower(),
             "MOUNTS": self.rep_mounts,
             "MONGO_INITDB_ROOT_USERNAME": VariablesEnvironnementMilleGrilles.MONGO_INITDB_ROOT_USERNAME,
         }

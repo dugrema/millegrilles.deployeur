@@ -8,37 +8,20 @@
       ],
       "Hostname": "vitrineweb",
       "Env": [
-        "IDMG=${IDMG}",
-        "NGINX_CONFIG_FILE=millegrilles.conf",
-        "WEB_CERT=/run/secrets/pki.millegrilles.web.fullchain",
-        "WEB_KEY=/run/secrets/pki.millegrilles.web.key",
-        "WEB_URL=${URL_WEB}",
-        "WEB_COUPDOEIL=${URL_COUPDOEIL}",
-        "LOCAL_CERT=/run/secrets/pki.millegrilles.ssl.fullchain",
-        "LOCAL_KEY=/run/secrets/pki.millegrilles.ssl.key",
-        "LOCAL_URL=mg-${IDMG}.local",
-        "LOCAL_COUPDOEIL=coupdoeil-${IDMG}.local"
+        "LISTE_MILLEGRILLES=IDMG=${IDMG}:WEB_URL=vitrineweb-${IDMGTRUNCLOWER}.local:WEB_CERT=/run/secrets/fullchain.cert.pem:WEB_KEY=/run/secrets/key.pem"
       ],
       "Mounts": [
         {
           "Type": "bind",
-          "Source": "/var/opt/millegrilles/${IDMG}/mounts/nginx",
-          "Target": "/usr/share/nginx/html"
+          "Source": "/var/opt/millegrilles",
+          "Target": "/usr/share/nginx/millegrilles"
         }
       ],
       "Secrets": [
         {
-          "SecretName": "pki.millegrilles.web.key;pki.nginx.key",
+          "SecretName": "pki.vitrineweb.key",
           "File": {
-            "Name": "pki.millegrilles.web.key",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        },{
-          "SecretName": "pki.nginx.key",
-          "File": {
-            "Name": "pki.millegrilles.ssl.key",
+            "Name": "key.pem",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -47,17 +30,9 @@
       ],
       "Configs": [
         {
-          "ConfigName": "pki.millegrilles.web.fullchain;pki.nginx.fullchain",
+          "ConfigName": "pki.vitrineweb.fullchain",
           "File": {
-            "Name": "/run/secrets/pki.millegrilles.web.fullchain",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        },{
-          "ConfigName": "pki.nginx.fullchain",
-          "File": {
-            "Name": "/run/secrets/pki.millegrilles.ssl.fullchain",
+            "Name": "/run/secrets/fullchain.cert.pem",
             "UID": "0",
             "GID": "0",
             "Mode": 292
@@ -70,7 +45,7 @@
     },
     "Placement": {
       "Constraints": [
-        "node.labels.millegrilles.nginx == true"
+        "node.labels.millegrilles.vitrine == true"
       ]
     },
     "Resources": {
@@ -92,7 +67,7 @@
     "Networks": [
         {
           "Target": "mg_${IDMG}_net",
-          "Aliases": ["vitrineweb-${IDMG}"]
+          "Aliases": ["vitrineweb-${IDMGLOWER}"]
         }
     ]
   },
