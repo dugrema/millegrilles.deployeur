@@ -79,7 +79,7 @@ class DockerIPV6Mapper:
 
         # Garder les 48 premiers bits pour completer le reseau (/80)
         suffixe_str = binascii.hexlify(digest).decode('utf-8')
-        suffixe_format = '%s:%s:%s' % (suffixe_str[0:2], suffixe_str[2:4], suffixe_str[4:6])
+        suffixe_format = '%s:%s:%s' % (suffixe_str[0:4], suffixe_str[4:8], suffixe_str[8:12])
         return suffixe_format
 
     def get_network(self, name: str):
