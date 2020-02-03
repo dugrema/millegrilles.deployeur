@@ -9,7 +9,7 @@ fi
 
 export IDMG=$1
 
-REP_MILLEGRILLE=$MILLEGRILLES_PATH/$IDMG
+REP_MILLEGRILLE=$MILLEGRILLES_VAR/$IDMG
 CURDATE=`date +%Y%m%d%H%M%S`
 
 REP_CERTS=$REP_MILLEGRILLE/$MILLEGRILLES_CERTS
@@ -45,7 +45,7 @@ creer_cert_noeud() {
   NOM_NOEUD=$HOSTNAME \
   URL_PUBLIC=$URL_PUBLIC \
   openssl req -newkey rsa:2048 -sha512 -nodes \
-              -config $MILLEGRILLES_OPENSSL_CNFMILLEGRILLES \
+              -config $MILLEGRILLES_OPENSSL_NOEUDPUBLIC \
               -out $REQ -outform PEM -keyout $KEY -keyform PEM \
               -reqexts noeud_req_public_extensions \
               -subj $SUBJECT
