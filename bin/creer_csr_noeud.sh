@@ -38,6 +38,8 @@ creer_cert_noeud() {
 
   echo "[INFO] Creation certificat $TYPE_NOEUD"
 
+  mkdir -p $REP_KEYS $REP_CERTS
+
   KEY=$REP_KEYS/${IDMG}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.key.pem
   REQ=$REP_CERTS/${IDMG}_${TYPE_NOEUD}_${HOSTNAME}_${CURDATE}.req.pem
   SUBJECT="/O=$IDMG/OU=$TYPE_NOEUD/CN=$HOSTNAME"
@@ -51,6 +53,7 @@ creer_cert_noeud() {
               -subj $SUBJECT
 
   ln -sf $KEY $REP_KEYS/${IDMG}_${TYPE_NOEUD}.key.pem
+  ln $KEY $REP_KEYS/pki.noeud.key.pem
 
   echo "[OK] Creation requete $TYPE_NOEUD complet"
   echo "Coller la valeur suivante dans CoupDOeil / PKI / Signer un certificat de noeud"
