@@ -112,6 +112,9 @@ class GestionnairesServicesDocker:
     def redemarrer_services_inactifs(self, idmg: str):
         if self.__phase_execution == '3':
             services = self.docker_facade.liste_services(idmg)
+
+            # Aller chercher la liste courante de services
+            # On ne reinstalle pas de services qui ont ete desinstalles manuellement
             for service in services:
                 service_name = service.attrs['Spec']['Name']
 
@@ -128,7 +131,11 @@ class GestionnairesServicesDocker:
                     state = status['State']
                     desired_state = task['DesiredState']
                     if state == 'running' or desired_state == 'running' or update_state == 'updating':
+                        # Le service est actif
                         running.append(running)
+                    else:
+                        # Le service est ferme, on le redemarre
+                        self.__logger.warning("Service %s etat %s, etat desire: %s" % (service_name, state, desired_state))
 
                 if len(running) == 0:
                     # Redemarrer
