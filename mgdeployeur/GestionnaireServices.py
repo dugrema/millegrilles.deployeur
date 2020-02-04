@@ -126,7 +126,7 @@ class GestionnairesServicesDocker:
 
                 # Compter le nombre de taches actives
                 running = list()
-                self.__logger.info(
+                self.__logger.debug(
                     "Service %s update state etat %s" % (service_name, update_state))
                 for task in service.tasks():
                     status = task['Status']
