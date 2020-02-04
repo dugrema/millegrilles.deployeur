@@ -313,15 +313,13 @@ class MonitorMilleGrille:
             self.__logger.debug("Configuration\n%s" % json.dumps(config_additionnelle, indent=4))
 
         self.__contexte = ContexteRessourcesMilleGrilles(additionals=[config_additionnelle])
-        self.__logger.debug("Contexte Init")
+        self.__contexte.initialiser(connecter=True)
+        self.__contexte.message_dao.register_channel_listener(self)
+        self.__logger.debug("Contexte initialise")
 
         # Configurer le deployeur de MilleGrilles
         self.__renouvellement_certificats = RenouvellementCertificats(
             self.__idmg, self.__gestionnaire_services_docker, self.node_name, self.generateur_transactions, self.__mq_info, self.__gestionnaire_comptes_rabbitmq)
-
-        self.__contexte.message_dao.register_channel_listener(self)
-        self.__contexte.initialiser(connecter=True)
-        self.__logger.debug("Contexte initialise")
 
         # Message handler et Q pour monitor
         self.__message_handler = MonitorMessageHandler(self.__contexte, self.__renouvellement_certificats, self)
