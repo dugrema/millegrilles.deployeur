@@ -320,6 +320,8 @@ class MonitorMilleGrille:
             self.__idmg, self.__gestionnaire_services_docker, self.node_name, self.generateur_transactions, self.__mq_info, self.__gestionnaire_comptes_rabbitmq)
 
         self.__contexte.message_dao.register_channel_listener(self)
+        self.__contexte.initialiser(connecter=True)
+        self.__logger.debug("Contexte initialise")
 
         # Message handler et Q pour monitor
         self.__message_handler = MonitorMessageHandler(self.__contexte, self.__renouvellement_certificats, self)
@@ -327,9 +329,6 @@ class MonitorMilleGrille:
         # Message handler et Q pour certificat
         self.__certificat_event_handler = GestionnaireEvenementsCertificat(self.__contexte)
         self.__certificat_event_handler.initialiser()
-
-        self.__contexte.initialiser(connecter=True)
-        self.__logger.debug("Contexte initialise")
 
         # Attendre que la Q de reponse soit prete
         self.__logger.debug("Attente connexion MQ pour %s" % self.__idmg)
