@@ -313,7 +313,11 @@ class MonitorMilleGrille:
             self.__logger.debug("Configuration\n%s" % json.dumps(config_additionnelle, indent=4))
 
         self.__contexte = ContexteRessourcesMilleGrilles(additionals=[config_additionnelle])
-        self.__contexte.initialiser(connecter=True)
+        try:
+            self.__contexte.initialiser(connecter=True)
+        except BrokenBarrierError:
+            self.__logger.exception("Connexion a MQ non possible, on va continuer avec un contexte partiel jusqu'a reconnexion")
+
         self.__contexte.message_dao.register_channel_listener(self)
         self.__logger.debug("Contexte initialise")
 
@@ -331,10 +335,7 @@ class MonitorMilleGrille:
         # Attendre que la Q de reponse soit prete
         self.__logger.debug("Attente connexion MQ pour %s" % self.__idmg)
 
-        try:
-            self.__action_event.wait(30)
-        except BrokenBarrierError:
-            self.__logger.exception("Connexion a MQ non possible, on va continuer avec un contexte partiel jusqu'a reconnexion")
+        self.__action_event.wait(30)
 
         if self.__action_event.is_set():
             self.__logger.debug("Connexion MQ pour %s reussie" % self.__idmg)
