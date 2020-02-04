@@ -143,7 +143,7 @@ creer_millegrille() {
 
   echo "[INFO] Creer une millegrille initiale"
   # Faire un hook vers la creation d'une millegrille si le parametre est inclus
-  $MILLEGRILLES_BIN/creer_millegrille.sh
+  sudo $MILLEGRILLES_BIN/creer_millegrille.sh
 
   # Charger IDMG
   source tmp/idmg.txt
