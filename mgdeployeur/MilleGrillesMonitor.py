@@ -11,7 +11,7 @@ from mgdeployeur.GestionExterne import GestionnairePublique
 from mgdeployeur.ComptesCertificats import RenouvellementCertificats, GestionnaireComptesRabbitMQ
 from mgdeployeur.GestionnaireServices import  GestionnairesServicesDocker
 
-from threading import Thread, Event
+from threading import Thread, Event, BrokenBarrierError
 
 import subprocess
 import logging
@@ -314,25 +314,31 @@ class MonitorMilleGrille:
 
         self.__contexte = ContexteRessourcesMilleGrilles(additionals=[config_additionnelle])
         self.__logger.debug("Contexte Init")
-        self.__contexte.initialiser(connecter=True)
-
-        self.__logger.debug("Contexte initialise")
 
         # Configurer le deployeur de MilleGrilles
         self.__renouvellement_certificats = RenouvellementCertificats(
             self.__idmg, self.__gestionnaire_services_docker, self.node_name, self.generateur_transactions, self.__mq_info, self.__gestionnaire_comptes_rabbitmq)
 
+        self.__contexte.message_dao.register_channel_listener(self)
+
         # Message handler et Q pour monitor
         self.__message_handler = MonitorMessageHandler(self.__contexte, self.__renouvellement_certificats, self)
-        self.__contexte.message_dao.register_channel_listener(self)
 
         # Message handler et Q pour certificat
         self.__certificat_event_handler = GestionnaireEvenementsCertificat(self.__contexte)
         self.__certificat_event_handler.initialiser()
 
+        self.__contexte.initialiser(connecter=True)
+        self.__logger.debug("Contexte initialise")
+
         # Attendre que la Q de reponse soit prete
         self.__logger.debug("Attente connexion MQ pour %s" % self.__idmg)
-        self.__action_event.wait(30)
+
+        try:
+            self.__action_event.wait(30)
+        except BrokenBarrierError:
+            self.__logger.exception("Connexion a MQ non possible, on va continuer avec un contexte partiel jusqu'a reconnexion")
+
         if self.__action_event.is_set():
             self.__logger.debug("Connexion MQ pour %s reussie" % self.__idmg)
         else:
