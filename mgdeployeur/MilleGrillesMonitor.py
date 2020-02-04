@@ -383,7 +383,10 @@ class MonitorMilleGrille:
         self.ceduler_redemarrage(15)
 
         # Verification initiale pour renouveller les certificats
-        self.__renouvellement_certificats.trouver_certs_a_renouveller()
+        try:
+            self.__renouvellement_certificats.trouver_certs_a_renouveller()
+        except Exception:
+            self.__logger.exception("Erreur trouver certificats a renouveller")
 
         self.__logger.info("Debut execution entretien MilleGrille %s" % self.__idmg)
         while not self.__stop_event.is_set():

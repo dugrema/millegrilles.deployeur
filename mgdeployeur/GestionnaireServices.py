@@ -135,11 +135,11 @@ class GestionnairesServicesDocker:
                     if state == 'running' or desired_state == 'running' or update_state == 'updating':
                         # Le service est actif
                         running.append(running)
-                        self.__logger.info(
+                        self.__logger.debug(
                             "Service %s etat %s, etat desire: %s" % (service_name, state, desired_state))
                     else:
                         # Le service est ferme, on le redemarre
-                        self.__logger.warning("Service %s etat %s, etat desire: %s" % (service_name, state, desired_state))
+                        self.__logger.debug("Service %s etat %s, etat desire: %s" % (service_name, state, desired_state))
 
                 if len(running) == 0:
                     # Redemarrer
