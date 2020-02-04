@@ -126,6 +126,8 @@ class GestionnairesServicesDocker:
 
                 # Compter le nombre de taches actives
                 running = list()
+                self.__logger.info(
+                    "Service %s update state etat %s" % (service_name, update_state))
                 for task in service.tasks():
                     status = task['Status']
                     state = status['State']
@@ -133,6 +135,8 @@ class GestionnairesServicesDocker:
                     if state == 'running' or desired_state == 'running' or update_state == 'updating':
                         # Le service est actif
                         running.append(running)
+                        self.__logger.info(
+                            "Service %s etat %s, etat desire: %s" % (service_name, state, desired_state))
                     else:
                         # Le service est ferme, on le redemarre
                         self.__logger.warning("Service %s etat %s, etat desire: %s" % (service_name, state, desired_state))
