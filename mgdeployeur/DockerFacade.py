@@ -384,16 +384,18 @@ class GestionnaireImagesDocker:
 
         return image
 
-    def get_image_locale(self, image_name, tag):
+    def get_image_locale(self, image_name, tag, custom_registries: list = tuple()):
         """
         Verifie si une image existe deja localement. Cherche dans tous les registres.
         :param image_name:
         :param tag:
+        :param custom_registries:
         :return:
         """
         self.__logger.debug("Get image locale %s:%s" % (image_name, tag))
 
         registries = self.__versions_images['registries'].copy()
+        registries.extend(custom_registries)
         registries.append('')
         for registry in registries:
             if registry != '':
@@ -413,7 +415,12 @@ class GestionnaireImagesDocker:
 
     def get_image_parconfig(self, config_key: str):
         config_values = self.__versions_images['images'].get(config_key)
-        image = self.get_image_locale(config_values['image'], config_values['version'])
+        self.__logger.debug("Config values pour %s: %s" % (config_key, str(config_values)))
+        custom_registries = list()
+        if config_values.get('registries') is not None:
+            custom_registries = config_values['registries']
+        image = self.get_image_locale(config_values['image'], config_values['version'], custom_registries)
+        self.__logger.debug("Tags pour image %s : %s" % (config_key, str(image.tags)))
         nom_image = image.tags[0]  # On prend un tag au hasard
         return nom_image
 
