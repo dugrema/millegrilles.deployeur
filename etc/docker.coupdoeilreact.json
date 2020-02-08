@@ -81,7 +81,7 @@
     "Ports": [
       {
         "Protocol": "tcp",
-        "PublishedPort": 7443,
+        "PublishedPort": 443,
         "TargetPort": 443,
         "PublishMode": "host"
       }
