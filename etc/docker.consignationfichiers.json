@@ -8,7 +8,7 @@
         "MG_IDMG=${IDMG}",
         "MG_MQ_URL=amqps://mq:5673/${IDMG}",
         "MG_MQ_CAFILE=/run/secrets/pki.millegrilles.ssl.CAchain",
-        "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
+        "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.fullchain",
         "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
         "CERT=/run/secrets/pki.millegrilles.ssl.fullchain",
         "PRIVKEY=/run/secrets/pki.millegrilles.ssl.key",
@@ -36,14 +36,6 @@
       ],
       "Configs": [
         {
-          "ConfigName": "pki.fichiers.cert",
-          "File": {
-            "Name": "/run/secrets/pki.millegrilles.ssl.cert",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }, {
           "ConfigName": "pki.millegrille.fullchain",
           "File": {
             "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
