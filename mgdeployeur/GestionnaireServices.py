@@ -210,6 +210,14 @@ class GestionnairesServicesDocker:
     def docker_facade(self):
         return self.__docker_facade
 
+    @property
+    def phase_execution(self):
+        return self.__phase_execution
+
+    @phase_execution.setter
+    def phase_execution(self, phase):
+        self.__phase_execution = phase
+
     def liste_nodes(self):
         return self.__docker_facade.liste_nodes()
 

@@ -56,6 +56,11 @@ class DeployeurDaemon(Daemon):
         )
 
         self.__parser.add_argument(
+            '--update', action="store_true", required=False,
+            help="Force un update de tous les services avec la configuration sur disque"
+        )
+
+        self.__parser.add_argument(
             'command', type=str, nargs=1, choices=['start', 'stop', 'restart', 'nofork'],
             help="Commande a executer (daemon): start, stop, restart. nofork execute en foreground"
         )
@@ -247,6 +252,10 @@ class DeployeurMonitor:
     def node_name(self):
         return self.__args.node
 
+    @property
+    def args(self):
+        return self.__args
+
 
 class MonitorMilleGrille:
 
@@ -384,7 +393,11 @@ class MonitorMilleGrille:
         self.__logger.info("Debut execution thread %s" % self.__idmg)
         self._initialiser_contexte()
 
-        self.ceduler_redemarrage(15)
+        if self.__monitor.args.update:
+            self.__logger.info("Redemarrage de tous les services cedule")
+            self.ceduler_redemarrage(15)
+        else:
+            self.__gestionnaire_services_docker.phase_execution = '3'
 
         # Verification initiale pour renouveller les certificats
         try:
@@ -425,10 +438,10 @@ class MonitorMilleGrille:
         self.__logger.info("Fin execution thread MilleGrille %s" % self.__idmg)
 
     def verifier_load(self):
-        cpu_load = psutil.getloadavg()[0]
-        if cpu_load > 3.0:
+        cpu_load, cpu_load5, cpu_load10 = psutil.getloadavg()
+        if cpu_load > 3.0 or cpu_load5 > 4.0:
             self.limiter_entretien = True
-            self.__logger.warning("Charge de travail elevee %s, entretien limite" % cpu_load)
+            self.__logger.warning("Charge de travail elevee %s / %s, entretien limite" % (cpu_load, cpu_load5))
         else:
             self.limiter_entretien = False
 

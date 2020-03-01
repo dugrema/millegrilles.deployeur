@@ -19,7 +19,7 @@ def get_version():
     return version
 
 setup(
-    name='MilleGrilles.deployeur',
+    name='millegrilles.deployeur',
     version='%s' % get_version(),
     packages=['mgdeployeur'],
     url='',
