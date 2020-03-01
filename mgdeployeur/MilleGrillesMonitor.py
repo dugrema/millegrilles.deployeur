@@ -492,7 +492,7 @@ class MonitorMilleGrille:
                 self.__gestionnaire_services_docker.demarrage_services(self.__idmg, self.__node_name)
         else:
             # Pas de redemarrage. On fait juste s'assurer que tous les services de la millegrille sont actifs.
-            self.__gestionnaire_services_docker.redemarrer_services_inactifs(self.__idmg)
+            self.__gestionnaire_services_docker.redemarrer_services_inactifs(self.__idmg, self.__node_name)
 
     def get_liste_service(self):
         liste = self.__gestionnaire_services_docker.liste_services()

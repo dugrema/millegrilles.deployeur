@@ -109,14 +109,26 @@ class GestionnairesServicesDocker:
             if service_inst is not None:
                 service_inst.remove()
 
-    def redemarrer_services_inactifs(self, idmg: str):
+    def redemarrer_services_inactifs(self, idmg: str, docker_nodename):
         if self.__phase_execution == '3':
             services = self.docker_facade.liste_services(idmg)
+
+            # Fabriquer liste services necessaires
+            nom_services = dict()
+            for phase in self.__noms_services_phases.values():
+                for service in phase:
+                    nom = self.tronquer_idmg(idmg) + '_' + service['nom']
+                    nom_services[nom] = service
+            self.__logger.debug("Liste complete services a activer: %s" % str(nom_services.keys()))
 
             # Aller chercher la liste courante de services
             # On ne reinstalle pas de services qui ont ete desinstalles manuellement
             for service in services:
                 service_name = service.attrs['Spec']['Name']
+
+                # Verifier si le service fait partie de la liste obligatoire
+                if nom_services.get(service_name) is not None:
+                    del nom_services[service_name]  # Enlever service deja present de la liste des services manquants
 
                 # Garder etat de mise a jour du service au besoin
                 update_state = None
@@ -146,6 +158,16 @@ class GestionnairesServicesDocker:
                     self.__logger.info("Redemarrer service %s" % service_name)
                     self.__logger.debug("Service\n%s" % json.dumps(service.attrs, indent=4))
                     service.force_update()
+
+            if len(nom_services) > 0:
+                self.__logger.warning("Sevices inactifs, activer immediatement : %s" % str(nom_services.keys()))
+                for conf_service in nom_services.values():
+                    nom_service = conf_service['nom']
+                    labels = conf_service['labels']
+
+                    # Installer le service
+                    self.__docker_facade.ajouter_nodelabels(docker_nodename, labels)
+                    self.demarrer_service_blocking(idmg, nom_service)
 
     def pull_image(self, nom_service, force=False):
         """
