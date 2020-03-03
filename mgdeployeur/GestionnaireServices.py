@@ -15,6 +15,7 @@ class GestionnairesServicesDocker:
 
         self.__phase_execution = '1'
         self.__wait_event = Event()
+        self.__arreter = False
 
         # Phase des services. Les services sont charges sequentiellement (blocking) dans l'ordre
         # represente dans la liste
@@ -26,7 +27,6 @@ class GestionnairesServicesDocker:
                 {'nom': 'maitredescles', 'labels': {'millegrilles.maitredescles': 'true'}}
             ],
             '2': [
-                {'nom': 'domaines', 'labels': {'millegrilles.domaines': 'true'}},
                 {'nom': 'consignationfichiers', 'labels': {'millegrilles.coupdoeil': 'true'}},
                 {'nom': 'ceduleur', 'labels': {}},
             ],
@@ -35,13 +35,17 @@ class GestionnairesServicesDocker:
                 # {'nom': 'vitrinereact',  'labels': {'millegrilles.vitrine': 'true'}},
                 # {'nom': 'nginx', 'labels': {'millegrilles.nginx': 'true'}},
                 {'nom': 'transmission', 'labels': {}},
-            ]
+            ],
+            '4': [
+                {'nom': 'domaines', 'labels': {'millegrilles.domaines': 'true'}},
+            ],
         }
 
     def demarrer(self):
         self.__docker_facade.demarrer_thread_event_listener()
 
     def arreter(self):
+        self.__arreter = True
         self.__docker_facade.arreter_thread_event_listener()
 
     def demarrage_services(self, idmg: str, docker_nodename: str):
@@ -52,17 +56,24 @@ class GestionnairesServicesDocker:
         self.demarrer_phase('1', idmg, docker_nodename)
         self.demarrer_phase('2', idmg, docker_nodename)
         self.demarrer_phase('3', idmg, docker_nodename)
+        self.demarrer_phase('4', idmg, docker_nodename)
         self.__logger.info("Services de la millegrille demarres")
 
     def arret_traitement(self, idmg, docker_nodename: str):
+        self.__arreter = True
         self.__logger.info("Arret de traitement sur la millegrille")
+        self.__phase_execution = '3'
+        self.arreter_phase('4', idmg, docker_nodename)
         self.__phase_execution = '2'
         self.arreter_phase('3', idmg, docker_nodename)
         self.__phase_execution = '1'
         self.arreter_phase('2', idmg, docker_nodename)
 
     def arret_total_services(self, idmg, docker_nodename: str):
+        self.__arreter = True
         self.__logger.info("Arret des services de la millegrille")
+        self.__phase_execution = '3'
+        self.arreter_phase('4', idmg, docker_nodename)
         self.__phase_execution = '2'
         self.arreter_phase('3', idmg, docker_nodename)
         self.__phase_execution = '1'
@@ -110,58 +121,80 @@ class GestionnairesServicesDocker:
                 service_inst.remove()
 
     def redemarrer_services_inactifs(self, idmg: str, docker_nodename):
-        if self.__phase_execution == '3':
+        """
+        Chercher les services inactifs, en ordre de deploiement
+
+        :param idmg:
+        :param docker_nodename:
+        :return:
+        """
+        # Fabriquer liste services necessaires en ordre de demarrage
+        liste_ordonnee_services = list()
+        for no_phase in range(1, 5):
+            for service in self.__noms_services_phases[str(no_phase)]:
+                liste_ordonnee_services.append(service)
+
+        self.__logger.debug("Liste ordonnee des services a activer: %s" % str(liste_ordonnee_services))
+
+        if not self.__arreter:
+            services_inactifs = list()
             services = self.docker_facade.liste_services(idmg)
 
-            # Fabriquer liste services necessaires
-            nom_services = dict()
-            for phase in self.__noms_services_phases.values():
-                for service in phase:
-                    nom = self.tronquer_idmg(idmg) + '_' + service['nom']
-                    nom_services[nom] = service
-            self.__logger.debug("Liste complete services a activer: %s" % str(nom_services.keys()))
-
-            # Aller chercher la liste courante de services
-            # On ne reinstalle pas de services qui ont ete desinstalles manuellement
+            # Extraire tous les services actifs et conserver par nom
+            dict_services_actifs = dict()
             for service in services:
                 service_name = service.attrs['Spec']['Name']
+                dict_services_actifs[service_name] = service
 
-                # Verifier si le service fait partie de la liste obligatoire
-                if nom_services.get(service_name) is not None:
-                    del nom_services[service_name]  # Enlever service deja present de la liste des services manquants
+            # Parcourir la liste des services ordonnees et redemarrer le premier qui est inactif
+            idmg_tronque = self.tronquer_idmg(idmg)
+            for conf_service in liste_ordonnee_services:
+                service_name = '%s_%s' % (idmg_tronque, conf_service['nom'])
+                service_docker_info = dict_services_actifs.get(service_name)
 
-                # Garder etat de mise a jour du service au besoin
-                update_state = None
-                update_status = service.attrs.get('UpdateStatus')
-                if update_status is not None:
-                    update_state = update_status['State']
+                if service_docker_info is not None:
+                    # Garder etat de mise a jour du service au besoin
+                    update_state = None
+                    update_status = service_docker_info.attrs.get('UpdateStatus')
+                    if update_status is not None:
+                        update_state = update_status['State']
 
-                # Compter le nombre de taches actives
-                running = list()
-                self.__logger.debug(
-                    "Service %s update state etat %s" % (service_name, update_state))
-                for task in service.tasks():
-                    status = task['Status']
-                    state = status['State']
-                    desired_state = task['DesiredState']
-                    if state == 'running' or desired_state == 'running' or update_state == 'updating':
-                        # Le service est actif
-                        running.append(running)
-                        self.__logger.debug(
-                            "Service %s etat %s, etat desire: %s" % (service_name, state, desired_state))
-                    else:
-                        # Le service est ferme, on le redemarre
-                        self.__logger.debug("Service %s etat %s, etat desire: %s" % (service_name, state, desired_state))
+                    # Compter le nombre de taches actives
+                    running = list()
+                    self.__logger.debug(
+                        "Service %s update state etat %s" % (service_name, update_state))
+                    for task in service_docker_info.tasks():
+                        status = task['Status']
+                        state = status['State']
+                        desired_state = task['DesiredState']
+                        if state == 'running' or desired_state == 'running' or update_state == 'updating':
+                            # Le service est actif
+                            running.append(running)
+                            self.__logger.debug(
+                                "Service %s etat %s, etat desire: %s" % (service_name, state, desired_state))
+                        else:
+                            # Le service est ferme, on le redemarre
+                            self.__logger.debug(
+                                "Service %s etat %s, etat desire: %s" % (service_name, state, desired_state))
 
-                if len(running) == 0:
-                    # Redemarrer
-                    self.__logger.info("Redemarrer service %s" % service_name)
-                    self.__logger.debug("Service\n%s" % json.dumps(service.attrs, indent=4))
-                    service.force_update()
+                    if len(running) == 0:
+                        # Redemarrer
+                        self.__logger.info("Redemarrer service %s" % service_name)
+                        self.__logger.debug("Service\n%s" % json.dumps(service_docker_info.attrs, indent=4))
+                        service_docker_info.force_update()
 
-            if len(nom_services) > 0:
-                self.__logger.warning("Sevices inactifs, activer immediatement : %s" % str(nom_services.keys()))
-                for conf_service in nom_services.values():
+                        # On demarre un seul service a la fois
+                        break
+                else:
+                    # Conserver la configuration du service pour le demarrer
+                    services_inactifs.append(conf_service)
+
+                    # On demarre un seul service a la fois
+                    break
+
+            if len(services_inactifs) > 0:
+                self.__logger.warning("Sevices inactifs, activer immediatement : %s" % str(services_inactifs))
+                for conf_service in services_inactifs:
                     nom_service = conf_service['nom']
                     labels = conf_service['labels']
 
