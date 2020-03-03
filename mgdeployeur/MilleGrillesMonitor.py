@@ -433,7 +433,7 @@ class MonitorMilleGrille:
             except Exception as e:
                 self.__logger.exception("Erreur traitement cedule: %s" % str(e))
 
-            self.__action_event.wait(20)
+            self.__action_event.wait(60)
 
         self.__logger.info("Fin execution thread MilleGrille %s" % self.__idmg)
 
