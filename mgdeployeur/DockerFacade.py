@@ -441,7 +441,7 @@ class GestionnaireImagesDocker:
             nom_image = image.tags[0]  # On prend un tag au hasard
         else:
             self.__logger.warning("Image locale non trouvee pour config_key: %s " % config_key)
-            raise ImageNonTrouvee(config_values['image'], config_values['version'])
+            raise ImageNonTrouvee(config_key)
 
         return nom_image
 
@@ -653,7 +653,6 @@ class ServiceDockerConfiguration:
 
 class ImageNonTrouvee(Exception):
 
-    def __init__(self, image, tag, t=None, obj=None):
+    def __init__(self, image, t=None, obj=None):
         super().__init__(t, obj)
         self.image = image
-        self.tag = tag
