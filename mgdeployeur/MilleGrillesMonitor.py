@@ -61,6 +61,11 @@ class DeployeurDaemon(Daemon):
         )
 
         self.__parser.add_argument(
+            '--intervalle', type=int, default=60,
+            help="Intervalle entre cycles d'entretien"
+        )
+
+        self.__parser.add_argument(
             'command', type=str, nargs=1, choices=['start', 'stop', 'restart', 'nofork'],
             help="Commande a executer (daemon): start, stop, restart. nofork execute en foreground"
         )
@@ -148,7 +153,7 @@ class DeployeurMonitor:
         self.__logger.info("Demarrage monitoring de la MilleGrille %s" % idmg)
 
         millegrille_monitor = MonitorMilleGrille(
-            self, idmg, self.__args.node, config, self.__gestionnaire_services_docker)
+            self, idmg, self.__args.node, config, self.__gestionnaire_services_docker, self.__args.intervalle)
         self.__millegrilles_monitors[idmg] = millegrille_monitor
 
         # Commence a ecouter evenements sur docker
@@ -198,7 +203,7 @@ class DeployeurMonitor:
         self.__charger_liste_millegrilles()
 
         while not self.__stop_event.is_set():
-            self.__stop_event.wait(60)
+            self.__stop_event.wait(self.__args.intervalle)
 
         self.__logger.info("Fin execution monitoring")
         self.arreter()
@@ -260,7 +265,8 @@ class DeployeurMonitor:
 class MonitorMilleGrille:
 
     def __init__(self, monitor: DeployeurMonitor, idmg: str, node_name: str, config: dict,
-                 gestionnaire_services_docker: GestionnairesServicesDocker):
+                 gestionnaire_services_docker: GestionnairesServicesDocker,
+                 intervalle_entretien: int):
         self.__logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
         # Config et constantes
@@ -268,6 +274,7 @@ class MonitorMilleGrille:
         self.__constantes = VariablesEnvironnementMilleGrilles(self.__idmg)
         self.__node_name = node_name
         self.__config = config
+        self.__intervalle_entretien = intervalle_entretien
 
         # Gestionnaires et helpers
         self.__monitor = monitor
@@ -344,7 +351,7 @@ class MonitorMilleGrille:
         # Attendre que la Q de reponse soit prete
         self.__logger.debug("Attente connexion MQ pour %s" % self.__idmg)
 
-        self.__action_event.wait(30)
+        self.__action_event.wait(self.__intervalle_entretien)
 
         if self.__action_event.is_set():
             self.__logger.debug("Connexion MQ pour %s reussie" % self.__idmg)
@@ -433,7 +440,7 @@ class MonitorMilleGrille:
             except Exception as e:
                 self.__logger.exception("Erreur traitement cedule: %s" % str(e))
 
-            self.__action_event.wait(60)
+            self.__action_event.wait(self.__intervalle_entretien)
 
         self.__logger.info("Fin execution thread MilleGrille %s" % self.__idmg)
 

@@ -233,8 +233,16 @@ class DockerFacade:
             try:
                 service_json = configurateur.formatter_service()
             except ImageNonTrouvee as imageexcept:
-                self.__logger.warning("Image non trouve, on fait un pull %s" % configurateur.formatter_nom_service())
-                service_json = self.pull(imageexcept.image, imageexcept.tag)
+                self.__logger.warning("Image pour service %s non trouvee, on fait un pull" % nom_service_complet)
+                list_services_manquants = list()
+                self.__service_images.pull_image(imageexcept.image, list_services_manquants)
+                if len(list_services_manquants) == 0:
+                    # On a downloade l'image
+                    self.__logger.info("Image pour service %s telechargee" % nom_service_complet)
+                    service_json = configurateur.formatter_service()
+                else:
+                    # Relancer l'exception originale, l'image n'est pas trouvee
+                    raise imageexcept
 
             etat_service_resp = self.post('services/%s' % mode, service_json)
             status_code = etat_service_resp.status_code
@@ -336,40 +344,42 @@ class GestionnaireImagesDocker:
         S'assure d'avoir une version locale de chaque image - telecharge au besoin
         :return:
         """
-        registries = self.__versions_images['registries']
-
         images_non_trouvees = list()
 
-        for service, config in self.__versions_images['images'].items():
-            nom_image = config['image']
-            tag = config['version']
-
+        for service in self.__versions_images['images'].keys():
             # Il est possible de definir des registre specifiquement pour un service
-            service_registries = config.get('registries')
-            if service_registries is None:
-                service_registries = registries
-
-            image_locale = self.get_image_locale(nom_image, tag)
-            if image_locale is None:
-                image = None
-                for registry in service_registries:
-                    if registry != '':
-                        nom_image_reg = '%s/%s' % (registry, nom_image)
-                    else:
-                        # Le registre '' represente une image docker officielle
-                        nom_image_reg = nom_image
-
-                    self.__logger.info("Telecharger image %s:%s" % (nom_image, tag))
-                    image = self.pull(nom_image_reg, tag)
-                    if image is not None:
-                        self.__logger.info("Image %s:%s sauvegardee avec succes" % (nom_image, tag))
-                        break
-                if image is None:
-                    images_non_trouvees.append('%s:%s' % (nom_image, tag))
+            self.pull_image(service, images_non_trouvees)
 
         if len(images_non_trouvees) > 0:
             message = "Images non trouvees: %s" % str(images_non_trouvees)
             raise Exception(message)
+
+    def pull_image(self, service, images_non_trouvees):
+        registries = self.__versions_images['registries']
+        config = self.__versions_images['images'][service]
+        nom_image = config['image']
+        tag = config['version']
+
+        service_registries = config.get('registries')
+        if service_registries is None:
+            service_registries = registries
+        image_locale = self.get_image_locale(nom_image, tag)
+        if image_locale is None:
+            image = None
+            for registry in service_registries:
+                if registry != '':
+                    nom_image_reg = '%s/%s' % (registry, nom_image)
+                else:
+                    # Le registre '' represente une image docker officielle
+                    nom_image_reg = nom_image
+
+                self.__logger.info("Telecharger image %s:%s" % (nom_image, tag))
+                image = self.pull(nom_image_reg, tag)
+                if image is not None:
+                    self.__logger.info("Image %s:%s sauvegardee avec succes" % (nom_image, tag))
+                    break
+            if image is None:
+                images_non_trouvees.append('%s:%s' % (nom_image, tag))
 
     def pull(self, image_name, tag):
         """
