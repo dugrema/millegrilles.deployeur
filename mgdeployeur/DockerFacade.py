@@ -644,6 +644,6 @@ class ServiceDockerConfiguration:
 class ImageNonTrouvee(Exception):
 
     def __init__(self, image, tag, t=None, obj=None):
-        super.__init__(t, obj)
+        super().__init__(t, obj)
         self.image = image
         self.tag = tag
