@@ -3,7 +3,7 @@ import logging
 import json
 from threading import Event
 
-from mgdeployeur.DockerFacade import DockerFacade, GestionnaireImagesDocker
+from mgdeployeur.DockerFacade import DockerFacade, GestionnaireImagesDocker, ImageNonTrouvee
 
 
 class GestionnairesServicesDocker:
@@ -189,9 +189,6 @@ class GestionnairesServicesDocker:
                     # Conserver la configuration du service pour le demarrer
                     services_inactifs.append(conf_service)
 
-                    # On demarre un seul service a la fois
-                    break
-
             if len(services_inactifs) > 0:
                 self.__logger.warning("Sevices inactifs, activer immediatement : %s" % str(services_inactifs))
                 for conf_service in services_inactifs:
@@ -200,7 +197,13 @@ class GestionnairesServicesDocker:
 
                     # Installer le service
                     self.__docker_facade.ajouter_nodelabels(docker_nodename, labels)
-                    self.demarrer_service_blocking(idmg, nom_service)
+                    try:
+                        self.demarrer_service_blocking(idmg, nom_service)
+                    except ImageNonTrouvee:
+                        self.__logger.exception("Image introuvable pour service %s" % nom_service)
+
+                    # On demarre un seul service a la fois
+                    break
 
     def pull_image(self, nom_service, force=False):
         """

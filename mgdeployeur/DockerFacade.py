@@ -229,7 +229,13 @@ class DockerFacade:
             docker_configs = self.get('configs').json()
             configurateur = ServiceDockerConfiguration(
                 idmg, nom_service, docker_secrets, docker_configs, self.__service_images, mappings)
-            service_json = configurateur.formatter_service()
+
+            try:
+                service_json = configurateur.formatter_service()
+            except ImageNonTrouvee as imageexcept:
+                self.__logger.warning("Image non trouve, on fait un pull %s" % configurateur.formatter_nom_service())
+                service_json = self.pull(imageexcept.image, imageexcept.tag)
+
             etat_service_resp = self.post('services/%s' % mode, service_json)
             status_code = etat_service_resp.status_code
             if 200 <= status_code <= 201:
@@ -420,8 +426,13 @@ class GestionnaireImagesDocker:
         if config_values.get('registries') is not None:
             custom_registries = config_values['registries']
         image = self.get_image_locale(config_values['image'], config_values['version'], custom_registries)
-        self.__logger.debug("Tags pour image %s : %s" % (config_key, str(image.tags)))
-        nom_image = image.tags[0]  # On prend un tag au hasard
+        if image is not None:
+            self.__logger.debug("Tags pour image %s : %s" % (config_key, str(image.tags)))
+            nom_image = image.tags[0]  # On prend un tag au hasard
+        else:
+            self.__logger.warning("Image locale non trouvee pour config_key: %s " % config_key)
+            raise ImageNonTrouvee(config_values['image'], config_values['version'])
+
         return nom_image
 
 
@@ -628,3 +639,11 @@ class ServiceDockerConfiguration:
             return configs[config_date]
 
         return None
+
+
+class ImageNonTrouvee(Exception):
+
+    def __init__(self, image, tag, t=None, obj=None):
+        super.__init__(t, obj)
+        self.image = image
+        self.tag = tag
