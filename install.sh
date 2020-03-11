@@ -72,13 +72,13 @@ installer_deployeur() {
   sudo systemctl start dockerIPv6mapper
 
   sudo mkdir -p /run/millegrilles /var/log/millegrilles
+  sudo chown root:syslog /var/log/millegrilles
+  sudo chmod 2770 /var/log/millegrilles
 
   if [ ! -e /run/millegrilles/mg_monitor.pipe ]; then sudo mkfifo /run/millegrilles/mg_monitor.pipe; fi
   sudo chmod 770 /run/millegrilles/mg_monitor.pipe
   sudo chown -R mg_deployeur:millegrilles /run/millegrilles
   sudo chown mg_deployeur:millegrilles /run/millegrilles/mg_monitor.pipe
-
-  sudo chown mg_deployeur:millegrilles /var/log/millegrilles
 
   echo "[OK] Deployeur Python et dependances installes"
 }
