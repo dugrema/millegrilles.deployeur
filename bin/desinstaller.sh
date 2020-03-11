@@ -6,7 +6,7 @@ echo "[INFO] Desinstaller services systemd"
 sudo systemctl stop millegrilles
 sudo systemctl stop millegrilles.noeud
 sudo systemctl stop dockerIPv6mapper
-sudo rm /etc/systemd/system/millegrilles.service
+sudo rm /etc/systemd/system/millegrilles.monitor.service
 sudo rm /etc/systemd/system/millegrilles.noeud.service
 sudo rm /etc/systemd/system/dockerIPv6mapper.service
 sudo systemctl daemon-reload

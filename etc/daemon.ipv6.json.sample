@@ -1,0 +1,9 @@
+{
+  "ipv6": true,
+  "fixed-cidr-v6": "2001:470:b080:109::/80",
+  "log-driver": "syslog",
+  "log-opts": {
+    "syslog-address": "tcp://localhost:514",
+    "tag": "{{.Name}}.{{.ID}}"
+  }
+}

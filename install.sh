@@ -53,14 +53,21 @@ installer_deployeur() {
   sudo pip3 install -r requirements.txt
   sudo python3 setup.py install
 
+  # Installer logging
+  # Copier fichiers s'ils n'existent pas deja
+  sudo cp -n etc/daemon.* /etc/docker
+  sudo cp -n etc/logrotate.millegrilles.conf /etc/logrotate.d/millegrilles
+  sudo cp -n etc/01-millegrilles.conf /etc/rsyslog.d/
+  echo "[WARN] S'assurer que /etc/rsyslog.conf contient l'option TCP sur port 514"
+
   # Installer script demarrage et IPv6
   sudo cp mgdeployeur/DockerIPv6mapper.py /opt/millegrilles/bin
   sudo chmod 755 /opt/millegrilles/bin/DockerIPv6mapper.py
   sudo cp etc/*.service /etc/systemd/system/
-  sudo chmod 644 /etc/systemd/system/millegrilles.service
+  sudo chmod 644 /etc/systemd/system/millegrilles.monitor.service
   sudo chmod 644 /etc/systemd/system/dockerIPv6mapper.service
   sudo systemctl daemon-reload
-  sudo systemctl enable millegrilles
+  sudo systemctl enable millegrilles.monitor
   sudo systemctl enable dockerIPv6mapper
   sudo systemctl start dockerIPv6mapper
 
