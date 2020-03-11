@@ -61,12 +61,14 @@
       {
         "Protocol": "tcp",
         "PublishedPort": 51413,
-        "TargetPort": 51413
+        "TargetPort": 51413,
+        "PublishMode": "host"
       },
       {
         "Protocol": "udp",
         "PublishedPort": 51413,
-        "TargetPort": 51413
+        "TargetPort": 51413,
+        "PublishMode": "host"
       }
     ]
   },
