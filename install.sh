@@ -175,8 +175,8 @@ preparer_rpi() {
 
     echo "[INFO] S'assurer que le swap est active - il faut au moins 1G de swap"
     if [ ! -f /swapfile ]; then
-      sudo fallocate -l 1G /swapfile
-      sudo dd if=/dev/zero of=/swapfile bs=1024 count=1048576
+      # sudo fallocate -l 1G /swapfile
+      sudo dd if=/dev/zero of=/swapfile bs=256 count=4194304
       sudo chmod 600 /swapfile
       sudo mkswap /swapfile
       sudo swapon /swapfile

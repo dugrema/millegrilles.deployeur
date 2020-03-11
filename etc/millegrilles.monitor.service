@@ -4,14 +4,18 @@ After=docker.service
 
 [Service]
 Type=simple
+Nice=2
 PIDFile=/var/run/millegrilles/monitor.pid
-ExecStart=/opt/millegrilles/bin/monitor.sh --info start
-ExecStop=/opt/millegrilles/bin/monitor.sh stop
+ExecStart=/opt/millegrilles/bin/monitor.sh --info nofork
+# ExecStop=/opt/millegrilles/bin/monitor.sh stop
 ExecStartPre=+/opt/millegrilles/bin/prestart_monitor.sh
 User=mg_deployeur
 Group=millegrilles
 Restart=always
 RestartSec=60s
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=[millegrilles.monitor]
 
 [Install]
 WantedBy=multi-user.target
