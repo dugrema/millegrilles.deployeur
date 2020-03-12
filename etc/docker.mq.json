@@ -31,7 +31,7 @@
           }
         },
         {
-          "SecretName": "pki.mq.key",
+          "SecretName": "pki.web.key;pki.mq.key",
           "File": {
             "Name": "webkey.pem",
             "UID": "0",
@@ -60,7 +60,7 @@
           }
         },
         {
-          "ConfigName": "pki.mq.cert",
+          "ConfigName": "pki.web.fullchain;pki.mq.cert",
           "File": {
             "Name": "/opt/rabbitmq/dist/certs/webcert.pem",
             "UID": "0",

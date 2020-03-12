@@ -10,8 +10,8 @@
         "MG_MQ_CAFILE=/run/secrets/pki.millegrilles.ssl.CAchain",
         "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
         "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
-        "CERT=/run/secrets/pki.millegrilles.ssl.cert",
-        "PRIVKEY=/run/secrets/pki.millegrilles.ssl.key",
+        "CERT=/run/secrets/pki.web.cert",
+        "PRIVKEY=/run/secrets/pki.web.key",
         "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation"
       ],
       "Secrets": [
@@ -23,6 +23,14 @@
             "GID": "0",
             "Mode": 292
           }
+        }, {
+          "SecretName": "pki.web.key;pki.coupdoeil.key",
+          "File": {
+            "Name": "pki.web.key",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
         }
       ],
       "Configs": [
@@ -30,6 +38,14 @@
           "ConfigName": "pki.coupdoeil.fullchain",
           "File": {
             "Name": "/run/secrets/pki.millegrilles.ssl.cert",
+            "UID": "0",
+            "GID": "0",
+            "Mode": 292
+          }
+        }, {
+          "ConfigName": "pki.web.fullchain;pki.coupdoeil.fullchain",
+          "File": {
+            "Name": "/run/secrets/pki.web.cert",
             "UID": "0",
             "GID": "0",
             "Mode": 292
