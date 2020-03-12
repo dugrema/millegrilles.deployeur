@@ -514,19 +514,7 @@ class MonitorMilleGrille:
             commande = self.__commandes_routeur.pop(0)
             routing = commande['routing']
 
-            if routing == ConstantesMonitor.COMMANDE_EXPOSER_PORTS:
-                self.exposer_ports(commande['commande'])
-
-            elif routing == ConstantesMonitor.COMMANDE_RETIRER_PORTS:
-                self.retirer_ports(commande['commande'])
-
-            elif routing == ConstantesMonitor.COMMANDE_PUBLIER_NOEUD_DOCKER:
-                self.deployer_noeud_public(commande['commande'])
-
-            elif routing == ConstantesMonitor.COMMANDE_PRIVATISER_NOEUD_DOCKER:
-                self.privatiser_noeud(commande['commande'])
-
-            elif routing == ConstantesMonitor.COMMANDE_MAJ_CERTIFICATS_WEB:
+            if routing == ConstantesMonitor.COMMANDE_MAJ_CERTIFICATS_WEB:
                 self.__renouvellement_certificats.maj_certificats_web_requetes(commande['commande'])
 
             elif routing == ConstantesMonitor.COMMANDE_MAJ_CERTIFICATS_PAR_ROLE:
@@ -634,8 +622,6 @@ class MonitorMessageHandler(BaseCallback):
         elif evenement == Constantes.EVENEMENT_TRANSACTION_PERSISTEE:
             self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
             self.__monitor.ceduler_redemarrage(30)
-        elif evenement == ConstantesMaitreDesCles.TRANSACTION_RENOUVELLEMENT_CERTIFICAT:
-            self.__renouvelleur.traiter_reponse_renouvellement(message_dict, correlation_id)
         elif routing_key.startswith('requete'):
             self.traiter_requete(routing_key, properties, message_dict)
         elif routing_key.startswith('commande'):

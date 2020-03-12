@@ -1,5 +1,5 @@
 from requests import HTTPError
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, SSLError
 from threading import Event
 import logging
 import secrets
@@ -243,8 +243,9 @@ class GestionnaireCertificats:
         self.__certificats[sujet] = enveloppe
 
     def deployer_clecert(self, id_secret: str, clecert: EnveloppeCleCert, combiner_cle_cert=False, datetag=None):
+
         if datetag is None:
-            datetag = datetime.datetime.utcnow().strftime('%Y%m%d') + 'a'
+            datetag = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')[:64]
 
         contenu_cle = base64.encodebytes(clecert.private_key_bytes).decode('utf-8')
         contenu_cert = base64.encodebytes(clecert.cert_bytes).decode('utf-8')
@@ -510,31 +511,39 @@ class RenouvellementCertificats:
 
     def executer_commande_renouvellement(self, commande):
         roles = commande['roles']
+        altdomains = commande.get('altdomains')
         for role in roles:
-            self.preparer_demande_renouvellement(role, ajouter_url_public=True)
+            domaines = None
+            if altdomains is not None:
+                domaine_module = altdomains.get(role)
+                if domaine_module is not None:
+                    domaines = domaine_module.split(',')
+            self.preparer_demande_renouvellement(role, domaines)
 
-    def preparer_demande_renouvellement(self, role, ajouter_url_public=False):
+    def preparer_demande_renouvellement(self, role, altdomains):
         """
         Demande un renouvellement pour le certificat.
         :param role: Module pour lequel le certificat doit etre genere
         :param ajouter_url_public: Si la millegrille a ete publiee, s'assurer de mettre les URLs publics dans alt names
         :return:
         """
-        if ajouter_url_public and role in ['mq']:
-            # Ajouter le nom domaine public au besoin
-            # Aller chercher document certificat dans Pki
-            domaine_requete = '%s.%s' % (ConstantesParametres.DOMAINE_NOM, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL)
-            requetes = {
-                'requetes': [{
-                    'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesParametres.LIBVAL_CONFIGURATION_PUBLIQUE}
-                }]
-            }
-            generateur_transactions = self.__generateur_transactions
-            generateur_transactions.transmettre_requete(
-                requetes, domaine_requete, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL, self.__mq_info['queue_reponse'])
+        # if ajouter_url_public and role in ['mq']:
+        #     # Ajouter le nom domaine public au besoin
+        #     # Aller chercher document certificat dans Pki
+        #     domaine_requete = '%s.%s' % (ConstantesParametres.DOMAINE_NOM, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL)
+        #     requetes = {
+        #         'requetes': [{
+        #             'filtre': {Constantes.DOCUMENT_INFODOC_LIBELLE: ConstantesParametres.LIBVAL_CONFIGURATION_PUBLIQUE}
+        #         }]
+        #     }
+        #     generateur_transactions = self.__generateur_transactions
+        #     generateur_transactions.transmettre_requete(
+        #         requetes, domaine_requete, ConstantesMonitor.REPONSE_MQ_PUBLIC_URL, self.__mq_info['queue_reponse'])
+        #
+        # else:
+        #     self.transmettre_demande_renouvellement(role, None)
 
-        else:
-            self.transmettre_demande_renouvellement(role, None)
+        self.transmettre_demande_renouvellement(role, altdomains)
 
     def transmettre_demande_renouvellement_urlpublics(self, role, resultats: dict):
         resultat = resultats['resultats'][0][0]
@@ -545,6 +554,7 @@ class RenouvellementCertificats:
         self.transmettre_demande_renouvellement(role, urls_publics=urls)
 
     def transmettre_demande_renouvellement(self, role, urls_publics: list = None):
+        self.__logger.debug("Creation demande renouvellemenet %s avec urls %s" % (role, str(urls_publics)))
         generateur_csr = GenerateurCertificat(self.__idmg)
 
         clecert = generateur_csr.preparer_key_request(role, self.__docker_nodename, alt_names=urls_publics)
@@ -596,7 +606,10 @@ class RenouvellementCertificats:
                 raise Exception("La cle et le certificat ne correspondent pas pour: %s" % role)
 
             # S'assurer que le compte existe dans RabbitMQ
-            self.__gestionnaire_comptes_rabbitmq.ajouter_compte(enveloppe)
+            try:
+                self.__gestionnaire_comptes_rabbitmq.ajouter_compte(enveloppe)
+            except SSLError:
+                self.__logger.exception("Erreur connexion a MQ pour maj comptes/roles, tenter de continuer quand meme")
 
             # On a maintenant une cle et son certificat correspondant. Il faut la sauvegarder dans
             # docker puis redeployer le service pour l'utiliser.
