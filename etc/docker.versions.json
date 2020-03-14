@@ -8,8 +8,8 @@
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_3"},
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.22.8"},
         "transmission": {"registries": ["docker.maceroc.com", "linuxserver"], "image": "transmission", "version": "2.94-r2-ls41"},
-        "consignationfichiers": {"image": "consignationfichiers", "version": "1.22.0"},
-        "coupdoeilreact": {"image": "coupdoeil_react", "version": "1.22.1"},
+        "consignationfichiers": {"image": "consignationfichiers", "version": "1.22.1"},
+        "coupdoeilreact": {"image": "coupdoeil_react", "version": "1.22.2"},
         "vitrineapi": {"image": "vitrineapi", "version": "1.21.5"},
         "vitrineweb": {"image": "vitrineweb", "version": "1.21.7"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
