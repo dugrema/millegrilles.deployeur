@@ -54,7 +54,7 @@
             "Mode": 292
           }
         }, {
-          "SecretName": "pki.mongoxp.key",
+          "SecretName": "pki.web.key;pki.mongoxp.key",
           "File": {
             "Name": "pki.millegrilles.wadmin.key",
             "UID": "0",
@@ -65,7 +65,7 @@
       ],
       "Configs": [
         {
-          "ConfigName": "pki.mongoxp.cert",
+          "ConfigName": "pki.web.fullchain;pki.mongoxp.cert",
           "File": {
             "Name": "/run/secrets/pki.millegrilles.wadmin.cert",
             "UID": "0",
