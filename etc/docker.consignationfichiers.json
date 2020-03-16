@@ -62,8 +62,8 @@
     },
     "Resources": {
       "Limits": {
-        "NanoCPUs": 1000000000,
-        "MemoryBytes": 52428800
+        "NanoCPUs": 2000000000,
+        "MemoryBytes": 209715200
       }
     },
     "RestartPolicy": {
