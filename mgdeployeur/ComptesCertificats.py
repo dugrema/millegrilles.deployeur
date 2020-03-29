@@ -507,7 +507,7 @@ class RenouvellementCertificats:
             if date_courante > date_comparaison:
                 self.__logger.info("Certificat role %s du pour renouvellement (expiration: %s)" % (role, str(date_exp)))
 
-                self.preparer_demande_renouvellement(role)
+                self.preparer_demande_renouvellement(role, [])
 
     def executer_commande_renouvellement(self, commande):
         roles = commande['roles']
