@@ -67,9 +67,22 @@ creer_certificat_racine() {
   echo "[INFO] IDMG genere : $IDMG"
 }
 
-echo "[INFO] Creer une nouvelle millegrille"
+restaurer_certificat_racine() {
+  echo "[INFO] Restaurer certificat racine"
+  $MILLEGRILLES_BIN/restaurer_certificat_racine.sh $1 $2
 
-creer_certificat_racine
+  # Extraire le IDMG
+  source tmp/idmg.txt
+  export IDMG
+  echo "[INFO] IDMG recupere : $IDMG"
+}
+
+if [ -z $1 ]; then
+  echo "[INFO] Creer une nouvelle millegrille"
+  creer_certificat_racine
+else
+  restaurer_certificat_racine $1 $2
+fi
 
 REP_MILLEGRILLE=$MILLEGRILLES_VAR/$IDMG
 
