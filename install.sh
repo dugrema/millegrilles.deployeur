@@ -128,7 +128,7 @@ download_images_docker() {
 
 redemarrer_monitor() {
   echo "[INFO] Redemarrer le monitor millegrilles"
-  sudo systemctl restart millegrilles
+  sudo systemctl restart millegrilles.monitor
 }
 
 # Execution de l'installation
