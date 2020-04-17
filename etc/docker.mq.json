@@ -1,35 +1,17 @@
 {
   "name": "mq",
-  "resources": {
-    "cpu_limit": 1000000000,
-    "mem_limit": 629145600
-  },
-  "restart_policy": {
-    "condition": "any",
-    "delay": 30000000000
-  },
-  "mode": {
-    "mode": "replicated",
-    "replicas": 1
-  },
   "env": [
     "MG_KEY=/run/secrets/key.pem",
     "WEB_KEY=/run/secrets/webkey.pem"
+  ],
+  "mounts": [
+    "mg-middleware-rabbitmq-data-${IDMG}:/var/lib/rabbitmq:rw",
+    "mq-accounts:/opt/rabbitmq/conf:rw"
   ],
   "constraints": [
     "node.labels.netzone.private == true",
     "node.labels.millegrilles.mq == true"
   ],
-  "container_labels": {
-    "ipv6.mapper.network": "mg_ipv6"
-  },
-  "networks": [{
-    "target": "mg_${IDMG}_net",
-    "aliases": ["mq"]
-  }],
-  "labels": {
-    "millegrille": "${IDMG}"
-  },
   "configs": [
     {
       "name": "pki.mq.cert",
@@ -71,8 +53,26 @@
       }
     ]
   },
-  "mounts": [
-    "mg-middleware-rabbitmq-data-${IDMG}:/var/lib/rabbitmq:rw",
-    "mq-accounts:/opt/rabbitmq/conf:rw"
-  ]
+  "container_labels": {
+    "ipv6.mapper.network": "mg_ipv6"
+  },
+  "networks": [{
+    "target": "mg_${IDMG}_net",
+    "aliases": ["mq"]
+  }],
+  "labels": {
+    "millegrille": "${IDMG}"
+  },
+  "resources": {
+    "cpu_limit": 1000000000,
+    "mem_limit": 629145600
+  },
+  "restart_policy": {
+    "condition": "any",
+    "delay": 30000000000
+  },
+  "mode": {
+    "mode": "replicated",
+    "replicas": 1
+  }
 }
