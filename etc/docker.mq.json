@@ -9,7 +9,6 @@
     "mq-accounts:/opt/rabbitmq/conf:rw"
   ],
   "constraints": [
-    "node.labels.netzone.private == true",
     "node.labels.millegrilles.mq == true"
   ],
   "configs": [
