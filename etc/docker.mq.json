@@ -3,7 +3,6 @@
   "TaskTemplate": {
     "ContainerSpec": {
       "Image": "${mq}",
-      "Hostname": "mq.local",
       "Env": [
         "MG_KEY=/run/secrets/key.pem",
         "WEB_KEY=/run/secrets/webkey.pem"
@@ -51,7 +50,7 @@
           }
         },
         {
-          "ConfigName": "pki.millegrille.fullchain",
+          "ConfigName": "pki.millegrille.cert",
           "File": {
             "Name": "/opt/rabbitmq/dist/certs/calist.cert.pem",
             "UID": "0",
@@ -60,7 +59,7 @@
           }
         },
         {
-          "ConfigName": "pki.web.fullchain;pki.mq.cert",
+          "ConfigName": "pki.web.cert;pki.mq.cert",
           "File": {
             "Name": "/opt/rabbitmq/dist/certs/webcert.pem",
             "UID": "0",
@@ -97,7 +96,7 @@
     "Networks": [
         {
           "Target": "mg_${IDMG}_net",
-          "Aliases": ["mq", "mq.local"]
+          "Aliases": ["mq"]
         }
     ]
   },
@@ -109,14 +108,7 @@
         "PublishedPort": 8443,
         "TargetPort": 8443,
         "PublishMode": "host"
-      },
-      {
-        "Protocol": "tcp",
-        "PublishedPort": 5671,
-        "TargetPort": 5671,
-        "PublishMode": "host"
-      },
-      {
+      },{
         "Protocol": "tcp",
         "PublishedPort": 5673,
         "TargetPort": 5673,
