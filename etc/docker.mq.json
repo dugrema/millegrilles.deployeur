@@ -20,11 +20,15 @@
     "node.labels.netzone.private == true",
     "node.labels.millegrilles.mq == true"
   ],
-  "labels": {
+  "container_labels": {
     "ipv6.mapper.network": "mg_ipv6"
   },
   "networks": [{
     "target": "mg_${IDMG}_net",
     "aliases": ["mq"]
-  }]
+  }],
+  "labels": {
+    "millegrille": "${IDMG}"
+  }
+
 }
