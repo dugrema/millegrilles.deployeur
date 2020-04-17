@@ -11,5 +11,20 @@
   "mode": {
     "mode": "replicated",
     "replicas": 1
-  }
+  },
+  "env": [
+    "MG_KEY=/run/secrets/key.pem",
+    "WEB_KEY=/run/secrets/webkey.pem"
+  ],
+  "constraints": [
+    "node.labels.netzone.private == true",
+    "node.labels.millegrilles.mq == true"
+  ],
+  "labels": {
+    "ipv6.mapper.network": "mg_ipv6"
+  },
+  "networks": [{
+    "target": "mg_${IDMG}_net",
+    "aliases": ["mq"]
+  }]
 }
