@@ -1,109 +1,83 @@
 {
-  "Name": "mongo",
-  "TaskTemplate": {
-    "ContainerSpec": {
-      "Image": "${mongo}",
-      "Args": [
-        "mongod",
-        "--replSet", "rs0",
-        "--sslMode", "requireSSL",
-        "--sslPEMKeyFile", "/run/secrets/pki.millegrilles.ssl.key_cert",
-        "--sslCAFile", "/run/secrets/pki.millegrilles.ssl.CAchain"
-      ],
-      "Hostname": "mongo",
-      "Env": [
-        "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}",
-        "MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongo.root.password"
-      ],
-      "Mounts": [
-        {
-          "Type": "bind",
-          "Source": "${MOUNTS}/mongo/data",
-          "Target": "/data/db"
-        },
-        {
-          "Type": "bind",
-          "Source": "${MOUNTS}/mongo/scripts",
-          "Target": "/opt/mongodb/scripts"
-        }
-      ],
-      "Secrets": [
-        {
-          "SecretName": "pki.mongo.key_cert",
-          "File": {
-            "Name": "pki.millegrilles.ssl.key_cert",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        },
-        {
-          "SecretName": "passwd.mongo.root",
-          "File": {
-            "Name": "mongo.root.password",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        },
-        {
-          "SecretName": "passwd.mongo.scriptinit",
-          "File": {
-            "Name": "mongo.accounts.js",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }
-      ],
-      "Configs": [
-        {
-          "ConfigName": "pki.mongo.cert",
-          "File": {
-            "Name": "/run/secrets/pki.millegrilles.ssl.cert",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        },
-        {
-          "ConfigName": "pki.millegrille.fullchain",
-          "File": {
-            "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }
-      ]
+  "name": "mongo",
+  "args": [
+    "mongod",
+    "--replSet", "rs0",
+    "--sslMode", "requireSSL",
+    "--sslPEMKeyFile", "/run/secrets/pki.millegrilles.ssl.key_cert",
+    "--sslCAFile", "/run/secrets/pki.millegrilles.ssl.CAchain"
+  ],
+  "env": [
+    "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}",
+    "MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongo.root.password"
+  ],
+  "mounts": [
+    "${MOUNTS}/mongo/data:/data/db:rw",
+    "${MOUNTS}/mongo/scripts:/opt/mongodb/scripts:rw"
+  ],
+  "constraints": [
+    "node.labels.millegrilles.database == true"
+  ],
+  "configs": [
+    {
+      "name": "pki.mongo.cert",
+      "filename": "/run/secrets/pki.millegrilles.ssl.cert"
     },
-    "Placement": {
-      "Constraints": [
-        "node.labels.netzone.private == true",
-        "node.labels.millegrilles.database == true"
-      ]
+    {
+      "name": "pki.millegrille.cert",
+      "filename": "/run/secrets/pki.millegrilles.ssl.CAchain"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "pki.mongo.key_cert",
+      "filename": "pki.millegrilles.ssl.key_cert"
     },
-    "Resources": {
-      "Limits": {
-        "NanoCPUs": 1000000000,
-        "MemoryBytes": 1073741824
+    {
+      "name": "passwd.mongo.root",
+      "filename": "mongo.root.password"
+    },
+    {
+      "name": "passwd.mongo.scriptinit",
+      "filename": "mongo.accounts.js"
+    }
+  ],
+  "endpoint_spec": {
+    "mode": "vip",
+    "ports": [
+      {
+        "published_port": 8443,
+        "target_port": 8443,
+        "protocol": "tcp",
+        "publish_mode": "host"
+      },
+      {
+        "published_port": 5673,
+        "target_port": 5673,
+        "protocol": "tcp",
+        "publish_mode": "host"
       }
-    },
-    "RestartPolicy": {
-      "Condition": "any",
-      "Delay": 30000000000
-    },
-    "Mode": {
-      "Global": {}
-    },
-    "Networks": [
-        {
-          "Target": "mg_${IDMG}_net",
-          "Aliases": ["mongo", "mongo.local"]
-        }
     ]
   },
-  "Labels": {
+  "container_labels": {
+    "ipv6.mapper.network": "mg_ipv6"
+  },
+  "networks": [{
+    "target": "mg_${IDMG}_net",
+    "aliases": ["mongo"]
+  }],
+  "labels": {
     "millegrille": "${IDMG}"
+  },
+  "resources": {
+    "cpu_limit": 1000000000,
+    "mem_limit": 1073741824
+  },
+  "restart_policy": {
+    "condition": "any",
+    "delay": 30000000000
+  },
+  "mode": {
+    "mode": "global"
   }
 }
