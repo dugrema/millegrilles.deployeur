@@ -29,6 +29,29 @@
   }],
   "labels": {
     "millegrille": "${IDMG}"
-  }
-
+  },
+  "configs": [
+    {
+      "name": "pki.mq.cert",
+      "filename": "/opt/rabbitmq/dist/certs/cert.pem"
+    },
+    {
+      "name": "pki.millegrille.cert",
+      "filename": "/opt/rabbitmq/dist/certs/calist.cert.pem"
+    },
+    {
+      "name": "pki.web.cert;pki.mq.cert",
+      "filename": "/opt/rabbitmq/dist/certs/webcert.pem"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "pki.mq.key",
+      "filename": "key.pem"
+    },
+    {
+      "name": "pki.web.key;pki.mq.key",
+      "filename": "webkey.pem"
+    }
+  ]
 }
