@@ -53,5 +53,22 @@
       "name": "pki.web.key;pki.mq.key",
       "filename": "webkey.pem"
     }
-  ]
+  ],
+  "endpoint_spec": {
+    "mode": "vip",
+    "ports": [
+      {
+        "published_port": 8443,
+        "target_port": 8443,
+        "protocol": "tcp",
+        "publish_mode": "host"
+      },
+      {
+        "published_port": 5673,
+        "target_port": 5673,
+        "protocol": "tcp",
+        "publish_mode": "host"
+      }
+    ]
+  }
 }
