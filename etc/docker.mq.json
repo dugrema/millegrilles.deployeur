@@ -17,7 +17,7 @@
       "filename": "/opt/rabbitmq/dist/certs/cert.pem"
     },
     {
-      "name": "pki.millegrille.cert",
+      "name": "pki.intermediaire.chain",
       "filename": "/opt/rabbitmq/dist/certs/calist.cert.pem"
     },
     {
