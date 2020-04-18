@@ -4,8 +4,8 @@
     "mongod",
     "--replSet", "rs0",
     "--sslMode", "requireSSL",
-    "--sslPEMKeyFile", "/run/secrets/pki.millegrilles.ssl.key_cert",
-    "--sslCAFile", "/run/secrets/pki.millegrilles.ssl.CAchain"
+    "--sslPEMKeyFile", "/run/secrets/mongo.key_cert.pem",
+    "--sslCAFile", "/run/secrets/millegrille.cert.pem"
   ],
   "env": [
     "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}",
@@ -21,44 +21,24 @@
   "configs": [
     {
       "name": "pki.mongo.cert",
-      "filename": "/run/secrets/pki.millegrilles.ssl.cert"
+      "filename": "/run/secrets/mongo.cert.pem"
     },
     {
       "name": "pki.millegrille.cert",
-      "filename": "/run/secrets/pki.millegrilles.ssl.CAchain"
+      "filename": "/run/secrets/millegrille.cert.pem"
     }
   ],
   "secrets": [
     {
-      "name": "pki.mongo.key_cert",
-      "filename": "pki.millegrilles.ssl.key_cert"
+      "match_config": true,
+      "name": "pki.mongo.key",
+      "filename": "mongo.key_cert.pem"
     },
     {
-      "name": "passwd.mongo.root",
+      "name": "passwd.mongo",
       "filename": "mongo.root.password"
-    },
-    {
-      "name": "passwd.mongo.scriptinit",
-      "filename": "mongo.accounts.js"
     }
   ],
-  "endpoint_spec": {
-    "mode": "vip",
-    "ports": [
-      {
-        "published_port": 8443,
-        "target_port": 8443,
-        "protocol": "tcp",
-        "publish_mode": "host"
-      },
-      {
-        "published_port": 5673,
-        "target_port": 5673,
-        "protocol": "tcp",
-        "publish_mode": "host"
-      }
-    ]
-  },
   "container_labels": {
     "ipv6.mapper.network": "mg_ipv6"
   },
