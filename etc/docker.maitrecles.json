@@ -1,4 +1,70 @@
 {
+  "name": "maitredescles-python",
+  "args": [
+    "demarrer_domaine.py",
+    "--info"
+  ],
+  "env": [
+    "MG_IDMG=${IDMG}",
+    "MG_MQ_HOST=mq",
+    "MG_MQ_PORT=5673",
+    "MG_MQ_SSL=on",
+    "MG_MQ_AUTH_CERT=on",
+    "MG_MQ_CERTFILE=/run/secrets/cert.pem",
+    "MG_MQ_KEYFILE=/run/secrets/key.pem",
+    "MG_MQ_CA_CERTS=/run/secrets/millegrille.cert.pem",
+    "MG_MONGO_HOST=mongo",
+    "MG_MONGO_SSL=x509",
+    "MG_MONGO_SSL_CERTFILE=/run/secrets/cert.pem",
+    "MG_MONGO_SSL_CA_CERTS=/run/secrets/millegrille.cert.pem"
+  ],
+  "constraints": [
+    "node.labels.millegrilles.python == true",
+    "node.labels.millegrilles.database == true"
+  ],
+  "configs": [
+    {
+      "name": "pki.maitrecles.cert",
+      "filename": "/run/secrets/cert.pem"
+    },
+    {
+      "name": "pki.millegrille.cert",
+      "filename": "/run/secrets/millegrille.cert.pem"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "pki.maitrecles.key",
+      "filename": "key.pem"
+    },
+    {
+      "name": "pki.intermediaire.key",
+      "filename": "intermediaire.key.pem"
+    },
+    {
+      "name": "pki.intermediaire.passwd",
+      "filename": "intermediaire.passwd.txt"
+    },
+
+
+    "SecretName": "passwd.maitrecles.json",
+          "File": {
+            "Name": "mg.maitredescles.json",
+  ],
+  "labels": {
+    "millegrille": "${IDMG}"
+  },
+  "resources": {
+    "cpu_limit": 1000000000,
+    "mem_limit": 104857600
+  },
+  "mode": {
+    "mode": "replicated",
+    "replicas": 1
+  }
+}
+
+{
   "Name": "maitredescles-python",
   "TaskTemplate": {
     "ContainerSpec": {

@@ -1,105 +1,52 @@
 {
-  "Name": "domaines-python",
-  "TaskTemplate": {
-    "ContainerSpec": {
-      "Image": "${mg-python}",
-      "Args": [
-        "demarrer_domaine.py",
-        "--info"
-      ],
-      "Hostname": "domaines-python.local",
-      "Env": [
-        "MG_IDMG=${IDMG}",
-        "MG_CONFIG_JSON=/run/secrets/mg.domaines.json",
-        "MG_DOMAINES_JSON=/opt/millegrilles/dist/domaines.json",
-        "MG_MONGO_USERNAME=mgdomaines",
-        "MG_MQ_HOST=mq",
-        "MG_MQ_PORT=5673",
-        "MG_MQ_SSL=on",
-        "MG_MQ_AUTH_CERT=on",
-        "MG_MQ_CERTFILE=/run/secrets/pki.millegrilles.ssl.cert",
-        "MG_MQ_KEYFILE=/run/secrets/pki.millegrilles.ssl.key",
-        "MG_MQ_CA_CERTS=/run/secrets/pki.millegrilles.ssl.CAchain",
-        "MG_MONGO_HOST=mongo",
-        "MG_MONGO_SSL=on",
-        "MG_MONGO_SSL_CERTFILE=/run/secrets/pki.millegrilles.ssl.key_cert",
-        "MG_MONGO_SSL_CA_CERTS=/run/secrets/pki.millegrilles.ssl.CAchain"
-      ],
-      "Secrets": [
-        {
-          "SecretName": "pki.domaines.key",
-          "File": {
-            "Name": "pki.millegrilles.ssl.key",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }, {
-          "SecretName": "pki.domaines.key_cert",
-          "File": {
-            "Name": "pki.millegrilles.ssl.key_cert",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }, {
-          "SecretName": "passwd.domaines.json",
-          "File": {
-            "Name": "mg.domaines.json",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }
-      ],
-      "Configs": [
-        {
-          "ConfigName": "pki.domaines.cert",
-          "File": {
-            "Name": "/run/secrets/pki.millegrilles.ssl.cert",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }, {
-          "ConfigName": "pki.millegrille.fullchain",
-          "File": {
-            "Name": "/run/secrets/pki.millegrilles.ssl.CAchain",
-            "UID": "0",
-            "GID": "0",
-            "Mode": 292
-          }
-        }
-      ]
+  "name": "domaines-python",
+  "args": [
+    "demarrer_domaine.py",
+    "--info"
+  ],
+  "env": [
+    "MG_IDMG=${IDMG}",
+    "MG_MQ_HOST=mq",
+    "MG_MQ_PORT=5673",
+    "MG_MQ_SSL=on",
+    "MG_MQ_AUTH_CERT=on",
+    "MG_MQ_CERTFILE=/run/secrets/cert.pem",
+    "MG_MQ_KEYFILE=/run/secrets/key.pem",
+    "MG_MQ_CA_CERTS=/run/secrets/millegrille.cert.pem",
+    "MG_MONGO_HOST=mongo",
+    "MG_MONGO_SSL=x509",
+    "MG_MONGO_SSL_CERTFILE=/run/secrets/cert.pem",
+    "MG_MONGO_SSL_CA_CERTS=/run/secrets/millegrille.cert.pem"
+  ],
+  "constraints": [
+    "node.labels.millegrilles.python == true",
+    "node.labels.millegrilles.database == true"
+  ],
+  "configs": [
+    {
+      "name": "pki.domaines.cert",
+      "filename": "/run/secrets/cert.pem"
     },
-    "Placement": {
-      "Constraints": [
-        "node.labels.netzone.private == true",
-        "node.labels.millegrilles.python == true",
-        "node.labels.millegrilles.domaines == true"
-      ]
-    },
-    "Resources": {
-      "Limits": {
-        "NanoCPUs": 1000000000,
-        "MemoryBytes": 104857600
-      }
-    },
-    "RestartPolicy": {
-      "Condition": "none"
-    },
-    "Mode": {
-      "Replicated": {
-        "Replicas": 1
-      }
-    },
-    "Networks": [
-        {
-          "Target": "mg_${IDMG}_net"
-        }
-    ]
-  },
-  "Labels": {
+    {
+      "name": "pki.millegrille.cert",
+      "filename": "/run/secrets/millegrille.cert.pem"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "pki.domaines.key",
+      "filename": "key.pem"
+    }
+  ],
+  "labels": {
     "millegrille": "${IDMG}"
+  },
+  "resources": {
+    "cpu_limit": 1000000000,
+    "mem_limit": 104857600
+  },
+  "mode": {
+    "mode": "replicated",
+    "replicas": 1
   }
 }

@@ -17,10 +17,6 @@
     "MG_MONGO_SSL_CERTFILE=/run/secrets/cert.pem",
     "MG_MONGO_SSL_CA_CERTS=/run/secrets/millegrille.cert.pem"
   ],
-  "mounts": [
-    "mg-middleware-rabbitmq-data-${IDMG}:/var/lib/rabbitmq:rw",
-    "mq-accounts:/opt/rabbitmq/conf:rw"
-  ],
   "constraints": [
     "node.labels.millegrilles.python == true",
     "node.labels.millegrilles.database == true"
@@ -41,9 +37,6 @@
       "filename": "key.pem"
     }
   ],
-  "container_labels": {
-    "ipv6.mapper.network": "mg_ipv6"
-  },
   "networks": [{
     "target": "mg_${IDMG}_net"
   }],
