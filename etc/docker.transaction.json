@@ -1,5 +1,5 @@
 {
-  "name": "transactions-python",
+  "name": "transaction",
   "args": [
     "demarrer_transaction.py"
   ],

@@ -1,5 +1,5 @@
 {
-  "name": "domaines-python",
+  "name": "domaines",
   "args": [
     "demarrer_domaine.py",
     "--info"
@@ -38,6 +38,9 @@
       "filename": "key.pem"
     }
   ],
+  "networks": [{
+    "target": "mg_${IDMG}_net"
+  }],
   "labels": {
     "millegrille": "${IDMG}"
   },
