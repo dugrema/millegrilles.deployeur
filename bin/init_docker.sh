@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 CONFIG=../etc
-FICHIERS_CONFIG=( mongo mq )
+FICHIERS_CONFIG=( mongo mq transaction )
 
 docker config rm docker.versions
 docker config create docker.versions $CONFIG/docker.versions.json
