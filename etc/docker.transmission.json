@@ -1,78 +1,80 @@
 {
-  "Name": "transmission",
-  "TaskTemplate": {
-    "ContainerSpec": {
-      "Image": "${transmission}",
-      "Hostname": "transmission",
-      "Env": [
-        "PGID=980",
-        "TZ=America/Toronto",
-        "USER=millegrilles",
-        "PASS=bwahahah1202"
-      ],
-      "Mounts": [
-        {
-          "Type": "bind",
-          "Source": "/var/opt/millegrilles/${IDMG}/mounts/consignation/torrents/downloads",
-          "Target": "/downloads"
-        },{
-          "Type": "bind",
-          "Source": "/var/opt/millegrilles/${IDMG}/mounts/consignation/torrents",
-          "Target": "/torrents"
-        }
-
-      ],
-      "Labels": {
-        "ipv6.mapper.network": "mg_ipv6"
-      }
+  "name": "transmission",
+  "env": [
+    "PGID=980",
+    "TZ=America/Toronto",
+    "USER=millegrilles",
+    "PASS=bwahahah1202"
+  ],
+  "mounts": [
+    "${MOUNTS}/consignation/torrents/downloads:/downloads:rw",
+    "${MOUNTS}/consignation/torrents:/torrents:rw"
+  ],
+  "constraints": [
+    "node.labels.millegrilles.coupdoeil == true"
+  ],
+  "configs": [
+    {
+      "name": "pki.coupdoeil.cert",
+      "filename": "/run/secrets/cert.pem"
     },
-    "Placement": {
-      "Constraints": [
-        "node.labels.netzone.private == true",
-        "node.labels.millegrilles.coupdoeil == true"
-      ]
+    {
+      "name": "pki.web.cert;pki.coupdoeil.cert",
+      "filename": "/run/secrets/webcert.pem"
     },
-    "Resources": {
-      "Limits": {
-        "NanoCPUs": 500000000,
-        "MemoryBytes": 52428800
-      }
+    {
+      "name": "pki.millegrille.cert",
+      "filename": "/run/secrets/millegrille.cert.pem"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "pki.coupdoeil.key",
+      "filename": "key.pem"
     },
-    "RestartPolicy": {
-      "Condition": "on-failure",
-      "Delay": 30000000000,
-      "MaxAttempts": 3
-    },
-    "Mode": {
-      "Replicated": {
-        "Replicas": 1
-      }
-    },
-    "Networks": [
-        {
-          "Target": "mg_${IDMG}_net",
-          "Aliases": ["transmission"]
-        }
-    ]
-  },
- "EndpointSpec": {
-    "Mode": "vip",
-    "Ports": [
+    {
+      "name": "pki.web.key;pki.coupdoeil.key",
+      "filename": "webkey.pem"
+    }
+  ],
+  "endpoint_spec": {
+    "mode": "vip",
+    "ports": [
       {
-        "Protocol": "tcp",
-        "PublishedPort": 51413,
-        "TargetPort": 51413,
-        "PublishMode": "host"
+        "published_port": 51413,
+        "target_port": 51413,
+        "protocol": "tcp",
+        "publish_mode": "host"
       },
       {
-        "Protocol": "udp",
-        "PublishedPort": 51413,
-        "TargetPort": 51413,
-        "PublishMode": "host"
+        "published_port": 51413,
+        "target_port": 51413,
+        "protocol": "udp",
+        "publish_mode": "host"
       }
     ]
   },
-  "Labels": {
+  "container_labels": {
+    "ipv6.mapper.network": "mg_ipv6"
+  },
+  "networks": [{
+    "target": "mg_${IDMG}_net",
+    "aliases": ["transmission"]
+  }],
+  "labels": {
     "millegrille": "${IDMG}"
+  },
+  "resources": {
+    "cpu_limit": 500000000,
+    "mem_limit": 52428800
+  },
+ "restart_policy": {
+    "condition": "on-failure",
+    "delay": 30000000000,
+    "max_attempts": 3
+  },
+  "mode": {
+    "mode": "replicated",
+    "replicas": 1
   }
 }

@@ -47,8 +47,9 @@
     "mem_limit": 41943040
   },
   "restart_policy": {
-    "condition": "any",
-    "delay": 60000000000
+    "condition": "on-failure",
+    "delay": 60000000000,
+    "max_attempts": 3
   },
   "mode": {
     "mode": "replicated",
