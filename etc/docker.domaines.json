@@ -6,6 +6,7 @@
   ],
   "env": [
     "MG_IDMG=${IDMG}",
+    "MG_DOMAINES_JSON=/opt/millegrilles/dist/domaines.json",
     "MG_MQ_HOST=mq",
     "MG_MQ_PORT=5673",
     "MG_MQ_SSL=on",
