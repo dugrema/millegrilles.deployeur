@@ -1,5 +1,5 @@
 {
-  "name": "maitredescles",
+  "name": "maitrecles",
   "args": [
     "demarrer_domaine.py",
     "--info"
@@ -46,7 +46,7 @@
     },
     {
       "name": "pki.intermediaire.passwd",
-      "filename": "intermediaire.passwd"
+      "filename": "intermediaire.passwd.txt"
     },
     {
       "name": "pki.millegrille.key",
@@ -54,7 +54,7 @@
     },
     {
       "name": "pki.millegrille.passwd",
-      "filename": "millegrille.passwd"
+      "filename": "millegrille.passwd.txt"
     }
   ],
   "networks": [{

@@ -12,8 +12,7 @@
     "MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongo.root.password"
   ],
   "mounts": [
-    "${MOUNTS}/mongo/data:/data/db:rw",
-    "${MOUNTS}/mongo/scripts:/opt/mongodb/scripts:rw"
+    "${MOUNTS}/mongo/data:/data/db:rw"
   ],
   "constraints": [
     "node.labels.millegrilles.database == true"
