@@ -23,9 +23,10 @@ configurer() {
 demarrer() {
   docker service create \
     --name service_monitor \
+    --hostname monitor \
     --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
     --mount type=bind,source=$REP_MILLEGRILLES,destination=/var/opt/millegrilles \
-    --user 1002:115 \
+    --user root:115 \
     docker.maceroc.com/millegrilles_consignation_python_main${SERVICEMONITOR_VERSION} \
     demarrer_servicemonitor.py --debug
 }
@@ -37,5 +38,5 @@ debug() {
 }
 
 configurer
-debug
-# demarrer
+# debug
+demarrer
