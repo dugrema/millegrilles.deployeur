@@ -8,7 +8,8 @@
     "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
     "CERT=/run/secrets/cert.pem",
     "PRIVKEY=/run/secrets/key.pem",
-    "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation"
+    "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation",
+    "MG_CONSIGNATION_HTTP=https://consignationfichiers"
   ],
   "mounts": [
     "${MOUNTS}/consignation:/opt/millegrilles/consignation:rw"
