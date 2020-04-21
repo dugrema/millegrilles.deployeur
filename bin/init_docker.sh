@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 CONFIG=../etc
-FICHIERS_CONFIG=( mongo mq transaction maitrecles ceduleur domaines fichiers coupdoeilreact transmission )
+FICHIERS_CONFIG=( mongo mq transaction maitrecles ceduleur domaines fichiers coupdoeilreact transmission mongoxp )
 SERVICEMONITOR_VERSION=:x86_64_1.24.2
 REP_MILLEGRILLES=/var/opt/millegrilles
 
@@ -38,5 +38,5 @@ debug() {
 }
 
 configurer
-debug
-# demarrer
+# debug
+demarrer
