@@ -1,5 +1,6 @@
 {
   "name": "mongo",
+  "hostname": "mongo",
   "args": [
     "mongod",
     "--replSet", "rs0",
