@@ -16,7 +16,12 @@
     "MG_MQ_CA_CERTS=/run/secrets/millegrille.cert.pem",
     "MG_MONGO_HOST=mongo",
     "MG_MONGO_SSL=x509",
-    "MG_MONGO_SSL_CA_CERTS=/run/secrets/millegrille.cert.pem"
+    "MG_MONGO_SSL_CA_CERTS=/run/secrets/millegrille.cert.pem",
+    "MG_PKI_PASSWORD_INTERMEDIAIRE=/run/secrets/intermediaire.passwd.txt",
+    "MG_PKI_CERT_INTERMEDIAIRE=/run/secrets/intermediaire.cert.pem",
+    "MG_PKI_KEY_INTERMEDIAIRE=/run/secrets/intermediaire.key.pem",
+    "MG_PKI_PASSWORD_MILLEGRILLE=/run/secrets/millegrille.passwd.txt",
+    "MG_PKI_CERT_MILLEGRILLE=/run/secrets/millegrille.cert.pem"
   ],
   "constraints": [
     "node.labels.millegrilles.maitredescles == true"
