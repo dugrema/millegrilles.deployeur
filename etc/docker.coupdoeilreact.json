@@ -1,15 +1,14 @@
 {
   "name": "coupdoeilreact",
   "env": [
-    "MG_IDMG=${IDMG}",
-    "MG_MQ_URL=amqps://mq:5673/${IDMG}",
+    "MG_MQ_URL=amqps://mq:5673",
     "MG_MQ_CERTFILE=/run/secrets/cert.pem",
     "MG_MQ_KEYFILE=/run/secrets/key.pem",
     "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
-    "CERT=/run/secrets/cert.pem",
-    "PRIVKEY=/run/secrets/key.pem",
-    "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation",
-    "MG_CONSIGNATION_HTTP=https://consignationfichiers"
+    "WEB_CERT=/run/secrets/cert.pem",
+    "WEB_KEY=/run/secrets/key.pem",
+    "SERVER_TYPE=https",
+    "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation"
   ],
   "mounts": [
     "${MOUNTS}/consignation:/opt/millegrilles/consignation:rw"
