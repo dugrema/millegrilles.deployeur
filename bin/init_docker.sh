@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
 CONFIG=../etc
-FICHIERS_CONFIG=( mongo mq transaction maitrecles ceduleur domaines fichiers coupdoeilreact transmission mongoxp heb_transaction heb_domaines heb_maitrecles )
+FICHIERS_CONFIG=( \
+  mongo mq transaction maitrecles ceduleur domaines \
+  fichiers coupdoeilreact \
+  transmission mongoxp \
+  heb_transaction heb_domaines heb_maitrecles heb_coupdoeil heb_fichiers \
+)
 SERVICEMONITOR_VERSION=:1.24.5
 REP_MILLEGRILLES=/var/opt/millegrilles
 

@@ -1,0 +1,72 @@
+{
+  "name": "heb_coupdoeil",
+  "args": ["npm", "run-script", "hebergement"],
+  "env": [
+    "MG_MQ_URL=amqps://mq:5673",
+    "HEB_CERTFILE=/run/secrets/cert.pem",
+    "HEB_KEYFILE=/run/secrets/key.pem",
+    "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
+    "WEB_CERT=/run/secrets/cert.pem",
+    "WEB_KEY=/run/secrets/key.pem",
+    "SERVER_TYPE=https",
+    "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation"
+  ],
+  "mounts": [
+    "${MOUNTS}/consignation:/opt/millegrilles/consignation:rw"
+  ],
+  "constraints": [
+    "node.labels.millegrilles.coupdoeil == true"
+  ],
+  "configs": [
+    {
+      "name": "pki.coupdoeil.cert",
+      "filename": "/run/secrets/cert.pem"
+    },
+    {
+      "name": "pki.web.cert;pki.coupdoeil.cert",
+      "filename": "/run/secrets/webcert.pem"
+    },
+    {
+      "name": "pki.millegrille.cert",
+      "filename": "/run/secrets/millegrille.cert.pem"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "pki.coupdoeil.key",
+      "filename": "key.pem"
+    },
+    {
+      "name": "pki.web.key;pki.coupdoeil.key",
+      "filename": "webkey.pem"
+    }
+  ],
+  "endpoint_spec": {
+    "mode": "vip",
+    "ports": [
+      {
+        "published_port": 4443,
+        "target_port": 443,
+        "protocol": "tcp",
+        "publish_mode": "host"
+      }
+    ]
+  },
+  "container_labels": {
+    "ipv6.mapper.network": "mg_ipv6"
+  },
+  "networks": [{
+    "target": "mg_${IDMG}_net"
+  }],
+  "labels": {
+    "millegrille": "${IDMG}"
+  },
+  "resources": {
+    "cpu_limit": 1000000000,
+    "mem_limit": 209715200
+  },
+  "mode": {
+    "mode": "replicated",
+    "replicas": 1
+  }
+}
