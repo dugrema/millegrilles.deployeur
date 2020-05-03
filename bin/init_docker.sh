@@ -43,5 +43,5 @@ debug() {
 }
 
 configurer
-# debug
-demarrer
+debug
+# demarrer
