@@ -2,171 +2,10 @@
 
 # Utilisation de sudo pour faire entrer le mot de passe des le debut
 sudo echo "Installation de MilleGrilles"
-source etc/paths.env
+REP_ETC=./etc
 
-installer_docker() {
-  sudo docker info > /dev/null 2> /dev/null
-  if [ $? -ne 0 ]; then
-    echo "[INFO] Installation de docker"
-    set -e  # Arreter execution sur erreur
-    sudo apt install -y docker.io
-  else
-    echo "[INFO] docker est deja installe"
-  fi
-
-  echo "[INFO] Activation du redemarrage automatique de docker"
-  sudo systemctl enable docker
-}
-
-installer_autres_deps() {
-  # Random number gens hardware, pip3, avahi-daemon
-  sudo apt install -y rng-tools python3-pip avahi-daemon
-}
-
-installer_deployeur() {
-  echo "[INFO] Installer deployeur Python et dependances"
-  MG_CONSIGNATION=millegrilles.consignation.python
-
-  # Installer requirements pour deployeur
-  sudo pip3 install -r requirements.txt
-
-  set -e
-  mkdir -p tmp/
-  cd tmp/
-
-  # Installer MilleGrilles.consignation.python
-  if [ ! -d $MG_CONSIGNATION ]; then
-    git clone https://github.com/dugrema/${MG_CONSIGNATION}.git
-  else
-    git -C $MG_CONSIGNATION pull
-  fi
-  cd $MG_CONSIGNATION
-  sudo pip3 install -r requirements.txt
-  sudo python3 setup.py install
-
-  # Fix bug 'cannot find abc'
-  # sudo pip3 uninstall -y bson
-  # sudo pip3 uninstall -y pymongo
-  # sudo pip3 install pymongo
-  cd ../..
-
-  sudo pip3 install -r requirements.txt
-  sudo python3 setup.py install
-
-  # Installer logging
-  # Copier fichiers s'ils n'existent pas deja
-  sudo cp -n etc/daemon.* /etc/docker
-  sudo cp -n etc/logrotate.millegrilles.conf /etc/logrotate.d/millegrilles
-  sudo cp -n etc/01-millegrilles.conf /etc/rsyslog.d/
-  echo "[WARN] S'assurer que /etc/rsyslog.conf contient l'option TCP sur port 514"
-
-  # Installer script demarrage et IPv6
-  sudo cp mgdeployeur/DockerIPv6mapper.py /opt/millegrilles/bin
-  sudo chmod 755 /opt/millegrilles/bin/DockerIPv6mapper.py
-  sudo cp etc/*.service /etc/systemd/system/
-  sudo chmod 644 /etc/systemd/system/millegrilles.monitor.service
-  sudo chmod 644 /etc/systemd/system/dockerIPv6mapper.service
-  sudo systemctl daemon-reload
-  sudo systemctl enable millegrilles.monitor
-  sudo systemctl enable dockerIPv6mapper
-  sudo systemctl start dockerIPv6mapper
-
-  sudo mkdir -p /run/millegrilles /var/log/millegrilles
-  sudo chown root:syslog /var/log/millegrilles
-  sudo chmod 2770 /var/log/millegrilles
-
-  if [ ! -e /run/millegrilles/mg_monitor.pipe ]; then sudo mkfifo /run/millegrilles/mg_monitor.pipe; fi
-  sudo chmod 770 /run/millegrilles/mg_monitor.pipe
-  sudo chown -R mg_deployeur:millegrilles /run/millegrilles
-  sudo chown mg_deployeur:millegrilles /run/millegrilles/mg_monitor.pipe
-
-  echo "[OK] Deployeur Python et dependances installes"
-}
-
-preparer_comptes() {
-  # set -e  # Arreter execution sur erreur
-  echo "[INFO] Preparer comptes millegrilles"
-
-  # Comptes utilises par containers pour acceder au systeme de fichiers local
-  sudo groupadd -g $MILLEGRILLES_GROUP_GID $MILLEGRILLES_GROUP || true
-  sudo useradd -u $MILLEGRILLES_USER_MAITREDESCLES_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_MAITREDESCLES || true
-  sudo useradd -u $MILLEGRILLES_USER_PYTHON_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_PYTHON || true
-  sudo useradd -u $MILLEGRILLES_USER_MONGO_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_MONGO || true
-
-  # Compte deployeur et monitor
-  sudo useradd -m -s /bin/bash -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_DEPLOYEUR || true
-  sudo adduser $MILLEGRILLES_USER_DEPLOYEUR docker || true
-
-  echo "[OK] Comptes millegrilles prets"
-}
-
-preparer_opt() {
-  set -e  # Arreter execution sur erreur
-  echo "[INFO] Preparer $MILLEGRILLES_PATH"
-  sudo mkdir -p $MILLEGRILLES_BIN
-  sudo mkdir -p $MILLEGRILLES_ETC
-  sudo mkdir -p $MILLEGRILLES_CACERT
-  sudo mkdir -p $MILLEGRILLES_VAR
-
-  sudo chmod -R 2755 $MILLEGRILLES_PATH
-  sudo chmod -R 2750 $MILLEGRILLES_VAR
-
-  sudo cp -R etc/* $MILLEGRILLES_ETC
-  sudo cp -R bin/* $MILLEGRILLES_BIN
-
-  sudo chown -R $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $MILLEGRILLES_PATH $MILLEGRILLES_VAR
-
-  echo "[OK] $MILLEGRILLES_PATH pret"
-}
-
-download_images_docker() {
-  echo "[INFO] Telecharger les images docker"
-  # Note: Utilise le compte docker de l'usager courant (docker login)
-  sudo /opt/millegrilles/bin/deployer.py --info --download_only installer pas_important
-  sudo chown -R $MILLEGRILLES_USER_DEPLOYEUR:$MILLEGRILLES_GROUP $MILLEGRILLES_ETC
-}
-
-redemarrer_monitor() {
-  echo "[INFO] Redemarrer le monitor millegrilles"
-  sudo systemctl restart millegrilles.monitor
-}
-
-# Execution de l'installation
-installer() {
-  # Au besoin, preparer l'environnement du RPi avant le reste. Ajoute swapfile et autres dependances
-  preparer_rpi
-
-  preparer_comptes
-  preparer_opt
-
-  installer_docker
-  installer_autres_deps
-  installer_deployeur
-
-  download_images_docker
-}
-
-creer_millegrille() {
-
-  echo "[INFO] Creer une millegrille initiale"
-  # Faire un hook vers la creation d'une millegrille si le parametre est inclus
-  sudo $MILLEGRILLES_BIN/creer_millegrille.sh
-
-  # Charger IDMG
-  source tmp/idmg.txt
-
-  # Certains fichiers de config peuvent etre crees, s'assurer de les assigner au bon usager
-  sudo chown mg_deployeur:millegrilles /opt/millegrilles/etc/*
-
-  echo "[INFO] Deployer le monitor et demarrer les services docker"
-  sudo -u mg_deployeur /opt/millegrilles/bin/deployer.py --info installer $IDMG
-  if [ $? -eq 0 ]; then
-    echo "[INFO] Demarrer le monitor - attendre 20 secondes"
-    # Donner le temps au systeme de demarrer les services deja lances (transaction, maitredescles)
-    sleep 20
-    redemarrer_monitor
-  fi
-}
+# Charger les variables, paths, users/groups
+source ${REP_ETC}/config.env
 
 preparer_rpi() {
   ARCH=`uname -m`
@@ -188,15 +27,147 @@ preparer_rpi() {
   fi
 }
 
-if [ ! -d $MILLEGRILLES_VAR ]; then
-  INSTALLER_PREMIERE=1
-fi
+installer_docker() {
+  # sudo docker info > /dev/null 2> /dev/null
+  if ! docker info > /dev/null 2> /dev/null; then
+    echo "[INFO] Installation de docker"
+    # set -e  # Arreter execution sur erreur
+    sudo apt install -y docker.io
+    if sudo apt install -y docker.io; then
+      echo "[OK] Docker installe"
+    else
+      echo "[ERREUR] Erreur installation docker"
+      exit 1
+    fi
+  else
+    echo "[INFO] docker est deja installe"
+  fi
+}
 
-#  Hook installer redemarrer
+installer_autres_deps() {
+  # Random number gens hardware, pip3, avahi-daemon
+  sudo apt install -y rng-tools avahi-daemon python3-pip
+}
+
+configurer_docker() {
+  # Installer logging pour docker avec rsyslog
+  # Copier fichiers s'ils n'existent pas deja
+  sudo cp -n etc/daemon.* /etc/docker
+  sudo cp -n etc/logrotate.millegrilles.conf /etc/logrotate.d/millegrilles
+  sudo cp -n etc/01-millegrilles.conf /etc/rsyslog.d/
+
+  if ! cat /etc/rsyslog.conf | grep '^input(type="imtcp" port="514")'; then
+    echo "[INFO] Ajouter l'option TCP sur port 514 dans /etc/rsyslog.conf"
+    sudo cp /etc/rsyslog.conf /etc/rsyslog.conf.old
+    echo 'module(load="imtcp")' | sudo tee -a /etc/rsyslog.conf
+    echo 'input(type="imtcp" port="514")' | sudo tee -a /etc/rsyslog.conf
+  fi
+  echo "[INFO] Redemarrer rsyslog"
+  sudo systemctl restart rsyslog
+
+  echo "[INFO] Activation du redemarrage automatique de docker"
+  sudo systemctl enable docker
+
+  echo "[INFO] Redmarrer docker avec la nouvelle configuration de logging"
+  sudo systemctl restart docker
+}
+
+configurer_repertoires() {
+  echo "[INFO] Configurer les repertoires de MilleGrilles"
+
+  set -e
+
+  sudo mkdir -p $MILLEGRILLES_VAR $MILLEGRILLES_LOGS
+  sudo chown root:syslog $MILLEGRILLES_LOGS
+  sudo chmod 2770 $MILLEGRILLES_LOGS
+  sudo chown mg_monitor:millegrilles $MILLEGRILLES_VAR
+  sudo chmod 750 $MILLEGRILLES_VAR
+
+  echo "[OK] Deployeur Python et dependances installes"
+}
+
+configurer_comptes() {
+  # set -e  # Arreter execution sur erreur
+  echo "[INFO] Preparer comptes millegrilles"
+
+  # Comptes utilises par containers pour acceder au systeme de fichiers local
+  sudo groupadd -g $MILLEGRILLES_GROUP_GID $MILLEGRILLES_GROUP || true
+  sudo useradd -u $MILLEGRILLES_USER_MONGO_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_MONGO || true
+  sudo useradd -u $MILLEGRILLES_USER_FICHIERS_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_FICHIERS || true
+
+  # Compte service monitor, donner acces au socket unix de docker
+  sudo useradd -u $MILLEGRILLES_USER_MONITOR_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_MONITOR || true
+  sudo adduser $MILLEGRILLES_USER_MONITOR docker || true
+
+  echo "[OK] Comptes millegrilles prets"
+}
+
+# Initialiser swarm
+initialiser_swarm() {
+  echo "[INFO] Initialiser docker swarm"
+  docker swarm init --advertise-addr 127.0.0.1 > /dev/null 2> /dev/null
+  resultat=$?
+  if [ $resultat -ne 0 ] && [ $resultat -ne 1 ]; then
+    echo $resultat
+    echo "[ERREUR] Erreur initalisation swarm"
+    exit 2
+  fi
+}
+
+configurer_swarm() {
+  echo "[INFO] Configurer docker swarm"
+  docker config rm docker.versions 2> /dev/null || true
+  docker config create docker.versions $REP_ETC/docker.versions.json
+
+  for MODULE in "${FICHIERS_CONFIG[@]}"; do
+    echo $MODULE
+    docker config rm docker.cfg.$MODULE > /dev/null 2> /dev/null || true
+    docker config create docker.cfg.${MODULE} $REP_ETC/docker.${MODULE}.json
+  done
+
+  echo "[OK] Configuration docker swarm completee"
+}
+
+# Installer le service ServiceMonitor
+demarrer_servicemonitor() {
+  docker service create \
+    --name service_monitor \
+    --hostname monitor \
+    --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
+    --mount type=bind,source=$MILLEGRILLES_VAR,destination=/var/opt/millegrilles \
+    --user root:115 \
+    ${SERVICEMONITOR_IMAGE} \
+    demarrer_servicemonitor.py --debug
+}
+
+# Execution de l'installation
+installer() {
+  # Au besoin, preparer l'environnement du RPi avant le reste. Ajoute swapfile et autres dependances
+  preparer_rpi
+  installer_autres_deps
+  installer_docker
+  initialiser_swarm
+}
+
+configurer() {
+  configurer_comptes
+  configurer_repertoires
+  configurer_docker
+  configurer_swarm
+}
+
+demarrer () {
+  demarrer_servicemonitor
+}
+
+debug() {
+  docker service create \
+    --name service_monitor \
+    ubuntu /bin/sleep 10000
+}
+
+# Main, installer docker, dependances et le service monitor de MilleGrille
 installer
-
-if [ -z $INSTALLER_PREMIERE ]; then
-  redemarrer_monitor
-else
-  creer_millegrille
-fi
+configurer
+# debug
+demarrer

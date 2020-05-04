@@ -1,23 +1,32 @@
 #!/usr/bin/env bash
 
-CONFIG=../etc
-FICHIERS_CONFIG=( \
-  mongo mq transaction maitrecles ceduleur domaines \
-  fichiers coupdoeilreact \
-  transmission mongoxp \
-  heb_transaction heb_domaines heb_maitrecles heb_coupdoeil heb_fichiers \
-)
-SERVICEMONITOR_VERSION=:1.24.5
-REP_MILLEGRILLES=/var/opt/millegrilles
+REP_ETC=../etc
+PATH_CONFIG=${REP_ETC}/config.env
 
-configurer() {
+# Charger les variables, paths, users/groups
+source $PATH_CONFIG
+
+#FICHIERS_CONFIG=( \
+#  mongo mq transaction maitrecles ceduleur domaines \
+#  fichiers coupdoeilreact \
+#  transmission mongoxp \
+#  heb_transaction heb_domaines heb_maitrecles heb_coupdoeil heb_fichiers \
+#)
+#SERVICEMONITOR_VERSION=:1.24.5
+#REP_MILLEGRILLES=/var/opt/millegrilles
+
+initialiser_swarm() {
+  docker swarm init --advertise-addr 127.0.0.1
+}
+
+configurer_swarm() {
   docker config rm docker.versions
-  docker config create docker.versions $CONFIG/docker.versions.json
+  docker config create docker.versions REP_ETC/docker.versions.json
 
   for MODULE in "${FICHIERS_CONFIG[@]}"; do
     echo $MODULE
     docker config rm docker.cfg.$MODULE
-    docker config create docker.cfg.${MODULE} $CONFIG/docker.${MODULE}.json
+    docker config create docker.cfg.${MODULE} REP_ETC/docker.${MODULE}.json
   done
 
   sudo mkdir -p $REP_MILLEGRILLES
@@ -32,7 +41,7 @@ demarrer() {
     --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
     --mount type=bind,source=$REP_MILLEGRILLES,destination=/var/opt/millegrilles \
     --user root:115 \
-    dugremat/millegrilles_consignation_python_main${SERVICEMONITOR_VERSION} \
+    ${SERVICEMONITOR_IMAGE} \
     demarrer_servicemonitor.py --debug
 }
 
@@ -43,5 +52,5 @@ debug() {
 }
 
 configurer
-debug
-# demarrer
+# debug
+demarrer
