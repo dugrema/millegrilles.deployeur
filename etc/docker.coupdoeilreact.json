@@ -5,14 +5,10 @@
     "MG_MQ_CERTFILE=/run/secrets/cert.pem",
     "MG_MQ_KEYFILE=/run/secrets/key.pem",
     "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
-    "WEB_CERT=/run/secrets/cert.pem",
-    "WEB_KEY=/run/secrets/key.pem",
+    "WEB_CERT=/run/secrets/webcert.pem",
+    "WEB_KEY=/run/secrets/webkey.pem",
     "SERVER_TYPE=https",
-    "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation",
     "MG_CONSIGNATION_HTTP=https://fichiers"
-  ],
-  "mounts": [
-    "${MOUNTS}/consignation:/opt/millegrilles/consignation:rw"
   ],
   "constraints": [
     "node.labels.millegrilles.coupdoeil == true"

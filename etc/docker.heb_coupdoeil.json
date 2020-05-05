@@ -6,25 +6,21 @@
     "HEB_CERTFILE=/run/secrets/cert.pem",
     "HEB_KEYFILE=/run/secrets/key.pem",
     "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
-    "WEB_CERT=/run/secrets/cert.pem",
-    "WEB_KEY=/run/secrets/key.pem",
+    "WEB_CERT=/run/secrets/webcert.pem",
+    "WEB_KEY=/run/secrets/webkey.pem",
     "SERVER_TYPE=https",
-    "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation",
     "MG_CONSIGNATION_HTTP=https://heb_fichiers"
-  ],
-  "mounts": [
-    "${MOUNTS}/consignation:/opt/millegrilles/consignation:rw"
   ],
   "constraints": [
     "node.labels.millegrilles.coupdoeil == true"
   ],
   "configs": [
     {
-      "name": "pki.coupdoeil.cert",
+      "name": "pki.heb_coupdoeil.cert",
       "filename": "/run/secrets/cert.pem"
     },
     {
-      "name": "pki.web.cert;pki.coupdoeil.cert",
+      "name": "pki.web.cert;pki.heb_coupdoeil.cert",
       "filename": "/run/secrets/webcert.pem"
     },
     {
@@ -34,11 +30,11 @@
   ],
   "secrets": [
     {
-      "name": "pki.coupdoeil.key",
+      "name": "pki.heb_coupdoeil.key",
       "filename": "key.pem"
     },
     {
-      "name": "pki.web.key;pki.coupdoeil.key",
+      "name": "pki.web.key;pki.heb_coupdoeil.key",
       "filename": "webkey.pem"
     }
   ],

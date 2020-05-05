@@ -13,14 +13,14 @@
     "TRANSMISSION_PASSWORD=bwahahah1202"
   ],
   "mounts": [
-    "${MOUNTS}/consignation:/opt/millegrilles/consignation:rw"
+    "/var/opt/millegrilles/${IDMG}/mounts/hebergement:/var/opt/millegrilles:rw"
   ],
   "constraints": [
     "node.labels.millegrilles.fichiers == true"
   ],
   "configs": [
     {
-      "name": "pki.fichiers.cert",
+      "name": "pki.heb_fichiers.cert",
       "filename": "/run/secrets/cert.pem"
     },
     {
@@ -30,7 +30,7 @@
   ],
   "secrets": [
     {
-      "name": "pki.fichiers.key",
+      "name": "pki.heb_fichiers.key",
       "filename": "key.pem"
     }
   ],
