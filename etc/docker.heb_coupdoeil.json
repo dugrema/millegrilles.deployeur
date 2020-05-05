@@ -9,7 +9,8 @@
     "WEB_CERT=/run/secrets/cert.pem",
     "WEB_KEY=/run/secrets/key.pem",
     "SERVER_TYPE=https",
-    "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation"
+    "MG_CONSIGNATION_PATH=/opt/millegrilles/consignation",
+    "MG_CONSIGNATION_HTTP=https://heb_fichiers"
   ],
   "mounts": [
     "${MOUNTS}/consignation:/opt/millegrilles/consignation:rw"

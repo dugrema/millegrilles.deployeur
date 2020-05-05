@@ -35,7 +35,7 @@
   ],
   "networks": [{
     "target": "mg_${IDMG}_net",
-    "aliases": ["consignationfichiers"]
+    "aliases": ["fichiers"]
   }],
   "labels": {
     "millegrille": "${IDMG}"
