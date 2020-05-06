@@ -8,11 +8,12 @@
     "WEB_CERT=/run/secrets/cert.pem",
     "WEB_KEY=/run/secrets/key.pem",
     "SERVER_TYPE=https",
+    "MG_CONSIGNATION_PATH=/var/opt/millegrilles/consignation",
     "TRANSMISSION_HOST=transmission",
     "TRANSMISSION_PASSWORD=bwahahah1202"
   ],
   "mounts": [
-    "${MOUNTS}/consignation:/opt/millegrilles/consignation:rw"
+    "${MOUNTS}/consignation:/var/opt/millegrilles/consignation:rw"
   ],
   "constraints": [
     "node.labels.millegrilles.fichiers == true"
