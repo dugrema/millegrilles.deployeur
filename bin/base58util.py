@@ -52,6 +52,7 @@ class Base58Util:
         print(valeur_hex)
 
 
-util = Base58Util()
-util.executer()
+if __name__ == '__main__':
+    util = Base58Util()
+    util.executer()
 

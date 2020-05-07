@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-import base58
 import json
-import os
 import argparse
 import docker
 from base64 import b64decode
