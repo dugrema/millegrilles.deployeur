@@ -25,9 +25,16 @@ class LecteurConfig:
         for config in configs:
             docker_config = self._docker.configs.get(config)
             content_b64 = docker_config.attrs['Spec']['Data']
-            content = json.loads(b64decode(content_b64))
+            content_bytes = b64decode(content_b64)
+            try:
+                content = json.loads(content_bytes)
+                content = json.dumps(content, indent=2)
+            except json.decoder.JSONDecodeError:
+                # Le contenu n'est pas json
+                content = str(content_bytes, 'utf-8')
+
             print("\n----- %s -----" % docker_config.name)
-            print(json.dumps(content, indent=2))
+            print(content)
 
 
 if __name__ == '__main__':
