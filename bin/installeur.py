@@ -4,6 +4,7 @@ import argparse
 import base58
 import logging
 import docker
+import sys
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -25,20 +26,41 @@ class InstalleurDependant:
 
     def inserer_configuration(self):
         self.__logger.debug("Certificat racine : %s" % self.args.path_racine)
-        with open(self.args.path_racine, 'rb') as fichier:
-            cert_bytes = fichier.read()
-        cert = x509.load_pem_x509_certificate(cert_bytes, default_backend())
-        idmg = str(base58.b58encode(cert.fingerprint(hashes.SHA512_224())), 'utf-8')
-        self.__logger.debug("Idmg : %s" % idmg)
 
-        document_configuration = {
-            'idmg': idmg,
-            'pem': str(cert_bytes, 'utf-8'),
-            'securite': '3.protege',
-            'specialisation': 'dependant'
-        }
-        config_bytes = json.dumps(document_configuration).encode('utf-8')
-        self.docker_client.configs.create(name='millegrille.configuration', data=config_bytes)
+        if self.args.path_racine:
+            with open(self.args.path_racine, 'rb') as fichier:
+                cert_bytes = fichier.read()
+        else:
+            # Lire le certificat a partir de la ligne de commande
+            cert_lines = list()
+            print("Coller le certificat racine, appuyer sur ENTREE lorsque termine")
+            while True:
+                ligne = input()
+                if ligne == '':
+                    break
+                else:
+                    cert_lines.append(ligne)
+
+            certificat = '\n'.join(cert_lines)
+            cert_bytes = certificat.encode('utf-8')
+            self.__logger.debug("Certificat capture:\n%s" % certificat)
+
+        try:
+            cert = x509.load_pem_x509_certificate(cert_bytes, default_backend())
+            idmg = str(base58.b58encode(cert.fingerprint(hashes.SHA512_224())), 'utf-8')
+            self.__logger.info("Idmg : %s" % idmg)
+
+            document_configuration = {
+                'idmg': idmg,
+                'pem': str(cert_bytes, 'utf-8'),
+                'securite': '3.protege',
+                'specialisation': 'dependant'
+            }
+            config_bytes = json.dumps(document_configuration).encode('utf-8')
+            self.docker_client.configs.create(name='millegrille.configuration', data=config_bytes)
+        except ValueError:
+            self.__logger.error("Certificat invalide")
+            sys.exit(2)
 
     def inserer_certificat(self):
         self.__logger.debug("Inserer certificat monitor")
@@ -87,7 +109,7 @@ class InstalleurParser:
         # Parser commande noeud protege dependant
         parser_commandes_dependant = self.parser_dependant.add_subparsers(dest='cmd', help='Commande')
         parser_init = parser_commandes_dependant.add_parser('init', help='Initialiser noeud protege dependant avec certificat millegrille')
-        parser_init.add_argument('path_racine', help='Path du certificat racine de la millegrille')
+        parser_init.add_argument('--path_racine', required=False, help='Path du certificat racine de la millegrille')
         parser_cert = parser_commandes_dependant.add_parser('cert', help='Inserer certificat signe du service monitor')
 
         self.parser = parser
