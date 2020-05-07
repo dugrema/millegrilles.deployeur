@@ -3,6 +3,7 @@ import json
 import argparse
 import base58
 import logging
+import docker
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -12,10 +13,14 @@ LOGGING_FORMAT = '%(asctime)s %(levelname)s: %(message)s'
 
 
 class InstalleurDependant:
+    """
+    Installeur de noeud protege dependant.
+    """
 
     def __init__(self, parser, args):
         self.parser = parser
         self.args = args
+        self.docker_client = docker.client.DockerClient()
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
 
     def inserer_configuration(self):
@@ -26,7 +31,14 @@ class InstalleurDependant:
         idmg = str(base58.b58encode(cert.fingerprint(hashes.SHA512_224())), 'utf-8')
         self.__logger.debug("Idmg : %s" % idmg)
 
-
+        document_configuration = {
+            'idmg': idmg,
+            'pem': str(cert_bytes, 'utf-8'),
+            'securite': '3.protege',
+            'specialisation': 'dependant'
+        }
+        config_bytes = json.dumps(document_configuration).encode('utf-8')
+        self.docker_client.configs.create(name='millegrille.configuration', data=config_bytes)
 
     def inserer_certificat(self):
         self.__logger.debug("Inserer certificat monitor")
@@ -40,7 +52,10 @@ class InstalleurDependant:
             self.parser.print_help()
 
 
-class Installeur:
+class InstalleurParser:
+    """
+    Classe de base pour parser la ligne de commande.
+    """
 
     def __init__(self):
         self.parser = None
@@ -55,6 +70,10 @@ class Installeur:
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
 
     def parse(self):
+        """
+        Parse la ligne de commande
+        :return:
+        """
         parser = argparse.ArgumentParser(description="Configuration d'un noeud")
         parser.add_argument('--debug', action='store_true', help='Active logging tre verbose')
         parser.add_argument('--info', action='store_true', help='Active logging verbose')
@@ -75,6 +94,10 @@ class Installeur:
         self.args = parser.parse_args()
 
     def executer(self):
+        """
+        Parse et execute la commande.
+        :return:
+        """
         self.parse()
 
         logger_main = logging.getLogger('__main__')
@@ -96,6 +119,6 @@ if __name__ == '__main__':
     logging.basicConfig(format=LOGGING_FORMAT, level=logging.WARNING)
     logger = logging.getLogger(__name__)
 
-    installeur = Installeur()
+    installeur = InstalleurParser()
     installeur.parse()
     installeur.executer()
