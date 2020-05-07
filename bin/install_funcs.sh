@@ -38,6 +38,7 @@ installer_docker() {
 installer_autres_deps() {
   # Random number gens hardware, pip3, avahi-daemon
   sudo apt install -y rng-tools avahi-daemon python3-pip
+  sudo pip3 install -r requirements.txt
 }
 
 configurer_docker() {
