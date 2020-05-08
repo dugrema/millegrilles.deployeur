@@ -5,12 +5,14 @@ import base58
 import logging
 import docker
 import sys
+import os
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 
 LOGGING_FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+PATH_FIFO = '/var/opt/millegrilles/monitor.socket'
 
 
 class InstalleurDependant:
@@ -64,6 +66,37 @@ class InstalleurDependant:
 
     def inserer_certificat(self):
         self.__logger.debug("Inserer certificat monitor")
+
+        # url_mq = "amqps://mg-dev3.maple.maceroc.com:5673"
+        url_mq = input("Indiquer adresse de connexion a MQ principal (e.g. amqps://serveur.com:5673) : ")
+        self.__logger.debug("Adresse connexion MQ : %s" % url_mq)
+
+        # Lire le certificat a partir de la ligne de commande
+        cert_lines = list()
+        print("Coller le certificat du service monitor dependant, appuyer sur ENTREE lorsque termine")
+        while True:
+            ligne = input()
+            if ligne == '':
+                break
+            else:
+                cert_lines.append(ligne)
+
+        certificat = '\n'.join(cert_lines)
+        self.__logger.debug("Certificat capture:\n%s" % certificat)
+
+        commande = {
+            "commande": "connecter_principal",
+            "pem": certificat,
+            "principal_mq_url": url_mq,
+        }
+        commande_json = json.dumps(commande)
+
+        self.__logger.info("Transmettre commande :\n%s" % json.dumps(commande, indent=4))
+        if os.path.exists(PATH_FIFO):
+            with open(PATH_FIFO, 'w') as pipe:
+                pipe.write(commande_json)
+        else:
+            raise FileNotFoundError("FIFO du monitor n'existe pas : %s" % PATH_FIFO)
 
     def installer(self):
         if self.args.cmd == 'init':
