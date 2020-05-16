@@ -18,10 +18,6 @@
       "filename": "/opt/rabbitmq/dist/certs/cert.pem"
     },
     {
-      "name": "pki.intermediaire.chain",
-      "filename": "/opt/rabbitmq/dist/certs/calist.cert.pem"
-    },
-    {
       "name": "pki.web.cert;pki.mq.cert",
       "filename": "/opt/rabbitmq/dist/certs/webcert.pem"
     }
