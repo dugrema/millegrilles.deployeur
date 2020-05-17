@@ -2,8 +2,11 @@
   "name": "mongo",
   "hostname": "mongo",
   "args": [
-    "/bin/sh", "-c",
-    "cat /run/secrets/mongo.key.pem /run/secrets/mongo.cert.pem > /tmp/mongo.key_cert.pem && chmod 400 /tmp/mongo.key_cert.pem && mongod --replSet rs0 --sslMode requireSSL --sslPEMKeyFile /tmp/mongo.key_cert.pem --sslCAFile /run/secrets/millegrille.cert.pem"
+    "mongod",
+    "--replSet", "rs0",
+    "--sslMode", "requireSSL",
+    "--sslPEMKeyFile", "/run/secrets/mongo.key_cert.pem",
+    "--sslCAFile", "/run/secrets/millegrille.cert.pem"
   ],
   "env": [
     "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}",
@@ -29,7 +32,7 @@
     {
       "match_config": true,
       "name": "pki.mongo.key",
-      "filename": "mongo.key.pem"
+      "filename": "mongo.key_cert.pem"
     },
     {
       "name": "passwd.mongo",
