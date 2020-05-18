@@ -129,5 +129,5 @@ demarrer_servicemonitor() {
     --mount type=bind,source=$MILLEGRILLES_VAR,destination=/var/opt/millegrilles \
     --user root:115 \
     ${SERVICEMONITOR_IMAGE} \
-    demarrer_servicemonitor.py --debug
+    -m millegrilles.util.ServiceMonitor --info
 }
