@@ -1,4 +1,0 @@
-# Configuration du proxy pass pour NodeJS prive
-
-# Exemple :
-proxy_pass https://web:3000;

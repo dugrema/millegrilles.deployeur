@@ -1,7 +1,0 @@
-# Configuration du certificat/cle SSL
-ssl_certificate       /run/secrets/webcert.pem;
-ssl_certificate_key   /run/secrets/webkey.pem;
-
-# OCSP stapling
-ssl_stapling          on;
-ssl_stapling_verify   on;
