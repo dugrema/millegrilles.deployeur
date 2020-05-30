@@ -8,7 +8,7 @@
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_4"},
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.26.4"},
         "transmission": {"registries": ["docker.maceroc.com", "linuxserver"], "image": "transmission", "version": "2.94-r2-ls41"},
-        "fichiers": {"image": "consignationfichiers", "version": "1.24.5"},
+        "fichiers": {"image": "consignationfichiers", "version": "1.26.0"},
         "nginx": {"image": "millegrilles_nginx", "version": "1.26.2"},
         "web": {"image": "millegrilles_web", "version": "1.26.3"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
