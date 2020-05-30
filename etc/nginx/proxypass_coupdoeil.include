@@ -1,0 +1,4 @@
+# Configuration du proxy pass pour NodeJS protege
+
+# Exemple :
+proxy_pass https://web:3000;

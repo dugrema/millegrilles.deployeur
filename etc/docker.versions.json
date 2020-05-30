@@ -9,7 +9,7 @@
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.26.3"},
         "transmission": {"registries": ["docker.maceroc.com", "linuxserver"], "image": "transmission", "version": "2.94-r2-ls41"},
         "fichiers": {"image": "consignationfichiers", "version": "1.24.5"},
-        "nginx": {"image": "millegrilles_nginx", "version": "1.26.0"},
+        "nginx": {"image": "millegrilles_nginx", "version": "1.26.2"},
         "web": {"image": "millegrilles_web", "version": "1.26.2"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
     }
