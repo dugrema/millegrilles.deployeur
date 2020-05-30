@@ -1,12 +1,12 @@
 {
-  "name": "domaines",
+  "name": "principal",
   "args": [
     "demarrer_domaine.py",
     "--info"
   ],
   "env": [
     "MG_IDMG=${IDMG}",
-    "MG_DOMAINES_JSON=/opt/millegrilles/dist/domaines.json",
+    "MG_DOMAINES_JSON=/opt/millegrilles/dist/domaines_principal.json",
     "MG_MQ_HOST=mq",
     "MG_MQ_PORT=5673",
     "MG_MQ_SSL=on",

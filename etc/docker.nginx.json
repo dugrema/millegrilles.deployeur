@@ -1,0 +1,56 @@
+{
+  "name": "nginx",
+  "mounts": [
+    "/var/opt/millegrilles:/usr/share/nginx/millegrilles:ro",
+    "${MOUNTS}/nginx/conf.d/modules:/etc/nginx/conf.d/modules:ro"
+  ],
+  "constraints": [
+    "node.labels.millegrilles.nginx == true"
+  ],
+  "configs": [
+    {
+      "name": "pki.web.cert;pki.vitrineweb.cert",
+      "filename": "/run/secrets/webcert.pem"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "pki.web.key;pki.vitrineweb.key",
+      "filename": "webkey.pem"
+    }
+  ],
+  "endpoint_spec": {
+    "mode": "vip",
+    "ports": [
+      {
+        "published_port": 443,
+        "target_port": 443,
+        "protocol": "tcp",
+        "publish_mode": "host"
+      },
+      {
+        "published_port": 80,
+        "target_port": 80,
+        "protocol": "tcp",
+        "publish_mode": "host"
+      }
+    ]
+  },
+  "container_labels": {
+    "ipv6.mapper.network": "mg_ipv6"
+  },
+  "networks": [{
+    "target": "mg_${IDMG}_net"
+  }],
+  "labels": {
+    "millegrille": "${IDMG}"
+  },
+  "resources": {
+    "cpu_limit": 500000000,
+    "mem_limit": 10485760
+  },
+  "mode": {
+    "mode": "replicated",
+    "replicas": 1
+  }
+}

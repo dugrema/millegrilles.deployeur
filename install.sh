@@ -30,6 +30,9 @@ demarrer () {
 }
 
 debug() {
+  sudo chown -R mathieu:millegrilles $MILLEGRILLES_VAR
+  sudo chmod -R g+w $MILLEGRILLES_VAR
+
   docker service create \
     --name service_monitor \
     ubuntu /bin/sleep 10000

@@ -1,5 +1,5 @@
 {
-  "name": "coupdoeilreact",
+  "name": "web",
   "env": [
     "MG_MQ_URL=amqps://mq:5673",
     "MG_MQ_CERTFILE=/run/secrets/cert.pem",
@@ -11,7 +11,7 @@
     "MG_CONSIGNATION_HTTP=https://fichiers"
   ],
   "constraints": [
-    "node.labels.millegrilles.coupdoeil == true"
+    "node.labels.millegrilles.web == true"
   ],
   "configs": [
     {
@@ -37,22 +37,12 @@
       "filename": "webkey.pem"
     }
   ],
-  "endpoint_spec": {
-    "mode": "vip",
-    "ports": [
-      {
-        "published_port": 443,
-        "target_port": 443,
-        "protocol": "tcp",
-        "publish_mode": "host"
-      }
-    ]
-  },
   "container_labels": {
     "ipv6.mapper.network": "mg_ipv6"
   },
   "networks": [{
-    "target": "mg_${IDMG}_net"
+    "target": "mg_${IDMG}_net",
+    "aliases": ["web"]
   }],
   "labels": {
     "millegrille": "${IDMG}"
