@@ -12,6 +12,9 @@
     "PORT=443",
     "MG_CONSIGNATION_HTTP=https://fichiers"
   ],
+  "mounts": [
+    "${MOUNTS}/nginx/data:${MOUNTS}/nginx/data:rw"
+  ],
   "constraints": [
     "node.labels.millegrilles.web == true"
   ],

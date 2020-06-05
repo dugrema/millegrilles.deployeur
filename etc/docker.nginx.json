@@ -1,7 +1,7 @@
 {
   "name": "nginx",
   "mounts": [
-    "/var/opt/millegrilles:/usr/share/nginx/millegrilles:ro",
+    "${MOUNTS}/nginx/data:${MOUNTS}/nginx/data:ro",
     "${MOUNTS}/nginx/conf.d/modules:/etc/nginx/conf.d/modules:ro"
   ],
   "constraints": [
