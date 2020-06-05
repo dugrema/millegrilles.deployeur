@@ -8,6 +8,8 @@
     "WEB_CERT=/run/secrets/webcert.pem",
     "WEB_KEY=/run/secrets/webkey.pem",
     "SERVER_TYPE=spdy",
+    "HOST=web",
+    "PORT=443",
     "MG_CONSIGNATION_HTTP=https://fichiers"
   ],
   "constraints": [
@@ -42,7 +44,7 @@
   },
   "networks": [{
     "target": "mg_${IDMG}_net",
-    "aliases": ["web"]
+    "aliases": ["web", "web_protege"]
   }],
   "labels": {
     "millegrille": "${IDMG}"
