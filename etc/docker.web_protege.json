@@ -1,5 +1,5 @@
 {
-  "name": "web",
+  "name": "web_protege",
   "env": [
     "MG_MQ_URL=amqps://mq:5673",
     "MG_MQ_CERTFILE=/run/secrets/cert.pem",
@@ -7,7 +7,7 @@
     "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
     "WEB_CERT=/run/secrets/webcert.pem",
     "WEB_KEY=/run/secrets/webkey.pem",
-    "SERVER_TYPE=https",
+    "SERVER_TYPE=spdy",
     "MG_CONSIGNATION_HTTP=https://fichiers"
   ],
   "constraints": [
@@ -15,11 +15,11 @@
   ],
   "configs": [
     {
-      "name": "pki.coupdoeil.cert",
+      "name": "pki.web_protege.cert",
       "filename": "/run/secrets/cert.pem"
     },
     {
-      "name": "pki.web.cert;pki.coupdoeil.cert",
+      "name": "pki.web.cert;pki.web_protege.cert",
       "filename": "/run/secrets/webcert.pem"
     },
     {
@@ -29,11 +29,11 @@
   ],
   "secrets": [
     {
-      "name": "pki.coupdoeil.key",
+      "name": "pki.web_protege.key",
       "filename": "key.pem"
     },
     {
-      "name": "pki.web.key;pki.coupdoeil.key",
+      "name": "pki.web.key;pki.web_protege.key",
       "filename": "webkey.pem"
     }
   ],

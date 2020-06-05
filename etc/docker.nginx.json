@@ -9,13 +9,13 @@
   ],
   "configs": [
     {
-      "name": "pki.web.cert;pki.vitrineweb.cert",
+      "name": "pki.web.cert;pki.nginx.cert",
       "filename": "/run/secrets/webcert.pem"
     }
   ],
   "secrets": [
     {
-      "name": "pki.web.key;pki.vitrineweb.key",
+      "name": "pki.web.key;pki.nginx.key",
       "filename": "webkey.pem"
     }
   ],
