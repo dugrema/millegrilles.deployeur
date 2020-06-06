@@ -1,5 +1,5 @@
 {
-  "name": "domaines_dynamique",
+  "name": "domaines_dynamiques",
   "args": [
     "demarrer_domaine.py",
     "--info"
