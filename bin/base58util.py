@@ -6,6 +6,9 @@ import math
 import struct
 import datetime
 
+VERSION_IDMG = 1
+
+
 class Base58Util:
 
     def __init__(self):
@@ -83,28 +86,33 @@ class Base58Util:
 
     def idmg_encoder(self):
         valeur = binascii.unhexlify(self._args.valeur[0])
+
         date_epoch = self._extract_epoch(self._args.date_end_cert)
-        valeur_combinee = valeur + date_epoch
+        valeur_combinee = struct.pack('=B28sI', VERSION_IDMG, valeur, date_epoch)
         valeur_base58 = base58.b58encode(valeur_combinee).decode('utf-8')
         print(valeur_base58)
 
     def idmg_decoder(self):
         valeur = base58.b58decode(self._args.valeur[0])
-        valeur_hex = binascii.hexlify(valeur[0:28]).decode('utf-8')
-        date_exp = struct.unpack('I', valeur[28:32])[0]
-        date_epoch_sec = date_exp * 1000
+        version, valeur_hachage, date_exp = struct.unpack('=B28sI', valeur)
 
-        if self._args.expiration:
-            date_epoch_dt = datetime.datetime.fromtimestamp(date_epoch_sec)
-            print('Expiration IDMG : %s' % date_epoch_dt)
+        if version == 0x1:
+            date_epoch_sec = date_exp * 1000
+            hachage_hex = binascii.hexlify(valeur_hachage)
+
+            if self._args.expiration:
+                date_epoch_dt = datetime.datetime.fromtimestamp(date_epoch_sec)
+                print('Expiration IDMG : %s' % date_epoch_dt)
+            else:
+                print('%s;%d' % (hachage_hex.decode('utf-8'), date_epoch_sec))
         else:
-            print('%s;%d' % (valeur_hex, date_epoch_sec))
+            raise ValueError("Version %d non supportee", version)
 
     def _extract_epoch(self, date_epoch: int):
         date_float = float(date_epoch)
-        date_int = math.ceil(date_float / 1000)
-        date_bytes = struct.pack('I', date_int)
-        return date_bytes
+        date_int = int(math.ceil(date_float / 1000))
+        # date_bytes = struct.pack('I', date_int)
+        return date_int
 
 
 if __name__ == '__main__':
