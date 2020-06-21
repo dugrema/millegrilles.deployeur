@@ -6,10 +6,10 @@
     "images": {
         "mongo": {"registries": [""], "image": "mongo", "version": "4.0"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_4"},
-        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "x86_64_1.28.0"},
+        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.28.1"},
         "fichiers": {"image": "consignationfichiers", "version": "1.26.0"},
-        "nginx": {"image": "millegrilles_nginx", "version": "1.27.1"},
-        "web": {"image": "millegrilles_web", "version": "1.27.3"},
+        "nginx": {"image": "millegrilles_nginx", "version": "1.28.0"},
+        "web": {"image": "millegrilles_web", "version": "1.28.0"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
     }
 }
