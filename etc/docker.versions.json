@@ -9,7 +9,7 @@
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.29.1"},
         "fichiers": {"image": "consignationfichiers", "version": "1.26.0"},
         "nginx": {"image": "millegrilles_nginx", "version": "1.29.0"},
-        "web": {"image": "millegrilles_web", "version": "1.29.3"},
+        "web": {"image": "millegrilles_web", "version": "1.29.5"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
     }
 }

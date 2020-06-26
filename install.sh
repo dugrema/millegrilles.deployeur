@@ -41,5 +41,5 @@ debug() {
 # Main, installer docker, dependances et le service monitor de MilleGrille
 installer
 configurer
-debug
-# demarrer
+# debug
+demarrer
