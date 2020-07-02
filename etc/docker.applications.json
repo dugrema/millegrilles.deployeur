@@ -1,0 +1,69 @@
+{
+    "registries": [
+        "docker.maceroc.com",
+        "dugremat"
+    ],
+    "images": {
+        "postgres": {"registries": [""], "image": "postgres", "version": "12.3"},
+        "mariadb": {"registries": [""], "image": "mariadb", "version": "10.5"},
+        "redmine": {"image": "mg_redmine", "version": "4.1_0"},
+        "jitsi_web": {"registries": ["jitsi"], "image": "web", "version": "stable-4627"},
+        "jitsi_jvb": {"registries": ["jitsi"], "image": "jvb", "version": "stable-4627"},
+        "jitsi_jicofo": {"registries": ["jitsi"], "image": "jicofo", "version": "stable-4627"},
+        "jitsi_prosody": {"registries": ["jitsi"], "image": "prosody", "version": "stable-4627"},
+        "wordpress": {"image": "wordpress", "version": "5.4"},
+        "blynk": {"image": "mpherg/blynk-server", "version": "0.41.10"}
+    },
+    "applications": {
+        "redmine": {
+            "subdomain": "redmine",
+            "dependances": [
+                {
+                    "image": "postgres",
+                    "scripts": [{
+                        "commande": "psql -h postgres -U postgres -f /scripts/psql.redmine_init.sql"
+                    }]
+                },{
+                    "image": "redmine"
+                }
+            ]
+        },
+        "wordpress": {
+            "subdomain": "wp",
+            "dependances": [
+                {
+                    "image": "mariadb",
+                    "scripts": [{
+                        "commande": "mysql... /scripts/mysql.wordpress_init.sql"
+                    }]
+                },{
+                    "image": "wordpress"
+                }
+            ]
+        },
+        "blynk": {
+            "subdomain": "blynk",
+            "ports": {"9443":  "tcp"},
+            "dependances": [
+                {
+                    "image": "postgres",
+                    "scripts": [{
+                        "commande": "psql -h postgres -U postgres -f /scripts/psql.blynk_init.sql"
+                    }]
+                },{
+                    "image": "blynk"
+                }
+            ]
+        },
+        "jitsi": {
+            "subdomain": "jitsi",
+            "ports": {"10000": "udp"},
+            "dependances": [
+                {"image": "jitsi_prosody"},
+                {"image": "jitsi_jicofo"},
+                {"image": "jitsi_jvb"},
+                {"image": "jitsi_web"}
+            ]
+        }
+    }
+}
