@@ -1,0 +1,77 @@
+{
+  "registries": [
+    "docker.maceroc.com",
+    "dugremat"
+  ],
+  "images": {
+    "shared.postgres": {
+      "registries": [
+        ""
+      ],
+      "image": "postgres",
+      "version": "12.3"
+    }
+  },
+  "dependances": [
+    {
+      "docker_config_file": "docker.postgres.json"
+    },
+    {
+      "image": "redmine",
+      "installation": [
+        {
+          "commande": "./script.redmine.postgres.installation.sh",
+          "fichiers": [
+            "script.redmine.postgres.installation.sh",
+            "script.redmine.postgres.installation.sql"
+          ]
+        }
+      ],
+      "backup": [
+        {
+          "commande": "./script.redmine.postgres.backup.sh",
+          "fichiers": ["script.redmine.postgres.backup.sh"],
+          "archives": ["/tmp/backup.redmine.postgres.xz"]
+        }
+      ],
+      "generer": {
+        "motsdepasse": [{"name": "passwd.redmine"}]
+      },
+      "config": {
+        "name": "redmine",
+        "env": [
+          "REDMINE_PASSWORD_FILE=/run/secrets/redmine-passwd"
+        ],
+        "mounts": [
+          "${MOUNTS}/redmine/files:/usr/src/redmine/files:rw"
+        ],
+        "constraints": [
+          "node.labels.millegrilles.app.redmine == true"
+        ],
+        "secrets": [
+          {
+            "name": "passwd.redmine",
+            "filename": "redmine-passwd"
+          }
+        ],
+        "networks": [
+          {
+            "target": "mg_${IDMG}_net",
+            "aliases": ["postgres"]
+          }
+        ],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 1000000000,
+          "mem_limit": 209715200
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ]
+}

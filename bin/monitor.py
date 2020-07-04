@@ -4,7 +4,9 @@
 import argparse
 import logging
 import json
-
+import tarfile
+import tempfile
+import os
 
 class MonitorLigneCommande:
 
@@ -87,10 +89,18 @@ class MonitorLigneCommande:
 
             return dict_commande
         elif self.__args.commande == 'application':
+            with open('etc/apps/docker.' + self.__args.nom + '.json', 'r') as fichier:
+                config_app = json.load(fichier)
+
             dict_commande = {
                 'commande': MonitorLigneCommande.MAPPING_APPS_SERVICE[self.__args.op_service],
                 'nom_application': self.__args.nom,
+                'configuration': config_app,
             }
+
+            scripts_tarfilename = self.creer_tarfile(config_app)
+            if scripts_tarfilename:
+                dict_commande['scripts_tarfile'] = scripts_tarfilename
 
             return dict_commande
         else:
@@ -108,6 +118,32 @@ class MonitorLigneCommande:
         commande = self.formatter_commande()
         self.emettre_commande(commande)
 
+    def creer_tarfile(self, config_app):
+        # Faire liste des scripts
+        liste_fichiers = list()
+        dependances = config_app.get('dependances')
+        if dependances:
+            for dep in dependances:
+                for key, info in dep.items():
+                    if key in ['installation', 'backup']:
+                        for script_info in info:
+                            fichiers = script_info.get('fichiers')
+                            if fichiers:
+                                liste_fichiers.extend(fichiers)
+
+        if len(liste_fichiers) > 0:
+            file_handle, tar_filename = tempfile.mkstemp()
+            os.close(file_handle)
+            with tarfile.open(name=tar_filename, mode='w') as tar_archives:
+                for nom_fichier in liste_fichiers:
+                    path_fichier = os.path.join('etc/apps', nom_fichier)
+                    tar_archives.add(path_fichier, arcname=os.path.join('scripts', nom_fichier), recursive=False)
+
+            self.__logger.info("Fichier script .tar cree : %s" % tar_filename)
+        else:
+            tar_filename = None
+
+        return tar_filename
 
 def main():
     logging.basicConfig()
