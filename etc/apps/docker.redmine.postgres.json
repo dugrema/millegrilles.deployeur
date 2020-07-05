@@ -28,8 +28,7 @@
       "image": "postgres",
       "installation": [
         {
-          "commande": "/tmp/scripts/script.redmine.postgres.installation.sh",
-          "secrets": ["passwd.redmine", "passwd.postgres"],
+          "commande": "/usr/local/scripts/script.redmine.postgres.installation.sh",
           "fichiers": [
             "script.redmine.postgres.installation.sh",
             "script.redmine.postgres.installation.sql"
@@ -38,7 +37,7 @@
       ],
       "backup": [
         {
-          "commande": "./script.redmine.postgres.backup.sh",
+          "commande": "/tmp/scripts/script.redmine.postgres.backup.sh",
           "fichiers": ["script.redmine.postgres.backup.sh"],
           "archives": ["/tmp/backup.redmine.postgres.xz"]
         }
@@ -50,12 +49,16 @@
         "name": "postgres_redmine_client",
         "command": ["/bin/sleep", 10000],
         "env": [
-          "PATH_SCRIPTS=/tmp/scripts",
+          "PATH_SCRIPTS=/usr/local/scripts",
           "REDMINE_PASSWORD_FILE=/run/secrets/redmine-passwd",
           "POSTGRES_PASSWORD_FILE=/run/secrets/postgres-passwd"
         ],
         "constraints": [
-          "node.labels.millegrilles.app.postgres == true"
+          "node.labels.millegrilles.app.redmine == true"
+        ],
+        "mounts": [
+          "redmine_files:/tmp/backup/files:ro",
+          "redmine_scripts:/usr/local/scripts:rw"
         ],
         "secrets": [
           {
@@ -106,7 +109,7 @@
         "networks": [
           {
             "target": "mg_${IDMG}_net",
-            "aliases": ["postgres"]
+            "aliases": ["redmine"]
           }
         ],
         "labels": {
@@ -122,5 +125,16 @@
         }
       }
     }
-  ]
+  ],
+  "nginx": {
+    "server_file": "",
+    "fichiers": [
+      {
+        "nomfichier":"",
+        "contenu": [
+          ""
+        ]
+      }
+    ]
+  }
 }

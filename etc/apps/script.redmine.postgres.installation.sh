@@ -15,7 +15,7 @@ export PGPASSWORD=`cat $PGPASSFILE`
 # Injecter le mot de passe redmine dans le script pour creer le compte
 PASSWORD_REDMINE=`cat /run/secrets/redmine-passwd`
 
-SCRIPT_TMP=$PATH_SCRIPTS/script_redmine_postgres_tmp.sql
+SCRIPT_TMP=/tmp/script_redmine_postgres_tmp.sql
 echo "\set psw '$PASSWORD'" > $SCRIPT_TMP
 cat $PATH_SCRIPTS/script.redmine.postgres.installation.sql >> $SCRIPT_TMP
 chmod 600 $SCRIPT_TMP

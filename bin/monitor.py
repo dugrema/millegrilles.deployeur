@@ -8,6 +8,7 @@ import tarfile
 import tempfile
 import os
 
+
 class MonitorLigneCommande:
 
     MAPPING_OPS_SERVICE = {
@@ -22,6 +23,7 @@ class MonitorLigneCommande:
     def __init__(self):
         self.__logger = logging.getLogger(self.__class__.__name__)
         self.__args = None
+        self.__path_scripts = None
 
         self.__path_etc = 'etc/apps'
 
