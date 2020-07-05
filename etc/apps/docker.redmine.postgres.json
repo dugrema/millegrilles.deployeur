@@ -1,26 +1,35 @@
 {
+  "nom": "redmine.postgres",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
   ],
   "images": {
-    "shared.postgres": {
+    "postgres": {
       "registries": [
         ""
       ],
       "image": "postgres",
       "version": "12.3"
+    },
+    "redmine": {
+      "registries": [
+        ""
+      ],
+      "image": "redmine",
+      "version": "4.1"
     }
   },
   "dependances": [
     {
-      "docker_config_file": "docker.postgres.json"
+      "docker_config_file": "docker.postgres.sharedapp.json"
     },
     {
-      "image": "redmine",
+      "image": "postgres",
       "installation": [
         {
-          "commande": "./script.redmine.postgres.installation.sh",
+          "commande": "/tmp/scripts/script.redmine.postgres.installation.sh",
+          "secrets": ["passwd.redmine", "passwd.postgres"],
           "fichiers": [
             "script.redmine.postgres.installation.sh",
             "script.redmine.postgres.installation.sql"
@@ -38,12 +47,52 @@
         "motsdepasse": [{"name": "passwd.redmine"}]
       },
       "config": {
+        "name": "postgres_redmine_client",
+        "command": ["/bin/sleep", 10000],
+        "env": [
+          "PATH_SCRIPTS=/tmp/scripts",
+          "REDMINE_PASSWORD_FILE=/run/secrets/redmine-passwd",
+          "POSTGRES_PASSWORD_FILE=/run/secrets/postgres-passwd"
+        ],
+        "constraints": [
+          "node.labels.millegrilles.app.postgres == true"
+        ],
+        "secrets": [
+          {
+            "name": "passwd.redmine",
+            "filename": "redmine-passwd"
+          },{
+            "name": "passwd.postgres",
+            "filename": "postgres-passwd"
+          }
+        ],
+        "networks": [
+          {
+            "target": "mg_${IDMG}_net"
+          }
+        ],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 1000000000,
+          "mem_limit": 50000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    },
+    {
+      "image": "redmine",
+      "config": {
         "name": "redmine",
         "env": [
           "REDMINE_PASSWORD_FILE=/run/secrets/redmine-passwd"
         ],
         "mounts": [
-          "${MOUNTS}/redmine/files:/usr/src/redmine/files:rw"
+          "redmine_files:/usr/src/redmine/files:rw"
         ],
         "constraints": [
           "node.labels.millegrilles.app.redmine == true"

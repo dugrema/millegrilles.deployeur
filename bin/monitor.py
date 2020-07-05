@@ -23,6 +23,8 @@ class MonitorLigneCommande:
         self.__logger = logging.getLogger(self.__class__.__name__)
         self.__args = None
 
+        self.__path_etc = 'etc/apps'
+
     def parse(self):
         parser = argparse.ArgumentParser(description="Utilitaire de ligne de commandes pour monitor MilleGrilles")
 
@@ -89,8 +91,11 @@ class MonitorLigneCommande:
 
             return dict_commande
         elif self.__args.commande == 'application':
-            with open('etc/apps/docker.' + self.__args.nom + '.json', 'r') as fichier:
+            with open(os.path.join(self.__path_etc, 'docker.' + self.__args.nom + '.json'), 'r') as fichier:
                 config_app = json.load(fichier)
+
+            # Injecter les dependances au besoin
+            config_app = self.injecter_dependances(config_app)
 
             dict_commande = {
                 'commande': MonitorLigneCommande.MAPPING_APPS_SERVICE[self.__args.op_service],
@@ -118,6 +123,22 @@ class MonitorLigneCommande:
         commande = self.formatter_commande()
         self.emettre_commande(commande)
 
+    def injecter_dependances(self, config_app):
+        """
+        Charge et injecte les dependances identifiees par docker_config_file avec le contenu du fichier
+        correspondant.
+        :param config_app:
+        :return:
+        """
+        for dependance in config_app.get('dependances'):
+            if dependance.get('docker_config_file'):
+                with open(os.path.join(self.__path_etc, dependance['docker_config_file']), 'r') as fichier:
+                    dependance_contenu = json.load(fichier)
+                    del dependance['docker_config_file']
+                    dependance.update(dependance_contenu)
+
+        return config_app
+
     def creer_tarfile(self, config_app):
         # Faire liste des scripts
         liste_fichiers = list()
@@ -136,7 +157,7 @@ class MonitorLigneCommande:
             os.close(file_handle)
             with tarfile.open(name=tar_filename, mode='w') as tar_archives:
                 for nom_fichier in liste_fichiers:
-                    path_fichier = os.path.join('etc/apps', nom_fichier)
+                    path_fichier = os.path.join(self.__path_etc, nom_fichier)
                     tar_archives.add(path_fichier, arcname=os.path.join('scripts', nom_fichier), recursive=False)
 
             self.__logger.info("Fichier script .tar cree : %s" % tar_filename)
