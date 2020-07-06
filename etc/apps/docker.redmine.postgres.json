@@ -26,7 +26,7 @@
     },
     {
       "image": "postgres",
-      "etape_seulement": true,
+      "etape_seulement": false,
       "installation": [
         {
           "commande": "/usr/local/scripts/script.redmine.postgres.installation.sh",
@@ -91,7 +91,10 @@
       "config": {
         "name": "redmine",
         "env": [
-          "REDMINE_PASSWORD_FILE=/run/secrets/redmine-passwd"
+          "REDMINE_DB_PASSWORD_FILE=/run/secrets/redmine-passwd",
+          "REDMINE_DB_POSTGRES=postgres",
+          "REDMINE_DB_USERNAME=redmine",
+          "REDMINE_DB_DATABASE=redmine"
         ],
         "mounts": [
           "redmine_files:/usr/src/redmine/files:rw"
