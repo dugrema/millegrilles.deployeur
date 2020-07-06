@@ -4,7 +4,7 @@ EXIT_CODE=0
 
 echo "[OK] Demarrage script de backup de redmine.postgres"
 
-PGPASSWORD=`cat /run/secrets/redmine-passwd`
+export PGPASSWORD=`cat $REDMINE_DB_PASSWORD_FILE`
 
 # Attente postgres
 pg_dump redmine -U redmine -h postgres | xz - > /tmp/backup/backup.redmine.postgres.xz

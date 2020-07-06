@@ -26,7 +26,7 @@
     },
     {
       "image": "postgres",
-      "etape_seulement": false,
+      "etape_seulement": true,
       "installation": [
         {
           "commande": "/usr/local/scripts/script.redmine.postgres.installation.sh",
@@ -38,9 +38,9 @@
       ],
       "backup": [
         {
-          "commande": "/tmp/scripts/script.redmine.postgres.backup.sh",
+          "commande": "/usr/local/scripts/script.redmine.postgres.backup.sh",
           "fichiers": ["script.redmine.postgres.backup.sh"],
-          "archives": ["/tmp/backup.redmine.postgres.xz"]
+          "archives": ["/tmp/backup"]
         }
       ],
       "generer": {
@@ -48,10 +48,10 @@
       },
       "config": {
         "name": "postgres_redmine_client",
-        "command": ["/bin/sleep", 10000],
+        "args": ["sleep", "10000"],
         "env": [
           "PATH_SCRIPTS=/usr/local/scripts",
-          "REDMINE_PASSWORD_FILE=/run/secrets/redmine-passwd",
+          "REDMINE_DB_PASSWORD_FILE=/run/secrets/redmine-passwd",
           "POSTGRES_PASSWORD_FILE=/run/secrets/postgres-passwd"
         ],
         "constraints": [
