@@ -139,6 +139,13 @@ class MonitorLigneCommande:
                     del dependance['docker_config_file']
                     dependance.update(dependance_contenu)
 
+        nginx_config = config_app.get('nginx')
+        if nginx_config.get('server_file'):
+            # Injecter le contenu du fichier nginx dans la configuration
+            with open(os.path.join(self.__path_etc, nginx_config['server_file']), 'r') as fichier:
+                config_nginx = fichier.read()
+            nginx_config['conf'] = config_nginx
+
         return config_app
 
     def creer_tarfile(self, config_app):

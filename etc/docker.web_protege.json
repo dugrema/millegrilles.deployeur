@@ -8,7 +8,7 @@
     "WEB_CERT=/run/secrets/webcert.pem",
     "WEB_KEY=/run/secrets/webkey.pem",
     "SERVER_TYPE=spdy",
-    "HOST=web",
+    "HOST=${HOSTNAME}",
     "PORT=443",
     "MG_CONSIGNATION_HTTP=https://fichiers",
     "DATA_FOLDER=${MOUNTS}/nginx/data"

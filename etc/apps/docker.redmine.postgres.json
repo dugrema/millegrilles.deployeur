@@ -69,11 +69,9 @@
             "filename": "postgres-passwd"
           }
         ],
-        "networks": [
-          {
-            "target": "mg_${IDMG}_net"
-          }
-        ],
+        "networks": [{
+          "target": "mg_${IDMG}_net"
+        }],
         "labels": {
           "millegrille": "${IDMG}"
         },
@@ -127,14 +125,9 @@
     }
   ],
   "nginx": {
-    "server_file": "",
-    "fichiers": [
-      {
-        "nomfichier":"",
-        "contenu": [
-          ""
-        ]
-      }
-    ]
+    "server_file": "nginx.redmine.postgres.conf",
+    "params": {
+      "PROXY_PASS_BACKEND": "http://redmine:3000"
+    }
   }
 }
