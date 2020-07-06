@@ -17,7 +17,8 @@ class MonitorLigneCommande:
     }
 
     MAPPING_APPS_SERVICE = {
-        'installer': 'servicemonitor.installerApplication'
+        'installer': 'servicemonitor.installerApplication',
+        'supprimer': 'servicemonitor.supprimerApplication',
     }
 
     def __init__(self):
@@ -73,7 +74,7 @@ class MonitorLigneCommande:
         # Services docker
         commande_applications = subparser_commandes.add_parser('application', help='Operations sur applications')
         commande_applications.add_argument(
-            'op_service', type=str, choices=['installer'],
+            'op_service', type=str, choices=['installer', 'supprimer'],
             help="Operation"
         )
         commande_applications.add_argument(
