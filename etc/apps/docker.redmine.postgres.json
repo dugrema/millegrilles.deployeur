@@ -27,22 +27,18 @@
     {
       "image": "postgres",
       "etape_seulement": true,
-      "installation": [
-        {
-          "commande": "/usr/local/scripts/script.redmine.postgres.installation.sh",
-          "fichiers": [
-            "script.redmine.postgres.installation.sh",
-            "script.redmine.postgres.installation.sql"
-          ]
-        }
-      ],
-      "backup": [
-        {
-          "commande": "/usr/local/scripts/script.redmine.postgres.backup.sh",
-          "fichiers": ["script.redmine.postgres.backup.sh"],
-          "archives": ["/tmp/backup"]
-        }
-      ],
+      "installation": {
+        "commande": "/usr/local/scripts/script.redmine.postgres.installation.sh",
+        "fichiers": [
+          "script.redmine.postgres.installation.sh",
+          "script.redmine.postgres.installation.sql"
+        ]
+      },
+      "backup": {
+        "commande": "/usr/local/scripts/script.redmine.postgres.backup.sh",
+        "fichiers": ["script.redmine.postgres.backup.sh"],
+        "path_archive": "/tmp/backup"
+      },
       "generer": {
         "motsdepasse": [{"name": "passwd.redmine"}]
       },

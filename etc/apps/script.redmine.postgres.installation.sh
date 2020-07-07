@@ -16,7 +16,7 @@ export PGPASSWORD=`cat $PGPASSFILE`
 PASSWORD_REDMINE=`cat /run/secrets/redmine-passwd`
 
 SCRIPT_TMP=/tmp/script_redmine_postgres_tmp.sql
-echo "\set psw '$PASSWORD'" > $SCRIPT_TMP
+echo "\set psw '$PASSWORD_REDMINE'" > $SCRIPT_TMP
 cat $PATH_SCRIPTS/script.redmine.postgres.installation.sql >> $SCRIPT_TMP
 chmod 600 $SCRIPT_TMP
 chown postgres $SCRIPT_TMP

@@ -75,13 +75,21 @@ class MonitorLigneCommande:
     def parseur_applications(self, subparser_commandes):
         # Services docker
         commande_applications = subparser_commandes.add_parser('application', help='Operations sur applications')
-        commande_applications.add_argument(
-            'op_service', type=str, choices=['installer', 'supprimer', 'backup', 'restore'],
-            help="Operation"
-        )
+        subparser_operations = commande_applications.add_subparsers(
+            dest='op_service', required=True, help='Commande application')
         commande_applications.add_argument(
             'nom', type=str,
             help='Nom de l\'application'
+        )
+
+        op_installer = subparser_operations.add_parser('installer', help='Installer application')
+        op_supprimer = subparser_operations.add_parser('supprimer', help='Supprimer application')
+        op_backup = subparser_operations.add_parser('backup', help='Backup application')
+
+        op_restore = subparser_operations.add_parser('restore', help='Restaurer application')
+        op_restore.add_argument(
+            'archive_tar', type=str,
+            help='Archive tar avec le contenu du backup a restaurer'
         )
 
     def formatter_commande(self):
@@ -111,6 +119,9 @@ class MonitorLigneCommande:
             scripts_tarfilename = self.creer_tarfile(config_app)
             if scripts_tarfilename:
                 dict_commande['scripts_tarfile'] = scripts_tarfilename
+
+            if self.__args.op_service == 'restore':
+                dict_commande['archive_tarfile'] = self.__args.archive_tar
 
             return dict_commande
         else:
@@ -157,15 +168,14 @@ class MonitorLigneCommande:
         dependances = config_app.get('dependances')
         if dependances:
             for dep in dependances:
-                for key, info in dep.items():
+                for key, script_info in dep.items():
                     if key in ['installation', 'backup']:
-                        for script_info in info:
-                            fichiers = script_info.get('fichiers')
-                            if fichiers:
-                                liste_fichiers.extend(fichiers)
+                        fichiers = script_info.get('fichiers')
+                        if fichiers:
+                            liste_fichiers.extend(fichiers)
 
         if len(liste_fichiers) > 0:
-            file_handle, tar_filename = tempfile.mkstemp()
+            file_handle, tar_filename = tempfile.mkstemp(prefix='monitor-scripts-', suffix='.tar')
             os.close(file_handle)
             with tarfile.open(name=tar_filename, mode='w') as tar_archives:
                 for nom_fichier in liste_fichiers:
