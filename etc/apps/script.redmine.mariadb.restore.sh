@@ -2,12 +2,12 @@
 
 EXIT_CODE=0
 
-echo "[OK] Demarrage script de backup de redmine.postgres"
+echo "[OK] Demarrage script de restauration de redmine.mariadb"
 
 export PGPASSWORD=`cat $REDMINE_DB_PASSWORD_FILE`
-xzcat /tmp/backup/backup.redmine.postgres.xz | psql --set ON_ERROR_STOP=on -U redmine -h postgres
+xzcat /tmp/backup/backup.redmine.mariadb.xz | mysql -h mariadb -u redmine -p"`cat /run/secrets/redmine-passwd`" redmine
 EXIT_CODE=$?
 
-echo "[OK] Fin du script de backup de redmine.postgres"
+echo "[OK] Fin du script de restauration de redmine.mariadb"
 
 echo "{\"exit\": $EXIT_CODE}"
