@@ -35,9 +35,13 @@
         ]
       },
       "backup": {
-        "commande": "/usr/local/scripts/script.redmine.postgres.backup.sh",
-        "fichiers": ["script.redmine.postgres.backup.sh"],
-        "path_archive": "/tmp/backup"
+        "commande_backup": "/usr/local/scripts/script.redmine.postgres.backup.sh",
+        "commande_restore": "/usr/local/scripts/script.redmine.postgres.restore.sh",
+        "fichiers": [
+          "script.redmine.postgres.backup.sh",
+          "script.redmine.postgres.restore.sh"
+        ],
+        "base_path": "/tmp/backup"
       },
       "generer": {
         "motsdepasse": [{"name": "passwd.redmine"}]
@@ -54,7 +58,7 @@
           "node.labels.millegrilles.app.redmine == true"
         ],
         "mounts": [
-          "redmine_files:/tmp/backup/files:ro",
+          "redmine_files:/tmp/backup/files:rw",
           "redmine_scripts:/usr/local/scripts:rw"
         ],
         "secrets": [
