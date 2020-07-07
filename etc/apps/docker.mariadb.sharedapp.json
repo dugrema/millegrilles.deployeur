@@ -1,0 +1,59 @@
+{
+  "nom": "mariadb.sharedapp",
+  "registries": [
+    "docker.maceroc.com",
+    "dugremat"
+  ],
+  "images": {
+    "shared.mariadb": {
+      "registries": [
+        ""
+      ],
+      "image": "mariadb",
+      "version": "10.5"
+    }
+  },
+  "dependances": [
+    {
+      "image": "shared.mariadb",
+      "generer": {
+        "motsdepasse": [{"name": "passwd.mariadb"}]
+      },
+      "config": {
+        "name": "mariadb",
+        "env": [
+          "MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mariadb-passwd"
+        ],
+        "mounts": [
+          "shared_mariadb:/var/lib/mysql:rw"
+        ],
+        "constraints": [
+          "node.labels.millegrilles.prive == true"
+        ],
+        "secrets": [
+          {
+            "name": "passwd.mariadb",
+            "filename": "mariadb-passwd"
+          }
+        ],
+        "networks": [
+          {
+            "target": "mg_${IDMG}_net",
+            "aliases": ["mariadb"]
+          }
+        ],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 1000000000,
+          "mem_limit": 209715200
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ]
+}
