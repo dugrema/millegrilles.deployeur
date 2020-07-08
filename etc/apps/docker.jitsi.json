@@ -24,24 +24,28 @@
   "dependances": [
     {
       "image": "jitsi_jicofo",
+      "generer": {
+        "motsdepasse": [
+          {"name": "passwd.jitsi.jicofoauth"},
+          {"name": "passwd.jitsi.jicofosecret"},
+          {"name": "passwd.jitsi.jvbauth"}
+        ]
+      },
       "config": {
         "name": "jitsi_jicofo",
         "constraints": [
           "node.labels.millegrilles.app.jitsi == true"
         ],
         "env": [
-          "JIBRI_BREWERY_MUC=jibribrewery",
-          "JIBRI_PENDING_TIMEOUT=90",
-          "JICOFO_AUTH_PASSWORD=c6891cd6b9d5986d1c876671498291dc",
           "JICOFO_AUTH_USER=focus",
-          "JICOFO_COMPONENT_SECRET=794ae5de5ee01743b59871955b92c43b",
-          "JIGASI_BREWERY_MUC=jigasibrewery",
           "JVB_BREWERY_MUC=jvbbrewery",
           "TZ=America/Toronto",
           "XMPP_AUTH_DOMAIN=auth.meet.jitsi",
           "XMPP_DOMAIN=meet.jitsi",
           "XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi",
-          "XMPP_SERVER=jitsi_prosody"
+          "XMPP_SERVER=jitsi_prosody",
+          "JICOFO_AUTH_PASSWORD=c6891cd6b9d5986d1c876671498291dc",
+          "JICOFO_COMPONENT_SECRET=794ae5de5ee01743b59871955b92c43b"
         ],
         "networks": [{
           "target": "mg_${IDMG}_net"
@@ -118,15 +122,9 @@
           "node.labels.millegrilles.app.jitsi == true"
         ],
         "env": [
-          "JIBRI_RECORDER_PASSWORD=cb3a7e242998d9dd1a9103f8817186bd",
-          "JIBRI_RECORDER_USER=recorder",
-          "JIBRI_XMPP_PASSWORD=adccd60e1ce2f2d80aa86535642b6cfe",
-          "JIBRI_XMPP_USER=jibri",
           "JICOFO_AUTH_PASSWORD=c6891cd6b9d5986d1c876671498291dc",
           "JICOFO_AUTH_USER=focus",
           "JICOFO_COMPONENT_SECRET=794ae5de5ee01743b59871955b92c43b",
-          "JIGASI_XMPP_PASSWORD=513a8dd60cde1d6abad19197bb221b5a",
-          "JIGASI_XMPP_USER=jigasi",
           "JVB_AUTH_PASSWORD=d0869387093876bb3ed2c1a3ac668556",
           "JVB_AUTH_USER=jvb",
           "TZ=America/Toronto",
@@ -162,12 +160,6 @@
           "node.labels.millegrilles.app.jitsi == true"
         ],
         "env": [
-          "JIBRI_BREWERY_MUC=jibribrewery",
-          "JIBRI_PENDING_TIMEOUT=90",
-          "JIBRI_RECORDER_PASSWORD=cb3a7e242998d9dd1a9103f8817186bd",
-          "JIBRI_RECORDER_USER=recorder",
-          "JIBRI_XMPP_PASSWORD=adccd60e1ce2f2d80aa86535642b6cfe",
-          "JIBRI_XMPP_USER=jibri",
           "JICOFO_AUTH_USER=focus",
           "TZ=America/Toronto",
           "XMPP_AUTH_DOMAIN=auth.meet.jitsi",
