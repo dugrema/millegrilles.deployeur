@@ -26,7 +26,7 @@
     },
     {
       "image": "mariadb",
-      "etape_seulement": false,
+      "etape_seulement": true,
       "installation": {
         "commande": "/usr/local/scripts/script.redmine.mariadb.installation.sh",
         "fichiers": [

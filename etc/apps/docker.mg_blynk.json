@@ -8,20 +8,16 @@
     "blynk": {
       "image": "mg_blynk",
       "version": "0.41.10_1"
+    },
+    "alpine": {
+      "registries": [""],
+      "image": "alpine",
+      "version": "latest"
     }
   },
   "dependances": [
     {
       "image": "blynk",
-      "backup": {
-        "commande_backup": "/usr/local/scripts/script.blynk.backup.sh",
-        "commande_restore": "/usr/local/scripts/script.blynk.restore.sh",
-        "fichiers": [
-          "script.blynk.backup.sh",
-          "script.blynk.restore.sh"
-        ],
-        "base_path": "/tmp/backup"
-      },
       "config": {
         "name": "blynk",
         "constraints": [
@@ -42,6 +38,34 @@
         "networks": [{
           "target": "mg_${IDMG}_net"
         }],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 1000000000,
+          "mem_limit": 50000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    },
+    {
+      "image": "alpine",
+      "command": "/bin/sleep 10000",
+      "etape_seulement": true,
+      "backup": {
+        "base_path": "/tmp/backup"
+      },
+      "config": {
+        "name": "blynk_client",
+        "constraints": [
+          "node.labels.millegrilles.app.blynk == true"
+        ],
+        "mounts": [
+          "blynk_data:/tmp/backup/data:rw"
+        ],
         "labels": {
           "millegrille": "${IDMG}"
         },
