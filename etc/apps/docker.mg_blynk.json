@@ -7,9 +7,9 @@
   "images": {
     "blynk": {
       "image": "mg_blynk",
-      "version": "0.41.10_1"
+      "version": "0.41.10_2"
     },
-    "alpine": {
+    "blynk_client": {
       "registries": [""],
       "image": "alpine",
       "version": "latest"
@@ -22,6 +22,22 @@
         "name": "blynk",
         "constraints": [
           "node.labels.millegrilles.app.blynk == true"
+        ],
+        "env": [
+          "SERVER_SSL_KEY=/run/secrets/webkey.pem",
+          "SERVER_SSL_CERT=/run/secrets/webcert.pem"
+        ],
+        "configs": [
+          {
+            "name": "pki.web.cert;pki.nginx.cert",
+            "filename": "/run/secrets/webcert.pem"
+          }
+        ],
+        "secrets": [
+          {
+            "name": "pki.web.key;pki.nginx.key",
+            "filename": "webkey.pem"
+          }
         ],
         "mounts": [
           "blynk_data:/blynk/data:rw"
@@ -52,7 +68,7 @@
       }
     },
     {
-      "image": "alpine",
+      "image": "blynk_client",
       "command": "/bin/sleep 10000",
       "etape_seulement": true,
       "backup": {
