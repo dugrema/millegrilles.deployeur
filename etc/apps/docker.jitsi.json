@@ -170,7 +170,8 @@
           "XMPP_RECORDER_DOMAIN=recorder.meet.jitsi"
         ],
         "networks": [{
-          "target": "mg_${IDMG}_net"
+          "target": "mg_${IDMG}_net",
+          "aliases": ["jitsi_web"]
         }],
         "labels": {
           "millegrille": "${IDMG}"
@@ -185,5 +186,12 @@
         }
       }
     }
-  ]
+  ],
+  "nginx": {
+    "server_file": "nginx.jitsi.conf",
+    "subdomain": "jitsi",
+    "params": {
+      "PROXY_PASS_BACKEND": "https://jitsi_web:443"
+    }
+  }
 }
