@@ -50,7 +50,7 @@
           "millegrille": "${IDMG}"
         },
         "resources": {
-          "cpu_limit": 640000000,
+          "cpu_limit": 320000000,
           "mem_limit": 128000000
         },
         "mode": {
@@ -67,7 +67,8 @@
           "node.labels.millegrilles.app.jitsi == true"
         ],
         "env": [
-          "DOCKER_HOST_ADDRESS=192.168.1.131",
+          "JVB_TCP_HARVESTER_DISABLED=true",
+          "DOCKER_HOST_ADDRESS=${HOSTNAME}",
           "JVB_AUTH_PASSWORD=d0869387093876bb3ed2c1a3ac668556",
           "JVB_AUTH_USER=jvb",
           "JVB_BREWERY_MUC=jvbbrewery",
@@ -80,22 +81,29 @@
         ],
         "endpoint_spec": {
           "mode": "vip",
-          "ports": [{
-            "published_port": 10000,
-            "target_port": 10000,
-            "protocol": "udp",
-            "publish_mode": "host"
-          }]
+          "ports": [
+            {
+              "published_port": 10000,
+              "target_port": 10000,
+              "protocol": "udp",
+              "publish_mode": "host"
+            }
+          ]
         },
-        "networks": [{
-          "target": "mg_${IDMG}_net"
-        }],
+        "networks": [
+          {
+            "target": "mg_${IDMG}_net"
+          },
+          {
+            "target": "bridge"
+          }
+        ],
         "labels": {
           "millegrille": "${IDMG}"
         },
         "resources": {
           "cpu_limit": 2000000000,
-          "mem_limit": 1000000000
+          "mem_limit": 512000000
         },
         "mode": {
           "mode": "replicated",
@@ -137,8 +145,8 @@
           "millegrille": "${IDMG}"
         },
         "resources": {
-          "cpu_limit": 640000000,
-          "mem_limit": 64000000
+          "cpu_limit": 320000000,
+          "mem_limit": 50000000
         },
         "mode": {
           "mode": "replicated",
@@ -177,8 +185,8 @@
           "millegrille": "${IDMG}"
         },
         "resources": {
-          "cpu_limit": 64000000,
-          "mem_limit": 64000000
+          "cpu_limit": 32000000,
+          "mem_limit": 24000000
         },
         "mode": {
           "mode": "replicated",
