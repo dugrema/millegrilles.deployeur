@@ -154,7 +154,7 @@ class MonitorLigneCommande:
                     dependance.update(dependance_contenu)
 
         nginx_config = config_app.get('nginx')
-        if nginx_config.get('server_file'):
+        if nginx_config and nginx_config.get('server_file'):
             # Injecter le contenu du fichier nginx dans la configuration
             with open(os.path.join(self.__path_etc, nginx_config['server_file']), 'r') as fichier:
                 config_nginx = fichier.read()
