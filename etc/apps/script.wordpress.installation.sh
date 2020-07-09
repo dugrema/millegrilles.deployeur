@@ -15,7 +15,7 @@ WORDPRESS_PASSWORD=`cat /run/secrets/wordpress-db-passwd`
 echo "
 CREATE DATABASE wordpress CHARACTER SET utf8mb4;
 CREATE USER 'wordpress'@'%' IDENTIFIED BY '$WORDPRESS_PASSWORD';
-GRANT ALL PRIVILEGES ON redmine.* TO 'redmine'@'%';
+GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'%';
 " > $SCRIPT
 
 echo "SCRIPT INSTALLATION WORDPRESS"
