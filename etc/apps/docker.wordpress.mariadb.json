@@ -1,0 +1,127 @@
+{
+  "nom": "redmine.mariadb",
+  "registries": [""],
+  "images": {
+    "mariadb": {
+      "image": "mariadb",
+      "version": "10.5"
+    },
+    "wordpress": {
+      "image": "wordpress",
+      "version": "5.4-fpm-alpine"
+    }
+  },
+  "dependances": [
+    {
+      "docker_config_file": "docker.mariadb.sharedapp.json"
+    },
+    {
+      "image": "mariadb",
+      "etape_seulement": true,
+      "installation": {
+        "commande": "/usr/local/scripts/script.wordpress.mariadb.installation.sh",
+        "fichiers": [
+          "script.wordpress.mariadb.installation.sh"
+        ]
+      },
+      "backup": {
+        "commande_backup": "/usr/local/scripts/script.wordpress.mariadb.backup.sh",
+        "commande_restore": "/usr/local/scripts/script.wordpress.mariadb.restore.sh",
+        "fichiers": [
+          "script.wordpress.mariadb.backup.sh",
+          "script.wordpress.mariadb.restore.sh"
+        ],
+        "base_path": "/tmp/backup"
+      },
+      "generer": {
+        "motsdepasse": [{"name": "passwd.wordpress.db"}]
+      },
+      "config": {
+        "name": "mariadb_wordpress_client",
+        "args": ["sleep", "10000"],
+        "env": [
+          "PATH_SCRIPTS=/usr/local/scripts",
+          "REDMINE_DB_PASSWORD_FILE=/run/secrets/redmine-passwd",
+          "MARIADB_PASSWORD_FILE=/run/secrets/mariadb-passwd"
+        ],
+        "constraints": [
+          "node.labels.millegrilles.app.redmine == true"
+        ],
+        "mounts": [
+          "redmine_files:/tmp/backup/files:rw",
+          "redmine_scripts:/usr/local/scripts:rw"
+        ],
+        "secrets": [
+          {
+            "name": "passwd.redmine",
+            "filename": "redmine-passwd"
+          },{
+            "name": "passwd.mariadb",
+            "filename": "mariadb-passwd"
+          }
+        ],
+        "networks": [{
+          "target": "mg_${IDMG}_net"
+        }],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 1000000000,
+          "mem_limit": 50000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    },
+    {
+      "image": "wordpress",
+      "config": {
+        "name": "wordpress",
+        "env": [
+          "WORDPRESS_DB_PASSWORD_FILE=/run/secrets/wordpress-db-passwd",
+          "WORDPRESS_DB_HOST=mariadb",
+          "WORDPRESS_DB_USER=wordpress",
+          "WORDPRESS_DB_NAME=wordpress"
+        ],
+        "mounts": [
+          "redmine_files:/usr/src/redmine/files:rw"
+        ],
+        "constraints": [
+          "node.labels.millegrilles.app.redmine == true"
+        ],
+        "secrets": [
+          {
+            "name": "passwd.redmine",
+            "filename": "redmine-passwd"
+          }
+        ],
+        "networks": [
+          {
+            "target": "mg_${IDMG}_net",
+            "aliases": ["redmine"]
+          }
+        ],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 1000000000,
+          "mem_limit": 209715200
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ],
+  "nginx": {
+    "server_file": "nginx.redmine.mariadb.conf",
+    "params": {
+      "PROXY_PASS_BACKEND": "http://redmine:3000"
+    }
+  }
+}
