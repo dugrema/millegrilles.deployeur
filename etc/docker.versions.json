@@ -6,7 +6,7 @@
     "images": {
         "mongo": {"registries": [""], "image": "mongo", "version": "4.0"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_4"},
-        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.29.2"},
+        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.30.0"},
         "fichiers": {"image": "consignationfichiers", "version": "1.26.0"},
         "nginx": {"image": "millegrilles_nginx", "version": "1.30.3"},
         "web": {"image": "millegrilles_web", "version": "1.30.3"},
