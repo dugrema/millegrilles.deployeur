@@ -122,9 +122,12 @@ configurer_swarm() {
 
 # Installer le service ServiceMonitor
 demarrer_servicemonitor() {
+  HOSTNAME_MONITOR=`hostname -f`
+
   docker service create \
     --name service_monitor \
     --hostname monitor \
+    --env HOSTNAME_MONITOR=$HOSTNAME_MONITOR \
     --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
     --mount type=bind,source=$MILLEGRILLES_VAR,destination=/var/opt/millegrilles \
     --user root:115 \
