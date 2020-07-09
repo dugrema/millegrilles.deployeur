@@ -23,7 +23,8 @@
         "commande": "/usr/local/scripts/script.wordpress.installation.sh",
         "fichiers": [
           "script.wordpress.installation.sh"
-        ]
+        ],
+        "exit_codes_ok": [1]
       },
       "backup": {
         "commande_backup": "/usr/local/scripts/script.wordpress.backup.sh",
