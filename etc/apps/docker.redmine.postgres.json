@@ -13,11 +13,8 @@
       "version": "12.3"
     },
     "redmine": {
-      "registries": [
-        ""
-      ],
-      "image": "redmine",
-      "version": "4.1"
+      "image": "mg_redmine",
+      "version": "4.1_0"
     }
   },
   "dependances": [
