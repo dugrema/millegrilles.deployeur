@@ -1,20 +1,22 @@
 {
   "nom": "jitsi",
   "registries": [
+    "docker.maceroc.com",
+    "dugremat",
     "jitsi"
   ],
   "images": {
     "jitsi_jvb": {
-      "image": "jvb",
-      "version": "stable-4627-1"
+      "image": "mg_jvb",
+      "version": "x86_64_stable-4627-1_0"
     },
     "jitsi_jicofo": {
-      "image": "jicofo",
-      "version": "stable-4627-1"
+      "image": "mg_jicofo",
+      "version": "x86_64_stable-4627-1_0"
     },
     "jitsi_prosody": {
-      "image": "prosody",
-      "version": "stable-4627-1"
+      "image": "mg_prosody",
+      "version": "x86_64_stable-4627-1_0"
     },
     "jitsi_web": {
       "image": "web",
