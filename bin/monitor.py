@@ -8,6 +8,7 @@ import tarfile
 import tempfile
 import os
 
+from base64 import b64encode
 
 class MonitorLigneCommande:
 
@@ -119,6 +120,11 @@ class MonitorLigneCommande:
             scripts_tarfilename = self.creer_tarfile(config_app)
             if scripts_tarfilename:
                 dict_commande['scripts_tarfile'] = scripts_tarfilename
+                with open(scripts_tarfilename, 'rb') as fichiers:
+                    tarfile_bytes = fichiers.read()
+                    tarfile_b64 = b64encode(tarfile_bytes)
+                    dict_commande['scripts_b64'] = tarfile_b64.decode('utf-8')
+                    os.remove(scripts_tarfilename)
 
             if self.__args.op_service == 'restore':
                 dict_commande['archive_tarfile'] = self.__args.archive_tar
