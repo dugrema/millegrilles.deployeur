@@ -131,6 +131,7 @@
   ],
   "nginx": {
     "server_file": "nginx.redmine.postgres.conf",
+    "subdomain": "redmine",
     "params": {
       "PROXY_PASS_BACKEND": "http://redmine:3000"
     }

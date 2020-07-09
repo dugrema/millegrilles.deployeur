@@ -32,7 +32,8 @@
         "commande": "/usr/local/scripts/script.redmine.mariadb.installation.sh",
         "fichiers": [
           "script.redmine.mariadb.installation.sh"
-        ]
+        ],
+        "exit_codes_ok": [1]
       },
       "backup": {
         "commande_backup": "/usr/local/scripts/script.redmine.mariadb.backup.sh",
@@ -130,6 +131,7 @@
   ],
   "nginx": {
     "server_file": "nginx.redmine.mariadb.conf",
+    "subdomain": "redmine",
     "params": {
       "PROXY_PASS_BACKEND": "http://redmine:3000"
     }
