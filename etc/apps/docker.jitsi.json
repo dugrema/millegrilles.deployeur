@@ -25,7 +25,7 @@
   },
   "dependances": [
     {
-      "image": "jitsi_jicofo",
+      "image": "jitsi_prosody",
       "generer": {
         "motsdepasse": [
           {"name": "passwd.jitsi.jicofoauth"},
@@ -33,6 +33,53 @@
           {"name": "passwd.jitsi.jvbauth"}
         ]
       },
+      "config": {
+        "name": "jitsi_prosody",
+        "constraints": [
+          "node.labels.millegrilles.app.jitsi == true"
+        ],
+        "env": [
+          "JICOFO_AUTH_USER=focus",
+          "JVB_AUTH_USER=jvb",
+          "TZ=America/Toronto",
+          "XMPP_AUTH_DOMAIN=auth.meet.jitsi",
+          "XMPP_DOMAIN=meet.jitsi",
+          "XMPP_GUEST_DOMAIN=guest.meet.jitsi",
+          "XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi",
+          "XMPP_MUC_DOMAIN=muc.meet.jitsi",
+          "XMPP_RECORDER_DOMAIN=recorder.meet.jitsi"
+        ],
+        "secrets": [
+          {
+            "name": "passwd.jitsi.jicofoauth",
+            "filename": "JICOFO_AUTH_PASSWORD"
+          },{
+            "name": "passwd.jitsi.jicofosecret",
+            "filename": "JICOFO_COMPONENT_SECRET"
+          },{
+            "name": "passwd.jitsi.jvbauth",
+            "filename": "JVB_AUTH_PASSWORD"
+          }
+        ],
+        "networks": [{
+          "target": "mg_${IDMG}_net",
+          "aliases": ["jitsi_prosody"]
+        }],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 320000000,
+          "mem_limit": 50000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    },
+    {
+      "image": "jitsi_jicofo",
       "config": {
         "name": "jitsi_jicofo",
         "constraints": [
@@ -45,9 +92,7 @@
           "XMPP_AUTH_DOMAIN=auth.meet.jitsi",
           "XMPP_DOMAIN=meet.jitsi",
           "XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi",
-          "XMPP_SERVER=jitsi_prosody",
-          "JICOFO_AUTH_PASSWORD=c6891cd6b9d5986d1c876671498291dc",
-          "JICOFO_COMPONENT_SECRET=794ae5de5ee01743b59871955b92c43b"
+          "XMPP_SERVER=jitsi_prosody"
         ],
         "secrets": [
           {
@@ -91,8 +136,7 @@
           "TZ=America/Toronto",
           "XMPP_AUTH_DOMAIN=auth.meet.jitsi",
           "XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi",
-          "XMPP_SERVER=jitsi_prosody",
-          "JVB_AUTH_PASSWORD=d0869387093876bb3ed2c1a3ac668556"
+          "XMPP_SERVER=jitsi_prosody"
         ],
         "secrets": [{
           "name": "passwd.jitsi.jvbauth",
@@ -123,55 +167,6 @@
         "resources": {
           "cpu_limit": 2000000000,
           "mem_limit": 512000000
-        },
-        "mode": {
-          "mode": "replicated",
-          "replicas": 1
-        }
-      }
-    },{
-      "image": "jitsi_prosody",
-      "config": {
-        "name": "jitsi_prosody",
-        "constraints": [
-          "node.labels.millegrilles.app.jitsi == true"
-        ],
-        "env": [
-          "JICOFO_AUTH_USER=focus",
-          "JVB_AUTH_USER=jvb",
-          "TZ=America/Toronto",
-          "XMPP_AUTH_DOMAIN=auth.meet.jitsi",
-          "XMPP_DOMAIN=meet.jitsi",
-          "XMPP_GUEST_DOMAIN=guest.meet.jitsi",
-          "XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi",
-          "XMPP_MUC_DOMAIN=muc.meet.jitsi",
-          "XMPP_RECORDER_DOMAIN=recorder.meet.jitsi",
-          "JICOFO_AUTH_PASSWORD=c6891cd6b9d5986d1c876671498291dc",
-          "JICOFO_COMPONENT_SECRET=794ae5de5ee01743b59871955b92c43b",
-          "JVB_AUTH_PASSWORD=d0869387093876bb3ed2c1a3ac668556"
-        ],
-        "secrets": [
-          {
-            "name": "passwd.jitsi.jicofoauth",
-            "filename": "JICOFO_AUTH_PASSWORD"
-          },{
-            "name": "passwd.jitsi.jicofosecret",
-            "filename": "JICOFO_COMPONENT_SECRET"
-          },{
-            "name": "passwd.jitsi.jvbauth",
-            "filename": "JVB_AUTH_PASSWORD"
-          }
-        ],
-        "networks": [{
-          "target": "mg_${IDMG}_net",
-          "aliases": ["jitsi_prosody"]
-        }],
-        "labels": {
-          "millegrille": "${IDMG}"
-        },
-        "resources": {
-          "cpu_limit": 320000000,
-          "mem_limit": 50000000
         },
         "mode": {
           "mode": "replicated",
