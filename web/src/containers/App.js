@@ -2,14 +2,18 @@ import React from 'react'
 import './App.css'
 import path from 'path'
 import {Jumbotron, Container, Row, Col} from 'react-bootstrap'
-import axios from 'axios'
 import QRCode from 'qrcode.react'
 
 import { LayoutMillegrilles } from './Layout'
+import { Installation } from './Installation'
+
+const MAPPING_PAGES = { Installation }
 
 class App extends React.Component {
 
   state = {
+
+    page: Installation,
 
     manifest: {
       version: 'DUMMY',
@@ -20,11 +24,8 @@ class App extends React.Component {
 
   changerPage = page => {
     console.debug("Changer page")
-    this.setState({page})
-  }
-
-  setMenuApplications = menuApplications => {
-    this.setState({menuApplications})
+    const pageMappee = MAPPING_PAGES[page]
+    this.setState({page: pageMappee?pageMappee:page})
   }
 
   componentDidMount() {
@@ -34,8 +35,8 @@ class App extends React.Component {
 
     // console.debug("Nom usager : %s, estProprietaire : %s", this.state.nomUsager, this.state.estProprietaire)
 
-    let affichage;
-    affichage = <p>Allo</p>
+    let PageMappee = this.state.page
+    let affichage = <PageMappee />
     return (
       <LayoutApplication
         changerPage={this.changerPage}

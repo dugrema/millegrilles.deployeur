@@ -23,46 +23,12 @@ export default function Menu(props) {
         <Nav>
           <Nav.Link href='/'></Nav.Link>
         </Nav>
-        <MenuItems changerPage={props.changerPage} rootProps={props.rootProps}/>
+        <Nav className="mr-auto">
+        </Nav>
         <Nav className="justify-content-end">
-          <Nav.Link href='/'>{iconeHome}</Nav.Link>
-          <Nav.Link onClick={props.rootProps.toggleProtege}>{boutonProtege}</Nav.Link>
           <Nav.Link onClick={props.rootProps.changerLanguage}><Trans>menu.changerLangue</Trans></Nav.Link>
         </Nav>
       </Navbar.Collapse>
     </Navbar>
-  )
-}
-
-function MenuItems(props) {
-
-  // Generer liste applications
-  var listeApplications = []
-  if(props.rootProps.menuApplications) {
-    // console.debug(props.rootProps.menuApplications)
-    for(let idx in props.rootProps.menuApplications) {
-      const appInfo = props.rootProps.menuApplications[idx]
-      listeApplications.push(
-        <Dropdown.Item key={idx} href={appInfo.url}><Trans>menu.{appInfo.nom}</Trans></Dropdown.Item>
-      )
-    }
-  } else {
-    listeApplications.push(<Dropdown.Item key="ND"><Trans>menu.nonDisponible</Trans></Dropdown.Item>)
-  }
-
-  return (
-    <Nav className="mr-auto" activeKey={props.rootProps.page} onSelect={props.changerPage}>
-      <Nav.Item>
-        <Nav.Link href='/vitrine'>
-          <Trans>menu.vitrine</Trans>
-        </Nav.Link>
-      </Nav.Item>
-      <Dropdown as={NavItem}>
-        <Dropdown.Toggle as={NavLink}><Trans>menu.applications</Trans></Dropdown.Toggle>
-        <Dropdown.Menu>
-          {listeApplications}
-        </Dropdown.Menu>
-      </Dropdown>
-    </Nav>
   )
 }
