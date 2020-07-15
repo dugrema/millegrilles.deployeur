@@ -32,3 +32,52 @@
 INPUT.motdepasse {
   width: 14em;
 }
+
+@media screen {
+  .print-only {
+    display: none;
+  }
+}
+
+@media print {
+  .screen-only {
+    display: none;
+  }
+
+  .motdepasse {
+    padding-top: 1em;
+    padding-bottom: 2em;
+  }
+
+  .footer {
+    display: none;
+  }
+  .pagebreak {
+    clear: both;
+    page-break-after: always;
+  }
+
+  .qrcode {
+    padding-bottom: 2em;
+  }
+
+  .bouton {
+    display: none;
+  }
+
+  .pem {
+    page-break-inside: avoid;
+  }
+
+  .cle-pem {
+    page-break-before: always;
+  }
+
+  button {
+    display: none;
+  }
+
+  h2 {
+    /* padding-top: 4em; */
+  }
+}

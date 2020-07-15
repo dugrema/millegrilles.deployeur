@@ -62,7 +62,7 @@ function LayoutApplication(props) {
 
   const pageAffichee = (
     <div>
-      <Jumbotron>
+      <Jumbotron className="screen-only">
         <h1>Installation MilleGrille</h1>
         <Row>
           <Col sm={10}>

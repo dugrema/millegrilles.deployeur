@@ -143,10 +143,6 @@ export async function sauvegarderRacineMillegrille(idmg, certificatPem, clePemSi
   ])
 }
 
-function sauvegarderCertCle(nomDb, certificatPem, clePem) {
-
-}
-
 export async function signerChallenge(usager, challengeJson) {
 
   const contenuString = stringify(challengeJson)
