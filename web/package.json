@@ -1,13 +1,23 @@
 {
-  "name": "web",
-  "version": "0.1.0",
+  "name": "monitor.web",
+  "version": "1.30.0",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
+    "axios": "^0.19.2",
+    "bootstrap": "^4.5.0",
+    "font-awesome": "^4.7.0",
+    "i18next": "^19.4.5",
+    "i18next-browser-languagedetector": "^4.2.0",
+    "millegrilles.common": "git+ssh://git.maceroc.com/git/millegrilles.common.nodejs#1.30",
+    "moment-timezone": "^0.5.31",
+    "qrcode.react": "^1.0.0",
     "react": "^16.13.1",
+    "react-bootstrap": "^1.2.2",
     "react-dom": "^16.13.1",
+    "react-i18next": "^11.7.0",
     "react-scripts": "3.4.1"
   },
   "scripts": {

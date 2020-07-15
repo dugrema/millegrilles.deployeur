@@ -1,0 +1,34 @@
+.boite-coinsronds {
+  /* border-radius: 25px; */
+  border-top: 2px solid grey;
+  padding: 20px;
+  margin-bottom: 1em;
+}
+
+.boite-authentification {
+  min-height: 15em
+}
+
+.champ-cache {
+  display: none !important;
+}
+
+.form-login > DIV {
+  padding-bottom: 3em
+}
+
+.idmg {
+  font-size: small;
+}
+
+.button-list button {
+  margin-right: 1em;
+}
+
+.qr-code {
+  padding: 2em;
+}
+
+INPUT.motdepasse {
+  width: 14em;
+}
