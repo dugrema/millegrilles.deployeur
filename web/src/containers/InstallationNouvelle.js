@@ -1,7 +1,34 @@
 import React from 'react'
 import { Form, Container, Row, Col, Button } from 'react-bootstrap';
+import { genererNouvelleCleMillegrille } from '../components/pkiHelper'
 
 export class InstallationNouvelle extends React.Component {
+
+  state = {
+    certificatRacinePret: false,
+    backupComplete: false,
+    credentialsRacine: '',
+  }
+
+  componentDidMount() {
+    if( ! this.state.certificatRacinePret ) {
+      // Generer un nouveau certificat racine
+      genererNouvelleCleMillegrille()
+      .then( credentialsRacine => {
+
+        this.props.rootProps.setIdmg(credentialsRacine.idmg)
+
+        this.setState({
+          certificatRacinePret: true,
+          credentialsRacine,
+        }, ()=>{console.debug("Info racine :\n%O", this.state)})
+      })
+      .catch(err=>{
+        console.error("Erreur generation nouvelle cle MilleGrille\n%O", err)
+      })
+    }
+
+  }
 
   render() {
     return (
@@ -9,7 +36,7 @@ export class InstallationNouvelle extends React.Component {
 
         <Row>
           <Col>
-          
+
             <h2>Copie de surete de la cle de MilleGrille</h2>
 
             <p>
@@ -27,6 +54,12 @@ export class InstallationNouvelle extends React.Component {
             <p>
               Il ne faut pas perdre ni se faire voler la cle de MilleGrille.
             </p>
+
+          </Col>
+        </Row>
+
+        <Row>
+          <Col>
 
           </Col>
         </Row>

@@ -12,9 +12,6 @@ export class Installation extends React.Component {
   state = {
     infoMonitorChargee: false,
     erreurAcces: false,
-
-    idmg: null,
-
   }
 
   componentDidMount() {
@@ -24,10 +21,11 @@ export class Installation extends React.Component {
       console.debug("Reponse recue\n%O", reponse)
       const dataReponse = reponse.data
 
+      this.props.rootProps.setIdmg(dataReponse.idmg)
+
       this.setState({
         infoMonitorChargee: true,
         erreurAcces: false,
-        idmg: dataReponse.idmg,
       })
     })
     .catch(err=>{
@@ -44,7 +42,7 @@ export class Installation extends React.Component {
         // La MilleGrille est deja installee
         pageAffichee = <PageInfoMillegrille />
       } else {
-        pageAffichee = <PageInstallation />
+        pageAffichee = <PageInstallation rootProps={this.props.rootProps}/>
       }
     } else {
       pageAffichee = <PageAttente />
@@ -93,7 +91,8 @@ class PageInstallation extends React.Component {
       pageInstallation = (
         <PageType
           setConfigurationEnCours={this.setConfigurationEnCours}
-          {...this.state}/>
+          rootProps={this.props.rootProps}
+          {...this.state} />
       )
     } else {
       pageInstallation = (
