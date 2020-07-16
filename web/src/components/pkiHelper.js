@@ -17,6 +17,17 @@ export async function genererNouvelleCleMillegrille() {
   return await genererNouveauCertificatMilleGrille()
 }
 
+export async function conserverCleChiffree(certificatPem, clePriveePem, motdepasse) {
+  const clePriveeForge = await chargerClePrivee(clePriveePem, {password: motdepasse})
+  
+  const idmg = 'aaaa'
+
+  const helperAsymetrique = new CryptageAsymetrique()
+  helperAsymetrique.preparerClePrivee(clePriveePem)
+
+  sauvegarderRacineMillegrille(idmg, certificatPem)
+}
+
 export async function signerCSRIntermediaire(url, csrPem, params) {
   console.debug("Params signerCSRIntermediaire\nurl: %O\nPEM\n%O\nParams\n%O", url, csrPem, params)
   console.debug(params)
@@ -63,9 +74,6 @@ export async function genererNouveauCertificatMilleGrille() {
 
   // Importer dans forge, creer certificat de MilleGrille
   const {cert, pem: certPEM, idmg} = await genererCertificatMilleGrille(clePriveePEM, clePubliquePEM)
-
-  // Sauvegarder le certificat et la cle dans la base de donnee du navigateur
-  sauvegarderRacineMillegrille(idmg, certPEM, clePriveeSigner)
 
   return {
     clePriveePEM, clePubliquePEM, cert, certPEM, idmg, clePriveeChiffree, motdepasseCle, clePriveeSigner

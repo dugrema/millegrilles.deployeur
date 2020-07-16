@@ -1,17 +1,20 @@
 import React from 'react'
-import { Form, Container, Row, Col, Button, Alert } from 'react-bootstrap';
+import { Form, Container, Row, Col, Button, Alert, FormControl, InputGroup } from 'react-bootstrap'
+import { Trans } from 'react-i18next'
+import Dropzone from 'react-dropzone'
 
 import { genererNouvelleCleMillegrille } from '../components/pkiHelper'
 import { PageBackupCles } from './PemUtils'
 import { genererUrlDataDownload } from '../components/pemDownloads'
+import { ChargerCleCert } from './ChargerCleCert'
 
 export class InstallationNouvelle extends React.Component {
 
   state = {
     certificatRacinePret: false,
     backupComplete: false,
-    etapeVerifierCle: false,
     credentialsRacine: '',
+    etapeVerifierCle: false,
   }
 
   componentDidMount() {
@@ -44,21 +47,33 @@ export class InstallationNouvelle extends React.Component {
   }
 
   setEtapeVerifierCle = event => {
-    this.setState({etapeVerifierCle: true})
+    const { value } = event.currentTarget
+    this.setState({etapeVerifierCle: value === 'true'})
   }
 
   render() {
 
-    return (
-      <GenererCle
-        setConfigurationEnCours={this.setConfigurationEnCours}
-        imprimer={this.imprimer}
-        suivante={this.setEtapeVerifierCle}
-        credentialsRacine={this.state.credentialsRacine}
-        setBackupFait={this.setBackupFait}
-        backupComplete={this.state.backupComplete}
-        {...this.props} />
-    )
+    var pageEtape = null
+    if( ! this.state.etapeVerifierCle ) {
+      pageEtape = (
+        <GenererCle
+          setConfigurationEnCours={this.setConfigurationEnCours}
+          imprimer={this.imprimer}
+          suivant={this.setEtapeVerifierCle}
+          credentialsRacine={this.state.credentialsRacine}
+          setBackupFait={this.setBackupFait}
+          backupComplete={this.state.backupComplete}
+          {...this.props} />
+      )
+    } else {
+      pageEtape = (
+        <ChargerCleCert
+          retour={this.setEtapeVerifierCle}
+          {...this.props} />
+      )
+    }
+
+    return pageEtape
   }
 
 }
@@ -96,8 +111,6 @@ function GenererCle(props) {
         </Col>
       </Row>
 
-      <div className="print-only">IDMG : {props.rootProps.idmg}</div>
-
       <Alert variant="warning">
         <p>
           Le proprietaire de la MilleGrille est le seul qui devrait etre en
@@ -115,6 +128,8 @@ function GenererCle(props) {
         </p>
       </Alert>
 
+      <div>IDMG : {props.rootProps.idmg}</div>
+
       <PageBackupCles
         rootProps={props.rootProps}
         certificatRacine={props.credentialsRacine.certPEM}
@@ -128,7 +143,7 @@ function GenererCle(props) {
           <Button onClick={props.setConfigurationEnCours} value='false'>Annuler</Button>
           <Button onClick={props.imprimer}>Imprimer</Button>
           {boutonDownload}
-          <Button onClick={props.suivant} disabled={!props.backupComplete}>Suivant</Button>
+          <Button onClick={props.suivant} value="true" disabled={!props.backupComplete}>Suivant</Button>
         </Col>
       </Row>
     </Container>
