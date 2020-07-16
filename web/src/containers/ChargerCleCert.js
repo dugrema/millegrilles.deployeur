@@ -3,7 +3,7 @@ import { Form, Container, Row, Col, Button, Alert, FormControl, InputGroup } fro
 import { Trans } from 'react-i18next'
 import Dropzone from 'react-dropzone'
 
-import { genererNouvelleCleMillegrille, dechiffrerCle } from '../components/pkiHelper'
+import { genererNouvelleCleMillegrille, dechiffrerCle, conserverCleChiffree } from '../components/pkiHelper'
 
 export class ChargerCleCert extends React.Component {
 
@@ -66,10 +66,9 @@ export class ChargerCleCert extends React.Component {
   }
 
   async chargerCle() {
-    console.debug("Update racine : %O", this.state)
-
-    if(this.state.motDePasse && this.state.cleChiffree) {
-      const clePrivee = await conserverCleChiffree(this.state.cleChiffree, {password: this.state.motDePasse})
+    if(this.state.certificat && this.state.motDePasse && this.state.cleChiffree) {
+      console.debug("Update racine : %O", this.state)
+      const clePrivee = await conserverCleChiffree(this.state.certificat, this.state.cleChiffree, this.state.motDePasse)
       this.setState({clePrivee}, ()=>{console.debug('State apres cle privee:\n%O', this.state)})
     }
   }

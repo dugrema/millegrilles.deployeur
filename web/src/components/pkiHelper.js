@@ -6,7 +6,7 @@ import { genererCsrNavigateur, genererCertificatMilleGrille, genererCertificatIn
 import {
     enveloppePEMPublique, enveloppePEMPrivee, chiffrerPrivateKeyPEM,
     CertificateStore, matchCertificatKey, signerContenuString, chargerClePrivee,
-    calculerIdmg, chargerCertificatPEM, chargerClePubliquePEM,
+    calculerIdmg, chargerCertificatPEM, chargerClePubliquePEM, sauvegarderPrivateKeyToPEM,
   } from 'millegrilles.common/lib/forgecommon'
 import { CryptageAsymetrique, genererAleatoireBase64 } from 'millegrilles.common/lib/cryptoSubtle'
 
@@ -18,14 +18,18 @@ export async function genererNouvelleCleMillegrille() {
 }
 
 export async function conserverCleChiffree(certificatPem, clePriveePem, motdepasse) {
+  console.debug("Conserver cle chiffree, cert\n%s", certificatPem)
   const clePriveeForge = await chargerClePrivee(clePriveePem, {password: motdepasse})
-  
-  const idmg = 'aaaa'
+  console.debug("Cle privee forge\n%O", clePriveeForge)
+  const clePriveeDechiffreePem = sauvegarderPrivateKeyToPEM(clePriveeForge)
+
+  const idmg = calculerIdmg(certificatPem)
+  console.debug("IDMG calcule : %s", idmg)
 
   const helperAsymetrique = new CryptageAsymetrique()
-  helperAsymetrique.preparerClePrivee(clePriveePem)
+  const {clePriveeDecrypt, clePriveeSigner} = helperAsymetrique.preparerClePrivee(clePriveeDechiffreePem)
 
-  sauvegarderRacineMillegrille(idmg, certificatPem)
+  sauvegarderRacineMillegrille(idmg, certificatPem, {signer: clePriveeSigner, dechiffrer: clePriveeDecrypt})
 }
 
 export async function signerCSRIntermediaire(url, csrPem, params) {
@@ -131,8 +135,9 @@ export async function sauvegarderCertificatPem(usager, certificatPem, chainePem)
   ])
 }
 
-export async function sauvegarderRacineMillegrille(idmg, certificatPem, clePemSigner) {
+export async function sauvegarderRacineMillegrille(idmg, certificatPem, clesPriveesSubtle) {
   const nomDB = 'millegrille.' + idmg
+  console.debug("Conserver cles %s\n%O", nomDB, clesPriveesSubtle)
 
   const db = await openDB(nomDB, 1, {
     upgrade(db) {
@@ -140,15 +145,21 @@ export async function sauvegarderRacineMillegrille(idmg, certificatPem, clePemSi
     },
   })
 
+  const {signer: cleSigner, dechiffrer: cleDechiffrer} = clesPriveesSubtle
+
   console.debug("Sauvegarde du nouveau cerfificat et cle de MilleGrille (idmg: %s) :\n%O", idmg, certificatPem)
 
   const txUpdate = db.transaction('cles', 'readwrite');
   const storeUpdate = txUpdate.objectStore('cles');
-  await Promise.all([
-    storeUpdate.put(certificatPem, 'certificat'),
-    storeUpdate.put(clePemSigner, 'signer'),
-    txUpdate.done,
-  ])
+
+  const listeTransactions = [storeUpdate.put(certificatPem, 'certificat'), txUpdate.done]
+
+  // Cles optionnelles
+  if(cleSigner) listeTransactions.push(storeUpdate.put(cleSigner, 'signer'))
+  if(cleDechiffrer) listeTransactions.push(storeUpdate.put(cleDechiffrer, 'dechiffrer'))
+
+  // Attendre fin de traitement des transactions
+  await Promise.all(listeTransactions)
 }
 
 export async function signerChallenge(usager, challengeJson) {
