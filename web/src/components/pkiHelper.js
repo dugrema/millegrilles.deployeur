@@ -13,23 +13,27 @@ import { CryptageAsymetrique, genererAleatoireBase64 } from 'millegrilles.common
 const cryptageAsymetriqueHelper = new CryptageAsymetrique()
 
 export async function genererNouvelleCleMillegrille() {
-  console.debug("Params genererNouvelleCleMillegrille")
+  // console.debug("Params genererNouvelleCleMillegrille")
   return await genererNouveauCertificatMilleGrille()
 }
 
 export async function conserverCleChiffree(certificatPem, clePriveePem, motdepasse) {
-  console.debug("Conserver cle chiffree, cert\n%s", certificatPem)
+  // console.debug("Conserver cle chiffree, cert\n%s", certificatPem)
   const clePriveeForge = await chargerClePrivee(clePriveePem, {password: motdepasse})
-  console.debug("Cle privee forge\n%O", clePriveeForge)
+  // console.debug("Cle privee forge\n%O", clePriveeForge)
   const clePriveeDechiffreePem = sauvegarderPrivateKeyToPEM(clePriveeForge)
 
   const idmg = calculerIdmg(certificatPem)
-  console.debug("IDMG calcule : %s", idmg)
+  // console.debug("IDMG calcule : %s", idmg)
 
   const helperAsymetrique = new CryptageAsymetrique()
-  const {clePriveeDecrypt, clePriveeSigner} = helperAsymetrique.preparerClePrivee(clePriveeDechiffreePem)
+  const {clePriveeDecrypt, clePriveeSigner} = await helperAsymetrique.preparerClePrivee(clePriveeDechiffreePem)
 
-  sauvegarderRacineMillegrille(idmg, certificatPem, {signer: clePriveeSigner, dechiffrer: clePriveeDecrypt})
+  const dictCles = {signer: clePriveeSigner, dechiffrer: clePriveeDecrypt}
+
+  sauvegarderRacineMillegrille(idmg, certificatPem, dictCles)
+
+  return {...dictCles, idmg}
 }
 
 export async function signerCSRIntermediaire(url, csrPem, params) {
@@ -66,7 +70,7 @@ export async function genererNouveauCertificatMilleGrille() {
   const clePriveePEM = enveloppePEMPrivee(clePriveePkcs8, true),
         clePubliquePEM = enveloppePEMPublique(clePubliqueSpki)
 
-  console.debug("Cle privee PEM\n%O \nCle publique PEM\n%O", clePriveePEM, clePubliquePEM)
+  // console.debug("Cle privee PEM\n%O \nCle publique PEM\n%O", clePriveePEM, clePubliquePEM)
 
   // Preparer secret pour mot de passe partiel navigateur
   const motdepasseCle = genererAleatoireBase64(32).replace(/=/g, '')
@@ -137,7 +141,7 @@ export async function sauvegarderCertificatPem(usager, certificatPem, chainePem)
 
 export async function sauvegarderRacineMillegrille(idmg, certificatPem, clesPriveesSubtle) {
   const nomDB = 'millegrille.' + idmg
-  console.debug("Conserver cles %s\n%O", nomDB, clesPriveesSubtle)
+  // console.debug("Conserver cles %s\n%O", nomDB, clesPriveesSubtle)
 
   const db = await openDB(nomDB, 1, {
     upgrade(db) {
@@ -147,7 +151,7 @@ export async function sauvegarderRacineMillegrille(idmg, certificatPem, clesPriv
 
   const {signer: cleSigner, dechiffrer: cleDechiffrer} = clesPriveesSubtle
 
-  console.debug("Sauvegarde du nouveau cerfificat et cle de MilleGrille (idmg: %s) :\n%O", idmg, certificatPem)
+  // console.debug("Sauvegarde du nouveau cerfificat et cle de MilleGrille (idmg: %s) :\n%O", idmg, certificatPem)
 
   const txUpdate = db.transaction('cles', 'readwrite');
   const storeUpdate = txUpdate.objectStore('cles');

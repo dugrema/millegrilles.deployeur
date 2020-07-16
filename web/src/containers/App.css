@@ -33,6 +33,10 @@ INPUT.motdepasse {
   width: 14em;
 }
 
+.boutons-installer {
+  margin-top: 2em;
+}
+
 @media screen {
   .print-only {
     display: none;

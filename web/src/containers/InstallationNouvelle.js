@@ -15,6 +15,7 @@ export class InstallationNouvelle extends React.Component {
     backupComplete: false,
     credentialsRacine: '',
     etapeVerifierCle: false,
+    idmg: '',
   }
 
   componentDidMount() {
@@ -23,12 +24,11 @@ export class InstallationNouvelle extends React.Component {
       genererNouvelleCleMillegrille()
       .then( credentialsRacine => {
 
-        this.props.rootProps.setIdmg(credentialsRacine.idmg)
-
         this.setState({
           certificatRacinePret: true,
           credentialsRacine,
-        }, ()=>{console.debug("Info racine :\n%O", this.state)})
+          idmg: credentialsRacine.idmg,
+        })
       })
       .catch(err=>{
         console.error("Erreur generation nouvelle cle MilleGrille\n%O", err)
@@ -63,6 +63,7 @@ export class InstallationNouvelle extends React.Component {
           credentialsRacine={this.state.credentialsRacine}
           setBackupFait={this.setBackupFait}
           backupComplete={this.state.backupComplete}
+          idmg={this.state.idmg}
           {...this.props} />
       )
     } else {
@@ -84,12 +85,12 @@ function GenererCle(props) {
 
   if(props.credentialsRacine) {
     const {dataUrl} = genererUrlDataDownload(
-      props.rootProps.idmg,
+      props.idmg,
       props.credentialsRacine.certPEM,
       props.credentialsRacine.clePriveeChiffree
     )
 
-    var fichierDownload = 'backupCle_' + props.rootProps.idmg + ".json";
+    var fichierDownload = 'backupCle_' + props.idmg + ".json";
     boutonDownload = (
       <Button href={dataUrl} download={fichierDownload} onClick={props.setBackupFait}>Telecharger cle</Button>
     );
@@ -128,7 +129,7 @@ function GenererCle(props) {
         </p>
       </Alert>
 
-      <div>IDMG : {props.rootProps.idmg}</div>
+      <div>IDMG : {props.idmg}</div>
 
       <PageBackupCles
         rootProps={props.rootProps}

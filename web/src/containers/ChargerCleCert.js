@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import { Form, Container, Row, Col, Button, Alert, FormControl, InputGroup } from 'react-bootstrap'
 import { Trans } from 'react-i18next'
 import Dropzone from 'react-dropzone'
@@ -11,7 +11,10 @@ export class ChargerCleCert extends React.Component {
     motDePasse: '',
     cleChiffree: '',
     certificat: '',
-    clePrivee: '',
+
+    clePriveeChargee: false,
+
+    erreurChargement: '',
   }
 
   changerMotDePasse = event => {
@@ -59,6 +62,7 @@ export class ChargerCleCert extends React.Component {
             maj.certificat =  racine.certificat
           }
         }
+
         this.setState({...maj}, ()=>{this.chargerCle()})
       }
     });
@@ -67,16 +71,37 @@ export class ChargerCleCert extends React.Component {
 
   async chargerCle() {
     if(this.state.certificat && this.state.motDePasse && this.state.cleChiffree) {
-      console.debug("Update racine : %O", this.state)
-      const clePrivee = await conserverCleChiffree(this.state.certificat, this.state.cleChiffree, this.state.motDePasse)
-      this.setState({clePrivee}, ()=>{console.debug('State apres cle privee:\n%O', this.state)})
+      try {
+        const clesPrivees = await conserverCleChiffree(this.state.certificat, this.state.cleChiffree, this.state.motDePasse)
+
+        if(clesPrivees) {
+          this.setState({clePriveeChargee: true})
+          this.props.rootProps.setIdmg(clesPrivees.idmg)
+        } else {
+          this.setState({clePriveeChargee: false})
+        }
+      } catch(err) {
+        this.setState({erreurChargement: err})
+      }
     }
   }
 
+  suivant = event => {
+    this.setState({})
+  }
+
   render() {
+
+    var erreurChargement = ''
+    if(this.state.erreurChargement) {
+      erreurChargement = <ErreurChargement />
+    }
+
     return (
       <Container>
-        <p>Charger cle et certificat</p>
+        <h2>Charger cle et certificat</h2>
+
+        {erreurChargement}
 
         <p>
           Cette etape sert a verifier que votre copie de surete de la cle et du
@@ -84,6 +109,13 @@ export class ChargerCleCert extends React.Component {
         </p>
 
         <Form>
+
+          <Row>
+            <Col>
+              <h3>Mot de passe</h3>
+            </Col>
+          </Row>
+
           <InputGroup>
             <FormControl
               placeholder="Mot de passe"
@@ -101,13 +133,15 @@ export class ChargerCleCert extends React.Component {
 
           <Row>
             <Col>
-              Certificat et cle non charge
+              <h3>Charger certificat et cle</h3>
             </Col>
           </Row>
 
           <Row className="boutons-installer">
-            <Col>
-              Uploader :
+            <Col xs={8}>
+              <Button disabled={ ! this.state.motDePasse}>Charger Certificat et Cle QR</Button>
+            </Col>
+            <Col xs={4}>
               <Dropzone onDrop={this.uploadFileProcessor} disabled={! this.state.motDePasse}>
                 {({getRootProps, getInputProps}) => (
                   <section className="uploadIcon">
@@ -118,8 +152,13 @@ export class ChargerCleCert extends React.Component {
                   </section>
                 )}
               </Dropzone>
+            </Col>
+          </Row>
+
+          <Row className="boutons-installer">
+            <Col>
               <Button onClick={this.props.retour} value='false'>Retour</Button>
-              <Button disabled={ ! this.state.motDePasse}>Charger Certificat et Cle QR</Button>
+              <Button onClick={this.props.suivant} value='true'>Suivant</Button>
             </Col>
           </Row>
 
@@ -127,4 +166,17 @@ export class ChargerCleCert extends React.Component {
       </Container>
     )
   }
+}
+
+function ErreurChargement(props) {
+  const [show, setShow] = useState(true);
+
+  if(show) {
+    return (
+      <Alert variant="danger" onClose={()=>setShow(false)} dismissible >
+        Erreur chargement de la cle
+      </Alert>
+    )
+  }
+  return ''
 }
