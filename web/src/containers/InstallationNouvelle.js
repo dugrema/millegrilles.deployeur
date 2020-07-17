@@ -1,9 +1,10 @@
 import React from 'react'
+import axios from 'axios'
 import { Form, Container, Row, Col, Button, Alert, FormControl, InputGroup } from 'react-bootstrap'
 import { Trans } from 'react-i18next'
 import Dropzone from 'react-dropzone'
 
-import { genererNouvelleCleMillegrille } from '../components/pkiHelper'
+import { genererNouvelleCleMillegrille, signerCSRIntermediaire } from '../components/pkiHelper'
 import { PageBackupCles } from './PemUtils'
 import { genererUrlDataDownload } from '../components/pemDownloads'
 import { ChargerCleCert } from './ChargerCleCert'
@@ -12,10 +13,16 @@ export class InstallationNouvelle extends React.Component {
 
   state = {
     certificatRacinePret: false,
-    backupComplete: false,
     credentialsRacine: '',
+
     etapeVerifierCle: false,
+    etapeGenererIntermediaire: false,
+    etapeConfigurerUrl: false,
+
     idmg: '',
+    backupComplete: false,
+    certificatIntermediaire: '',
+    url: '',
   }
 
   componentDidMount() {
@@ -51,6 +58,16 @@ export class InstallationNouvelle extends React.Component {
     this.setState({etapeVerifierCle: value === 'true'})
   }
 
+  setEtapeGenererIntermediaire = event => {
+    const { value } = event.currentTarget
+    this.setState({etapeGenererIntermediaire: value === 'true'})
+  }
+
+  setEtapeConfigurerUrl = event => {
+    const { value } = event.currentTarget
+    this.setState({etapeConfigurerUrl: value === 'true'})
+  }
+
   render() {
 
     var pageEtape = null
@@ -66,10 +83,28 @@ export class InstallationNouvelle extends React.Component {
           idmg={this.state.idmg}
           {...this.props} />
       )
-    } else {
+    } else if( ! this.state.etapeGenererIntermediaire ) {
       pageEtape = (
         <ChargerCleCert
           retour={this.setEtapeVerifierCle}
+          suivant={this.setEtapeGenererIntermediaire}
+          {...this.props} />
+      )
+    } else if ( ! this.state.etapeConfigurerUrl ) {
+      pageEtape = (
+        <GenererIntermediaire
+          idmg={this.props.rootProps.idmg}
+          cleForge={this.state.clePriveeForge}
+          clesSubtle={this.state.clePriveesSubtle}
+          precedent={this.setEtapeGenererIntermediaire}
+          suivant={this.setEtapeConfigurerUrl}
+          {...this.props} />
+      )
+    } else {
+      pageEtape = (
+        <ConfigurerUrl
+          precedent={this.setEtapeConfigurerUrl}
+          suivant={this.setEtapeGenererIntermediaire}
           {...this.props} />
       )
     }
@@ -149,5 +184,55 @@ function GenererCle(props) {
       </Row>
     </Container>
   )
+
+}
+
+class GenererIntermediaire extends React.Component {
+
+  componentDidMount() {
+    this.traiterCsr()
+  }
+
+  async traiterCsr() {
+    const csrResponse = await axios.get('/installation/api/csr')
+    // console.debug("CSR recu :\n%O", csrResponse)
+    const info = await signerCSRIntermediaire(this.props.idmg, csrResponse.data, {cleForge: this.props.cleForge, clesSubtle: this.props.clesSubtle})
+
+    console.debug("Info generer cert intermediaire: \n%s", info.pem)
+  }
+
+  render() {
+    return (
+      <Container>
+        <p>Generer intermediaire</p>
+
+        <Row>
+          <Col className="bouton">
+            <Button onClick={this.props.precedent} value='false'>Precedent</Button>
+            <Button onClick={this.props.suivant} value="true">Suivant</Button>
+          </Col>
+        </Row>
+      </Container>
+    )
+  }
+
+}
+
+class ConfigurerUrl extends React.Component {
+
+  render() {
+    return (
+      <Container>
+        <p>Configurer URL</p>
+
+        <Row>
+          <Col className="bouton">
+            <Button onClick={this.props.precedent} value='false'>Precedent</Button>
+            <Button onClick={this.props.suivant} value="true">Suivant</Button>
+          </Col>
+        </Row>
+      </Container>
+    )
+  }
 
 }

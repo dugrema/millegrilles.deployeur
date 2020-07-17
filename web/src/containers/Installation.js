@@ -16,9 +16,9 @@ export class Installation extends React.Component {
 
   componentDidMount() {
     // Lire etat de l'installation de la MilleGrille
-    axios.get('/api/infoMonitor')
+    axios.get('/installation/api/infoMonitor')
     .then(reponse=>{
-      console.debug("Reponse recue\n%O", reponse)
+      // console.debug("Reponse recue\n%O", reponse)
       const dataReponse = reponse.data
 
       this.props.rootProps.setIdmg(dataReponse.idmg)

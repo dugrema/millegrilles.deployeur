@@ -3,7 +3,7 @@ import { Form, Container, Row, Col, Button, Alert, FormControl, InputGroup } fro
 import { Trans } from 'react-i18next'
 import Dropzone from 'react-dropzone'
 
-import { genererNouvelleCleMillegrille, dechiffrerCle, conserverCleChiffree } from '../components/pkiHelper'
+import { genererNouvelleCleMillegrille, dechiffrerCle, conserverCleChiffree, chargerClePriveeForge } from '../components/pkiHelper'
 
 export class ChargerCleCert extends React.Component {
 
