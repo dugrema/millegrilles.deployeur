@@ -1,5 +1,5 @@
 import React from 'react'
-import { Container, Row, Col, Button, Form } from 'react-bootstrap'
+import { Container, Row, Col, Button, Form, Alert } from 'react-bootstrap'
 import QRCode from 'qrcode.react'
 import { Trans } from 'react-i18next';
 
@@ -80,6 +80,11 @@ function RenderPair(props) {
             <h3>Cle {props.idmg}</h3>
           </Col>
         </Row>
+
+        <Alert variant="warning">
+          Conserver cette page separement de celle avec le mot de passe.
+        </Alert>
+
         <RenderPEM pem={props.clePrivee} nom={props.nom + '.cle'}/>
       </div>
     );

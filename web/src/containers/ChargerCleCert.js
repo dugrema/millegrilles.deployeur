@@ -77,6 +77,8 @@ export class ChargerCleCert extends React.Component {
         if(clesPrivees) {
           this.setState({clePriveeChargee: true})
           this.props.rootProps.setIdmg(clesPrivees.idmg)
+
+          this.props.setCertificat(this.state.certificat)
         } else {
           this.setState({clePriveeChargee: false})
         }
@@ -158,7 +160,7 @@ export class ChargerCleCert extends React.Component {
           <Row className="boutons-installer">
             <Col>
               <Button onClick={this.props.retour} value='false'>Retour</Button>
-              <Button onClick={this.props.suivant} value='true'>Suivant</Button>
+              <Button onClick={this.props.suivant} value='true' disabled={!this.state.clePriveeChargee}>Suivant</Button>
             </Col>
           </Row>
 

@@ -21,7 +21,8 @@ export class InstallationNouvelle extends React.Component {
 
     idmg: '',
     backupComplete: false,
-    certificatIntermediaire: '',
+    certificatMillegrillePem: '',
+    certificatIntermediairePem: '',
     url: '',
   }
 
@@ -42,6 +43,14 @@ export class InstallationNouvelle extends React.Component {
       })
     }
 
+  }
+
+  setCertificatMillegrille = certificatMillegrillePem => {
+    this.setState({certificatMillegrillePem})
+  }
+
+  setCertificatIntermediaire = certificatIntermediairePem => {
+    this.setState({certificatIntermediairePem})
   }
 
   setBackupFait = event => {
@@ -86,6 +95,7 @@ export class InstallationNouvelle extends React.Component {
     } else if( ! this.state.etapeGenererIntermediaire ) {
       pageEtape = (
         <ChargerCleCert
+          setCertificat={this.setCertificatMillegrille}
           retour={this.setEtapeVerifierCle}
           suivant={this.setEtapeGenererIntermediaire}
           {...this.props} />
@@ -94,17 +104,17 @@ export class InstallationNouvelle extends React.Component {
       pageEtape = (
         <GenererIntermediaire
           idmg={this.props.rootProps.idmg}
-          cleForge={this.state.clePriveeForge}
-          clesSubtle={this.state.clePriveesSubtle}
+          certificatMillegrillePem={this.state.certificatMillegrillePem}
+          certificatIntermediairePem={this.state.certificatIntermediairePem}
+          setCertificatIntermediaire={this.setCertificatIntermediaire}
           precedent={this.setEtapeGenererIntermediaire}
           suivant={this.setEtapeConfigurerUrl}
           {...this.props} />
       )
     } else {
       pageEtape = (
-        <ConfigurerUrl
+        <EtatInstallation
           precedent={this.setEtapeConfigurerUrl}
-          suivant={this.setEtapeGenererIntermediaire}
           {...this.props} />
       )
     }
@@ -127,7 +137,7 @@ function GenererCle(props) {
 
     var fichierDownload = 'backupCle_' + props.idmg + ".json";
     boutonDownload = (
-      <Button href={dataUrl} download={fichierDownload} onClick={props.setBackupFait}>Telecharger cle</Button>
+      <Button href={dataUrl} download={fichierDownload} onClick={props.setBackupFait} variant="outline-secondary">Telecharger cle</Button>
     );
   }
 
@@ -171,23 +181,43 @@ function GenererCle(props) {
         certificatRacine={props.credentialsRacine.certPEM}
         motdepasse={props.credentialsRacine.motdepasseCle}
         cleChiffreeRacine={props.credentialsRacine.clePriveeChiffree}
-        idmg={props.rootProps.idmg}
+        idmg={props.idmg}
         />
 
-      <Row>
-        <Col className="bouton">
-          <Button onClick={props.setConfigurationEnCours} value='false'>Annuler</Button>
-          <Button onClick={props.imprimer}>Imprimer</Button>
-          {boutonDownload}
-          <Button onClick={props.suivant} value="true" disabled={!props.backupComplete}>Suivant</Button>
-        </Col>
-      </Row>
+      <div className="bouton">
+        <Row>
+          <Col>
+            Utiliser au moins une des deux actions suivantes pour conserver la cle
+            et le certificat de MilleGrille.
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <Button onClick={props.imprimer} variant="outline-secondary">Imprimer</Button>
+            {boutonDownload}
+          </Col>
+        </Row>
+
+        <Row>
+          <Col className="boutons-installer">
+            <Button onClick={props.setConfigurationEnCours} value='false' variant="secondary">Annuler</Button>
+            <Button onClick={props.suivant} value="true" disabled={!props.backupComplete}>Suivant</Button>
+          </Col>
+        </Row>
+      </div>
+
     </Container>
   )
 
 }
 
 class GenererIntermediaire extends React.Component {
+
+  state = {
+    certificatintermediairePem: '',
+    certificatintermediaire: '',
+    url: '',
+  }
 
   componentDidMount() {
     this.traiterCsr()
@@ -198,18 +228,66 @@ class GenererIntermediaire extends React.Component {
     // console.debug("CSR recu :\n%O", csrResponse)
     const info = await signerCSRIntermediaire(this.props.idmg, csrResponse.data, {cleForge: this.props.cleForge, clesSubtle: this.props.clesSubtle})
 
-    console.debug("Info generer cert intermediaire: \n%s", info.pem)
+    // console.debug("Info generer cert intermediaire: \n%O", info)
+    this.setState({
+      certificatintermediairePem: info.pem,
+      certificatintermediaire: info.cert,
+      url: info.cert.subject.getField('CN').value,
+    })
+
+    this.props.setCertificatIntermediaire(info.pem)
+  }
+
+  changerUrl = event => {
+    const {value} = event.currentTarget
+    this.setState({url: value})
+  }
+
+  installer = event => {
+    // Transmettre information d'installation
+    const paramsInstallation = {
+      certificatMillegrillePem: this.props.certificatMillegrillePem,
+      certificatIntermediairePem: this.props.certificatIntermediairePem,
+      url: this.state.url,
+      securite: '3.protege',
+    }
+
+    console.debug("Transmettre parametres d'installation: \n%O", paramsInstallation)
+
+    axios.post('/installation/api/initialisation', paramsInstallation)
+    .then(response=>{
+      console.debug("Recu reponse demarrage installation noeud\n%O", response)
+    })
+    .catch(err=>{
+      console.error("Erreur demarrage installation noeud\n%O", err)
+    })
   }
 
   render() {
     return (
       <Container>
-        <p>Generer intermediaire</p>
+        <h2>Finaliser la configuration</h2>
+
+        <h3>Certificat du noeud</h3>
+        <InformationCertificat certificat={this.state.certificatintermediaire} />
+
+        <h3>Information supplementaire</h3>
+        <Form>
+          <label htmlFor="noeud-url">URL d'acces au noeud</label>
+          <InputGroup className="mb-3">
+            <InputGroup.Prepend>
+              <InputGroup.Text id="noeud-addon3">
+                https://
+              </InputGroup.Text>
+            </InputGroup.Prepend>
+            <FormControl id="noeud-url" aria-describedby="noeud-addon3" value={this.state.url} onChange={this.changerUrl}/>
+          </InputGroup>
+        </Form>
 
         <Row>
           <Col className="bouton">
-            <Button onClick={this.props.precedent} value='false'>Precedent</Button>
-            <Button onClick={this.props.suivant} value="true">Suivant</Button>
+            <Button onClick={this.props.precedent} value='false' variant="secondary">Precedent</Button>
+            <Button onClick={this.installer} value="true">Demarrer installation</Button>
           </Col>
         </Row>
       </Container>
@@ -218,21 +296,25 @@ class GenererIntermediaire extends React.Component {
 
 }
 
-class ConfigurerUrl extends React.Component {
+function EtatInstallation(props) {
+  return (
+    <Container>
+      <h2>Installation en cours</h2>
+      <p>Progres : 0%</p>
+    </Container>
+  )
+}
 
-  render() {
+function InformationCertificat(props) {
+  if(props.certificat) {
     return (
-      <Container>
-        <p>Configurer URL</p>
-
-        <Row>
-          <Col className="bouton">
-            <Button onClick={this.props.precedent} value='false'>Precedent</Button>
-            <Button onClick={this.props.suivant} value="true">Suivant</Button>
-          </Col>
-        </Row>
-      </Container>
+      <Row>
+        <Col>
+          <p>IDMG : {props.certificat.subject.getField('O').value}</p>
+          <p>Noeud : {props.certificat.subject.getField('CN').value}</p>
+        </Col>
+      </Row>
     )
   }
-
+  return ''
 }
