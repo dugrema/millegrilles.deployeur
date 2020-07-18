@@ -1,5 +1,6 @@
 {
   "name": "principal",
+  "certificat_compte": "pki.domaines.cert",
   "args": [
     "demarrer_domaine.py",
     "--info"

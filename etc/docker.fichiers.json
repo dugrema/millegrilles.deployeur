@@ -1,5 +1,6 @@
 {
   "name": "fichiers",
+  "certificat_compte": "pki.fichiers.cert",
   "env": [
     "MG_MQ_URL=amqps://mq:5673",
     "MG_MQ_CERTFILE=/run/secrets/cert.pem",
@@ -13,7 +14,7 @@
     "TRANSMISSION_PASSWORD=bwahahah1202"
   ],
   "mounts": [
-    "${MOUNTS}/consignation:/var/opt/millegrilles/consignation:rw"
+    "millegrilles-consignation:/var/opt/millegrilles/consignation:rw"
   ],
   "constraints": [
     "node.labels.millegrilles.fichiers == true"

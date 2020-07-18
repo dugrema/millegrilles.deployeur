@@ -1,5 +1,6 @@
 {
   "name": "web_protege",
+  "certificat_compte": "pki.web_protege.cert",
   "env": [
     "MG_MQ_URL=amqps://mq:5673",
     "MG_MQ_CERTFILE=/run/secrets/cert.pem",

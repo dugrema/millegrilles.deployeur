@@ -1,5 +1,6 @@
 {
   "name": "transaction",
+  "certificat_compte": "pki.transaction.cert",
   "args": [
     "demarrer_transaction.py"
   ],

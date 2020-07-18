@@ -1,5 +1,6 @@
 {
   "name": "mongoexpress",
+  "certificat_compte": "pki.mongoxp.cert",
   "env": [
     "ME_CONFIG_BASICAUTH_USERNAME=mongo",
     "ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_INITDB_ROOT_USERNAME}",

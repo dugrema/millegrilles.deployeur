@@ -1,5 +1,6 @@
 {
   "name": "maitrecles",
+  "certificat_compte": "pki.maitrecles.cert",
   "args": [
     "demarrer_domaine.py",
     "--info"
