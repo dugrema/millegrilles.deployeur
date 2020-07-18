@@ -20,7 +20,6 @@
     "MG_PKI_PASSWORD_INTERMEDIAIRE=/run/secrets/intermediaire.passwd.txt",
     "MG_PKI_CERT_INTERMEDIAIRE=/run/secrets/intermediaire.cert.pem",
     "MG_PKI_KEY_INTERMEDIAIRE=/run/secrets/intermediaire.key.pem",
-    "MG_PKI_PASSWORD_MILLEGRILLE=/run/secrets/millegrille.passwd.txt",
     "MG_PKI_CERT_MILLEGRILLE=/run/secrets/millegrille.cert.pem"
   ],
   "constraints": [
@@ -52,14 +51,6 @@
     {
       "name": "pki.intermediaire.passwd",
       "filename": "intermediaire.passwd.txt"
-    },
-    {
-      "name": "pki.millegrille.key",
-      "filename": "millegrille.key.pem"
-    },
-    {
-      "name": "pki.millegrille.passwd",
-      "filename": "millegrille.passwd.txt"
     }
   ],
   "networks": [{
