@@ -38,12 +38,18 @@ debug() {
     ubuntu /bin/sleep 10000
 }
 
-# Main, installer docker, dependances et le service monitor de MilleGrille
-installer
-configurer
-
-if [ -z $DEBUG ]; then
-  demarrer
+if [ $1 == 'config' ]; then
+  configurer_swarm
 else
-  debug
+
+  # Main, installer docker, dependances et le service monitor de MilleGrille
+  installer
+  configurer
+
+  if [ -z $DEBUG ]; then
+    demarrer
+  else
+    debug
+  fi
+
 fi
