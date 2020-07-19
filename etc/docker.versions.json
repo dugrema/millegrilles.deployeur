@@ -4,6 +4,7 @@
         "dugremat"
     ],
     "images": {
+        "acme": {"registries": ["neilpang"], "image": "acme.sh", "version": "latest"},
         "mongo": {"registries": [""], "image": "mongo", "version": "4.0"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_4"},
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.30.0"},

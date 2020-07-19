@@ -1,8 +1,8 @@
 {
   "name": "nginx",
   "mounts": [
-    "${MOUNTS}/nginx/data:${MOUNTS}/nginx/data:ro",
-    "${MOUNTS}/nginx/conf.d/modules:/etc/nginx/conf.d/modules:ro"
+    "nginx-data:${MOUNTS}/nginx/data:ro",
+    "nginx-config:/etc/nginx/conf.d/modules:ro"
   ],
   "constraints": [
     "node.labels.millegrilles.nginx == true"

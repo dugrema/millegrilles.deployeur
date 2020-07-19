@@ -6,8 +6,7 @@
     "CONFIG_FILE=/etc/rabbitmq/rabbitmq_ipv6management.config"
   ],
   "mounts": [
-    "mg-middleware-rabbitmq-data-${IDMG}:/var/lib/rabbitmq:rw",
-    "mq-accounts:/opt/rabbitmq/conf:rw"
+    "mg-middleware-rabbitmq-data-${IDMG}:/var/lib/rabbitmq:rw"
   ],
   "constraints": [
     "node.labels.millegrilles.mq == true"
