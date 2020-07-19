@@ -67,7 +67,7 @@
     ]
   },
   "networks": [{
-    "target": "mg_${IDMG}_net",
+    "target": "millegrille_net",
     "aliases": ["mongoexpress"]
   }],
   "labels": {

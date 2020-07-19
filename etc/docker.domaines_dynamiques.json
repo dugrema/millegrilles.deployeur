@@ -40,7 +40,7 @@
     }
   ],
   "networks": [{
-    "target": "mg_${IDMG}_net"
+    "target": "millegrille_net"
   }],
   "labels": {
     "millegrille": "${IDMG}"

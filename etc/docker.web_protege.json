@@ -48,7 +48,7 @@
     "ipv6.mapper.network": "mg_ipv6"
   },
   "networks": [{
-    "target": "mg_${IDMG}_net",
+    "target": "millegrille_net",
     "aliases": ["web", "web_protege"]
   }],
   "labels": {
