@@ -4,7 +4,8 @@
     "daemon"
   ],
   "mounts": [
-    "acmesh-data:/acme.sh:rw"
+    "acmesh-data:/acme.sh:rw",
+    "${NGINX_HTML_VOLUME}:/usr/share/nginx/html:rw"
   ],
   "constraints": [
     "node.labels.millegrilles.nginx == true"

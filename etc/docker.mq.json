@@ -17,7 +17,7 @@
       "filename": "/opt/rabbitmq/dist/certs/cert.pem"
     },
     {
-      "name": "pki.web.cert;pki.mq.cert",
+      "name": "pki.mq.cert",
       "filename": "/opt/rabbitmq/dist/certs/webcert.pem"
     }
   ],
@@ -27,7 +27,7 @@
       "filename": "key.pem"
     },
     {
-      "name": "pki.web.key;pki.mq.key",
+      "name": "pki.mq.key",
       "filename": "webkey.pem"
     }
   ],
