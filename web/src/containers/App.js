@@ -14,6 +14,7 @@ class App extends React.Component {
   state = {
 
     idmg: '',
+    domaine: '',
 
     page: Installation,
 
@@ -34,6 +35,10 @@ class App extends React.Component {
     this.setState({idmg})
   }
 
+  setDomaine = domaine => {
+    this.setState({domaine})
+  }
+
   componentDidMount() {
   }
 
@@ -41,13 +46,15 @@ class App extends React.Component {
 
     // console.debug("Nom usager : %s, estProprietaire : %s", this.state.nomUsager, this.state.estProprietaire)
 
+    const rootProps = {...this.state, setIdmg: this.setIdmg,  setDomaine: this.setDomaine}
+
     let PageMappee = this.state.page
-    let affichage = <PageMappee rootProps={{...this.state, setIdmg: this.setIdmg}} />
+    let affichage = <PageMappee rootProps={rootProps} />
     return (
       <LayoutApplication
         changerPage={this.changerPage}
         affichage={affichage}
-        rootProps={{...this.state, setIdmg: this.setIdmg}} />
+        rootProps={rootProps} />
     )
   }
 }
