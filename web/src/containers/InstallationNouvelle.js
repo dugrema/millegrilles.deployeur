@@ -17,7 +17,8 @@ export class InstallationNouvelle extends React.Component {
 
     etapeVerifierCle: false,
     etapeGenererIntermediaire: false,
-    etapeConfigurerUrl: false,
+    etapeDemarrerInstallation: false,
+    etapeSurveillerInstallation: false,
 
     idmg: '',
     backupComplete: false,
@@ -72,9 +73,13 @@ export class InstallationNouvelle extends React.Component {
     this.setState({etapeGenererIntermediaire: value === 'true'})
   }
 
-  setEtapeConfigurerUrl = event => {
+  setEtapeDemarrerInstallation = etat => {
+    this.setState({etapeDemarrerInstallation: etat})
+  }
+
+  setEtapeSurveillerInstallation = event => {
     const { value } = event.currentTarget
-    this.setState({etapeConfigurerUrl: value === 'true'})
+    this.setState({etapeSurveillerInstallation: value === 'true'})
   }
 
   render() {
@@ -100,7 +105,7 @@ export class InstallationNouvelle extends React.Component {
           suivant={this.setEtapeGenererIntermediaire}
           {...this.props} />
       )
-    } else if ( ! this.state.etapeConfigurerUrl ) {
+    } else if ( ! this.state.etapeDemarrerInstallation ) {
       pageEtape = (
         <GenererIntermediaire
           idmg={this.props.rootProps.idmg}
@@ -108,7 +113,7 @@ export class InstallationNouvelle extends React.Component {
           certificatIntermediairePem={this.state.certificatIntermediairePem}
           setCertificatIntermediaire={this.setCertificatIntermediaire}
           precedent={this.setEtapeGenererIntermediaire}
-          suivant={this.setEtapeConfigurerUrl}
+          suivant={this.setEtapeDemarrerInstallation}
           {...this.props} />
       )
     } else {
@@ -249,6 +254,7 @@ class GenererIntermediaire extends React.Component {
     axios.post('/installation/api/initialisation', paramsInstallation)
     .then(response=>{
       console.debug("Recu reponse demarrage installation noeud\n%O", response)
+      this.props.suivant(true)
     })
     .catch(err=>{
       console.error("Erreur demarrage installation noeud\n%O", err)
@@ -275,13 +281,107 @@ class GenererIntermediaire extends React.Component {
 
 }
 
-function EtatInstallation(props) {
-  return (
-    <Container>
-      <h2>Installation en cours</h2>
-      <p>Progres : 0%</p>
-    </Container>
-  )
+class EtatInstallation extends React.Component {
+
+  SERVICES_ATTENDUS = [
+    'acme', 'nginx',
+    'mq', 'mongo', 'maitrecles', 'transaction',
+    'fichiers', 'principal', 'domaines_dynamiques', 'web_protege'
+  ]
+
+  // Liste des services qui, s'ils sont actifs, on peut considerer que
+  // l'installation a reussie
+  SERVICES_CLES = ['nginx', 'principal', 'web_protege']
+
+  state = {
+    erreur: false,
+    erreurArret: false,
+    servicesPrets: false,
+    installationComplete: false,
+  }
+
+  componentDidMount() {
+    this.surveillerProgres()
+  }
+
+  surveillerProgres = async () => {
+    try {
+      const reponse = await axios('/installation/api/services')
+      const dictServices = reponse.data
+
+      // Comparer liste des services demarres a la liste des services cles
+      const listeServicesDemarres = Object.keys(dictServices).filter(nomService=>{
+        var infoService = dictServices[nomService]
+        return infoService.message_tache === 'started' && this.SERVICES_CLES.includes(nomService)
+      })
+      const servicesPrets = listeServicesDemarres.length === this.SERVICES_CLES.length
+      const installationComplete = Object.keys(dictServices).length === this.SERVICES_ATTENDUS.length
+
+      // Conserver information
+      this.setState({...dictServices, installationComplete, servicesPrets, erreur: false}, ()=>{
+        if(!installationComplete) {
+          setTimeout(this.surveillerProgres, 5000)
+        } else {
+          console.debug("Installation complete")
+        }
+      })
+
+    } catch(err) {
+      console.error("Erreur verification etat des services\n%O", err)
+
+      if(!this.state.erreur) {
+        this.setState({erreur: true, erreurMessage: err.message})
+        setTimeout(this.surveillerProgres, 20000)  // 20 secondes avant de reessayer
+      } else {
+        console.error("2e erreur de rafraichissement, on arrete. Echec installation.")
+        this.setState({erreurArret: true, erreurMessage: err.message})
+      }
+    } finally {
+
+    }
+  }
+
+  render() {
+
+    const complet = <i key="spinner" className="fa fa-check-square fa-2x fa-fw btn-outline-success"/>
+
+    var compteServicesDemarres = 0
+
+    const listeServices = this.SERVICES_ATTENDUS.map( nomService => {
+
+      var infoService = this.state[nomService]
+      var etat = ''
+      if(infoService && infoService.message_tache === 'started') {
+        etat = complet
+        compteServicesDemarres++
+      }
+
+      return (
+        <Row>
+          <Col xs={10}>
+            {nomService}
+          </Col>
+          <Col xs={2}>
+            {etat}
+          </Col>
+        </Row>
+      )
+    })
+
+    const pctProgres = Math.abs(compteServicesDemarres * 100 / this.SERVICES_ATTENDUS.length)
+
+    return (
+      <Container>
+        <h2>Installation en cours</h2>
+        <p>Progres : {pctProgres}%</p>
+
+        <h3>Services</h3>
+        {listeServices}
+
+        <Button disabled={!this.state.servicesPrets}>Terminer</Button>
+      </Container>
+    )
+  }
 }
 
 function InformationCertificat(props) {
