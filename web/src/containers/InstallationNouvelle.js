@@ -216,7 +216,6 @@ class GenererIntermediaire extends React.Component {
   state = {
     certificatintermediairePem: '',
     certificatintermediaire: '',
-    url: '',
   }
 
   componentDidMount() {
@@ -232,15 +231,9 @@ class GenererIntermediaire extends React.Component {
     this.setState({
       certificatintermediairePem: info.pem,
       certificatintermediaire: info.cert,
-      url: info.cert.subject.getField('CN').value,
     })
 
     this.props.setCertificatIntermediaire(info.pem)
-  }
-
-  changerUrl = event => {
-    const {value} = event.currentTarget
-    this.setState({url: value})
   }
 
   installer = event => {
@@ -248,7 +241,6 @@ class GenererIntermediaire extends React.Component {
     const paramsInstallation = {
       certificatMillegrillePem: this.props.certificatMillegrillePem,
       certificatIntermediairePem: this.props.certificatIntermediairePem,
-      url: this.state.url,
       securite: '3.protege',
     }
 
@@ -270,19 +262,6 @@ class GenererIntermediaire extends React.Component {
 
         <h3>Certificat du noeud</h3>
         <InformationCertificat certificat={this.state.certificatintermediaire} />
-
-        <h3>Information supplementaire</h3>
-        <Form>
-          <label htmlFor="noeud-url">URL d'acces au noeud</label>
-          <InputGroup className="mb-3">
-            <InputGroup.Prepend>
-              <InputGroup.Text id="noeud-addon3">
-                https://
-              </InputGroup.Text>
-            </InputGroup.Prepend>
-            <FormControl id="noeud-url" aria-describedby="noeud-addon3" value={this.state.url} onChange={this.changerUrl}/>
-          </InputGroup>
-        </Form>
 
         <Row>
           <Col className="bouton">
