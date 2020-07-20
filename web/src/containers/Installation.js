@@ -1,6 +1,7 @@
 import React from 'react'
 import axios from 'axios'
-import { Form, Container, Row, Col, Button, InputGroup, FormControl } from 'react-bootstrap';
+import https from 'https'
+import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } from 'react-bootstrap';
 
 import { InstallationNouvelle } from './InstallationNouvelle'
 import { Restauration } from './Restauration'
@@ -32,6 +33,7 @@ export class Installation extends React.Component {
         erreurAcces: false,
         fqdnDetecte: dataReponse.fqdn_detecte,
         ipDetectee: dataReponse.ip_detectee,
+        domaine: dataReponse.domaine,
       })
     })
     .catch(err=>{
@@ -93,8 +95,11 @@ class PageConfigurationDomaine extends React.Component {
 
   configurerDomaine = event => {
     // Transmettre la commande de configuration du domaine
-
     this.setState({attenteServeur: true})
+  }
+
+  revenirPageSaisie = event => {
+    this.setState({attenteServeur: false})
   }
 
   render() {
@@ -103,6 +108,7 @@ class PageConfigurationDomaine extends React.Component {
     if(this.state.attenteServeur) {
       pageAffichee = <PageConfigurationDomaineAttente
                         domaine={this.state.domaine}
+                        retour={this.revenirPageSaisie}
                         {...this.props} />
     } else {
       pageAffichee = <PageConfigurationDomaineSetup
@@ -266,11 +272,206 @@ function PageConfigurationDomaineSetup(props) {
 }
 
 class PageConfigurationDomaineAttente extends React.Component {
+
+  state = {
+    resultatTestAccesUrl: false,
+    domaineConfigure: false,
+    certificatRecu: false,
+    serveurWebRedemarre: false,
+
+    erreur: false,
+    messageErreur: '',
+    stackErreur: '',
+
+  }
+
   componentDidMount() {
-    // Commencer le polling du serveur pour attendre redemarrage
+    // Lancer le processus de configuration
+    this.testerAccesUrl()
+  }
+
+  testerAccesUrl = async () => {
+    this.setState({
+      resultatTestAccesUrl: false,
+      domaineConfigure: false,
+      certificatRecu: false,
+      compteurAttenteCertificatWeb: 0,
+
+      erreur: false,
+      messageErreur: '',
+      stackErreur: '',
+    })
+
+    const urlDomaine = 'https://' + this.props.domaine + ':8444/installation/api/infoMonitor'
+
+    // Creer instance AXIOS avec timeout court (5 secondes) et
+    // qui ignore cert SSL (... parce que c'est justement ce qu'on va installer!)
+    const instanceAxios = axios.create({
+      timeout: 5000,
+      httpsAgent: new https.Agent({ keepAlive: true, rejectUnauthorized: false, }),
+    });
+
+    try {
+      const reponseTest = await instanceAxios.get(urlDomaine)
+      console.debug("Reponse test\n%O", reponseTest)
+      this.setState({resultatTestAccesUrl: true}, ()=>{
+        this.configurerDomaine()
+      })
+    } catch (err) {
+      console.error("Erreur connexion\n%O", err)
+      this.setState({erreur: true, messageErreur: err.message, stackErreur: err.stack})
+    }
+
+  }
+
+  async configurerDomaine() {
+    console.debug("Configurer le domaine " + this.props.domaine)
+
+    const paramsDomaine = {
+      domaine: this.props.domaine
+    }
+
+    try {
+      const reponseCreation = await axios.post('/installation/api/configurerDomaine', paramsDomaine)
+      this.setState({domaineConfigure: true}, ()=>{
+        // Declencher attente du certificat
+        this.attendreCertificatWeb()
+      })
+
+    } catch(err) {
+      console.error("Erreur configuration domaine\n%O", err)
+      this.setState({erreur: true, messageErreur: err.message, stackErreur: err.stack})
+    }
+
+  }
+
+  attendreCertificatWeb = async() => {
+    console.debug("Attente certificat web - debut")
+
+    if(this.state.compteurAttenteCertificatWeb > 25) {
+      // Echec, timeout
+      this.setState({erreur: true, messageErreur:'Timeout attente certificat SSL'})
+      return
+    }
+
+    console.debug("Attente certificat web")
+    try {
+      const reponse = await axios.get('/installation/api/etatCertificatWeb')
+      if(!reponse.data.pret) {
+        console.debug("Certificat n'est pas pret")
+        this.setState({compteurAttenteCertificatWeb: this.state.compteurAttenteCertificatWeb + 1 })
+        setTimeout(this.attendreCertificatWeb, 5000) // Reessayer dans 5 secondes
+      } else {
+        console.debug("Certificat pret")
+        this.setState({certificatRecu: true}, ()=>{
+          // Declencher attente du certificat
+          this.configurationCompletee()
+        })
+      }
+    } catch(err) {
+      console.error("Erreur configuration domaine\n%O", err)
+      this.setState({erreur: true, messageErreur: err.message, stackErreur: err.stack})
+    }
+
+  }
+
+  configurationCompletee = async() => {
+    console.debug("Configuration completee")
   }
 
   render() {
-    return <p>Attente serveur</p>
+
+    const etapes = []
+    var spinner = ''
+    if(this.state.erreur) {
+      spinner = <i className="fa fa-close fa-2x btn-outline-danger"/>
+    } else {
+      spinner = <i key="spinner" className="fa fa-spinner fa-pulse fa-2x fa-fw"/>
+    }
+    const complet = <i key="spinner" className="fa fa-check-square fa-2x fa-fw btn-outline-success"/>
+
+    const etatTest = this.state.resultatTestAccesUrl?complet:spinner
+    etapes.push(<li key="1">Verifier acces au serveur {this.props.domaine} {etatTest}</li>)
+
+    if(this.state.resultatTestAccesUrl) {
+      const etatConfigurationDomaine = this.state.domaineConfigure?complet:spinner
+      etapes.push(<li key="2">Configuration du domaine {etatConfigurationDomaine}</li>)
+    }
+    if(this.state.domaineConfigure) {
+      const etatConfigurationSsl = this.state.certificatRecu?complet:spinner
+      etapes.push(<li key="3">Configuration du certificat SSL {etatConfigurationSsl}</li>)
+    }
+
+    var page = ''
+    if(this.state.erreur) {
+      page = <AfficherErreurConnexion
+              domaine={this.props.domaine}
+              retour={this.props.retour}
+              reessayer={this.testerAccesUrl}
+              {...this.state} />
+    } else if(this.state.certificatRecu) {
+      page = <ConfigurationCompletee
+              domaine={this.props.domaine} />
+    }
+
+    return (
+      <Container>
+        <h3>Configuration en cours ...</h3>
+        <ol>
+          {etapes}
+        </ol>
+        {page}
+      </Container>
+    )
+  }
+}
+
+function AfficherErreurConnexion(props) {
+  return (
+    <div>
+      <Alert variant="danger">
+        <Alert.Heading>Erreur de connexion au domaine demande</Alert.Heading>
+        <p>Domaine : {props.domaine}</p>
+        <hr />
+        <p>{props.messageErreur}</p>
+      </Alert>
+      <Row>
+        <Col>
+          <Button onClick={props.retour}>Retour</Button>
+          <Button onClick={props.reessayer}>Reessayer</Button>
+        </Col>
+      </Row>
+    </div>
+  )
+}
+
+class ConfigurationCompletee extends React.Component {
+
+  suivant = event => {
+    const url = 'https://' + this.props.domaine + '/installation'
+    window.location = url
+  }
+
+  render() {
+
+    return (
+      <div>
+        <Alert variant="success">
+          <Alert.Heading>Configuration du serveur web completee</Alert.Heading>
+          <p>Domaine : {this.props.domaine}</p>
+          <hr />
+          <p>La premiere partie de configuration du noeud est completee.</p>
+          <p>
+            Cliquez sur Suivant pour poursuivre le processus sur l'adresse
+            officielle du noeud.
+          </p>
+        </Alert>
+        <Row>
+          <Col>
+            <Button onClick={this.suivant}>Suivant</Button>
+          </Col>
+        </Row>
+      </div>
+    )
   }
 }
