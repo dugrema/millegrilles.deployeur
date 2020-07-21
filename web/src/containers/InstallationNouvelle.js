@@ -304,6 +304,10 @@ class EtatInstallation extends React.Component {
     this.surveillerProgres()
   }
 
+  terminer = event => {
+    window.location = '/millegrilles'
+  }
+
   surveillerProgres = async () => {
     try {
       const reponse = await axios('/installation/api/services')
@@ -378,7 +382,7 @@ class EtatInstallation extends React.Component {
         <h3>Services</h3>
         {listeServices}
 
-        <Button disabled={!this.state.servicesPrets}>Terminer</Button>
+        <Button onClick={this.terminer} disabled={!this.state.servicesPrets}>Terminer</Button>
       </Container>
     )
   }

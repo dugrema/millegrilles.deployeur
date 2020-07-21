@@ -28,10 +28,15 @@ export class Installation extends React.Component {
       this.props.rootProps.setIdmg(dataReponse.idmg)
       this.props.rootProps.setDomaine(dataReponse.domaine)
 
+      var domaineDetecte = window.location.hostname
+      if( ! RE_DOMAINE.test(domaineDetecte) ) {
+        domaineDetecte = dataReponse.fqdn_detecte
+      }
+
       this.setState({
         infoMonitorChargee: true,
         erreurAcces: false,
-        fqdnDetecte: dataReponse.fqdn_detecte,
+        fqdnDetecte: domaineDetecte,
         ipDetectee: dataReponse.ip_detectee,
         domaine: dataReponse.domaine,
       })
@@ -302,7 +307,7 @@ class PageConfigurationDomaineAttente extends React.Component {
       stackErreur: '',
     })
 
-    const urlDomaine = 'https://' + this.props.domaine + ':8444/installation/api/infoMonitor'
+    const urlDomaine = 'https://' + this.props.domaine + '/installation/api/infoMonitor'
 
     // Creer instance AXIOS avec timeout court (5 secondes) et
     // qui ignore cert SSL (... parce que c'est justement ce qu'on va installer!)
