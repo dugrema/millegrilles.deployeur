@@ -130,8 +130,6 @@ demarrer_servicemonitor() {
     --env HOSTNAME_MONITOR=$HOSTNAME_MONITOR \
     --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
     --mount type=bind,source=$MILLEGRILLES_VAR,destination=/var/opt/millegrilles \
-    --network millegrille_net \
-    --publish 8080 \
     --user root:115 \
     ${SERVICEMONITOR_IMAGE} \
     -m millegrilles.monitor.ServiceMonitor --info
