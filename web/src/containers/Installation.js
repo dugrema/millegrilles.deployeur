@@ -89,6 +89,14 @@ class PageConfigurationDomaine extends React.Component {
   state = {
     domaine: this.props.fqdnDetecte,
     domaineValide: RE_DOMAINE.test(this.props.fqdnDetecte),
+
+    configurationAvancee: false,
+    modeTest: false,
+    modeCreation: 'webroot',
+
+    cloudnsSubid: '',
+    cloudnsPassword: '',
+
     attenteServeur: false,
   }
 
@@ -96,6 +104,21 @@ class PageConfigurationDomaine extends React.Component {
     const {value} = event.currentTarget
     const valide = RE_DOMAINE.test(value)
     this.setState({domaine: value, domaineValide: valide})
+  }
+
+  changerTextfield = event => {
+    const {name, value} = event.currentTarget
+    this.setState({[name]: value})
+  }
+
+  setCheckbox = event => {
+    const {name, checked} = event.currentTarget
+    this.setState({[name]: checked})
+  }
+
+  setModeCreation = event => {
+    const {value} = event.currentTarget
+    this.setState({modeCreation: value}, ()=>{console.debug("State :\n%O", this.state)})
   }
 
   configurerDomaine = event => {
@@ -113,6 +136,10 @@ class PageConfigurationDomaine extends React.Component {
     if(this.state.attenteServeur) {
       pageAffichee = <PageConfigurationDomaineAttente
                         domaine={this.state.domaine}
+                        modeCreation={this.state.modeCreation}
+                        modeTest={this.state.modeTest}
+                        cloudnsSubid={this.state.cloudnsSubid}
+                        cloudnsPassword={this.state.cloudnsPassword}
                         retour={this.revenirPageSaisie}
                         {...this.props} />
     } else {
@@ -120,6 +147,14 @@ class PageConfigurationDomaine extends React.Component {
                         domaine={this.state.domaine}
                         domaineValide={this.state.domaineValide}
                         changerDomaine={this.changerDomaine}
+                        changerTextfield={this.changerTextfield}
+                        setCheckbox={this.setCheckbox}
+                        configurationAvancee={this.state.configurationAvancee}
+                        modeTest={this.state.modeTest}
+                        cloudnsSubid={this.state.cloudnsSubid}
+                        cloudnsPassword={this.state.cloudnsPassword}
+                        setModeCreation={this.setModeCreation}
+                        modeCreation={this.state.modeCreation}
                         configurerDomaine={this.configurerDomaine}
                         {...this.props} />
     }
@@ -212,6 +247,62 @@ function PageConfigurationDomaineSetup(props) {
     flagDomaineInvalide = <i className="fa fa-close btn-outline-danger"/>
   }
 
+  var configurationAvancee = ''
+  if(props.configurationAvancee) {
+    var cloudnsParams = ''
+    if (props.modeCreation === 'dns_cloudns') {
+      cloudnsParams = (
+        <div>
+          <label htmlFor="cloudns-subid">Configuration ClouDNS</label>
+          <InputGroup className="mb-3">
+            <InputGroup.Prepend>
+              <InputGroup.Text id="cloudns-subid">
+                SubID (numero)
+              </InputGroup.Text>
+            </InputGroup.Prepend>
+            <FormControl id="cloudns-subid"
+                         aria-describedby="cloudns-subid"
+                         name="cloudnsSubid"
+                         value={props.cloudnsSubid}
+                         onChange={props.changerTextfield} />
+          </InputGroup>
+          <InputGroup className="mb-3">
+            <InputGroup.Prepend>
+              <InputGroup.Text id="cloudns-password">
+                Mot de passe
+              </InputGroup.Text>
+            </InputGroup.Prepend>
+            <FormControl id="cloudns-password"
+                         aria-describedby="cloudns-password"
+                         type="password"
+                         name="cloudnsPassword"
+                         value={props.cloudnsPassword}
+                         onChange={props.changerTextfield} />
+          </InputGroup>
+        </div>
+      )
+    }
+
+    configurationAvancee = (
+      <div>
+        <Form.Check id="certificat-test">
+          <Form.Check.Input type='checkbox' name="modeTest" value='true' onChange={props.setCheckbox} value={props.modeTest}/>
+          <Form.Check.Label>Certificat de test</Form.Check.Label>
+        </Form.Check>
+
+        <Form.Group controlId="modeCreationCertificat">
+          <Form.Label>Mode de creation certificat</Form.Label>
+          <Form.Control as="select" value={props.modeCreation} onChange={props.setModeCreation}>
+            <option value="webroot">Mode http (port 80)</option>
+            <option value="dns_cloudns">ClouDNS</option>
+          </Form.Control>
+        </Form.Group>
+
+        {cloudnsParams}
+      </div>
+    )
+  }
+
   return (
     <Container>
       <Row>
@@ -264,9 +355,17 @@ function PageConfigurationDomaineSetup(props) {
           </InputGroup.Prepend>
           <FormControl id="noeud-url" aria-describedby="noeud-addon3" value={props.domaine} onChange={props.changerDomaine}/>
         </InputGroup>
+
+        <Form.Check id="configuration-avancee">
+          <Form.Check.Input type='checkbox' name="configurationAvancee" value='true' onChange={props.setCheckbox} value={props.configurationAvancee}/>
+          <Form.Check.Label>Configuration avancee</Form.Check.Label>
+        </Form.Check>
+
+        {configurationAvancee}
+
       </Form>
 
-      <Row>
+      <Row className="boutons-installer">
         <Col>
           <Button onClick={props.configurerDomaine} value="true" disabled={!props.domaineValide}>Suivant</Button>
         </Col>
@@ -301,6 +400,7 @@ class PageConfigurationDomaineAttente extends React.Component {
       domaineConfigure: false,
       certificatRecu: false,
       compteurAttenteCertificatWeb: 0,
+      compteurAttenteRedemarrageServeur: 0,
 
       erreur: false,
       messageErreur: '',
@@ -333,7 +433,14 @@ class PageConfigurationDomaineAttente extends React.Component {
     console.debug("Configurer le domaine " + this.props.domaine)
 
     const paramsDomaine = {
-      domaine: this.props.domaine
+      domaine: this.props.domaine,
+      modeTest: this.props.modeTest,
+    }
+
+    if(this.props.modeCreation === 'dns_cloudns') {
+      paramsDomaine['modeCreation'] = this.props.modeCreation
+      paramsDomaine['cloudnsSubid'] = this.props.cloudnsSubid
+      paramsDomaine['cloudnsPassword'] = this.props.cloudnsPassword
     }
 
     try {
@@ -369,13 +476,38 @@ class PageConfigurationDomaineAttente extends React.Component {
       } else {
         console.debug("Certificat pret")
         this.setState({certificatRecu: true}, ()=>{
-          // Declencher attente du certificat
-          this.configurationCompletee()
+          // Declencher attente du redemarrage du serveur
+          setTimeout(this.attendreRedemarrageServeur, 15000) // Verifier dans 15 secondes
         })
       }
     } catch(err) {
       console.error("Erreur configuration domaine\n%O", err)
       this.setState({erreur: true, messageErreur: err.message, stackErreur: err.stack})
+    }
+
+  }
+
+  attendreRedemarrageServeur = async() => {
+    console.debug("Attente redemarrage serveur - debut")
+
+    if(this.state.compteurAttenteRedemarrageServeur > 10) {
+      // Echec, timeout
+      this.setState({erreur: true, messageErreur:'Timeout redemarrage serveur'})
+      return
+    }
+
+    console.debug("Attente redemarrage web")
+    try {
+      const reponse = await axios.get('/installation/api/etatCertificatWeb')
+      console.debug("Certificat pret")
+      this.setState({serveurWebRedemarre: true}, ()=>{
+        // Declencher attente du certificat
+        this.configurationCompletee()
+      })
+    } catch(err) {
+      console.error("Erreur test nouveau certificat serveur\n%O", err)
+      setTimeout(this.attendreRedemarrageServeur, 5000) // Reessayer dans 10 secondes
+      this.setState({compteurAttenteRedemarrageServeur: this.state.compteurAttenteRedemarrageServeur + 1 })
     }
 
   }
@@ -406,6 +538,10 @@ class PageConfigurationDomaineAttente extends React.Component {
       const etatConfigurationSsl = this.state.certificatRecu?complet:spinner
       etapes.push(<li key="3">Configuration du certificat SSL {etatConfigurationSsl}</li>)
     }
+    if(this.state.certificatRecu) {
+      const etatAttenteServeur = this.state.attenteServeur?complet:spinner
+      etapes.push(<li key="4">Attente redemarrage serveur {etatAttenteServeur}</li>)
+    }
 
     var page = ''
     if(this.state.erreur) {
@@ -414,7 +550,7 @@ class PageConfigurationDomaineAttente extends React.Component {
               retour={this.props.retour}
               reessayer={this.testerAccesUrl}
               {...this.state} />
-    } else if(this.state.certificatRecu) {
+    } else if(this.state.serveurWebRedemarre) {
       page = <ConfigurationCompletee
               domaine={this.props.domaine} />
     }

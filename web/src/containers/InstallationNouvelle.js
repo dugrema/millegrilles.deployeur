@@ -316,10 +316,13 @@ class EtatInstallation extends React.Component {
       // Comparer liste des services demarres a la liste des services cles
       const listeServicesDemarres = Object.keys(dictServices).filter(nomService=>{
         var infoService = dictServices[nomService]
-        return infoService.message_tache === 'started' && this.SERVICES_CLES.includes(nomService)
+        return infoService.message_tache === 'started'
       })
-      const servicesPrets = listeServicesDemarres.length === this.SERVICES_CLES.length
-      const installationComplete = Object.keys(dictServices).length === this.SERVICES_ATTENDUS.length
+      const listeServicesClesDemarres = listeServicesDemarres.filter(nomService=>{
+        return this.SERVICES_CLES.includes(nomService)
+      })
+      const servicesPrets = listeServicesClesDemarres.length === this.SERVICES_CLES.length
+      const installationComplete = listeServicesDemarres.length === this.SERVICES_ATTENDUS.length
 
       // Conserver information
       this.setState({...dictServices, installationComplete, servicesPrets, erreur: false}, ()=>{
@@ -361,7 +364,7 @@ class EtatInstallation extends React.Component {
       }
 
       return (
-        <Row>
+        <Row key={nomService}>
           <Col xs={10}>
             {nomService}
           </Col>
