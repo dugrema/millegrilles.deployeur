@@ -6,4 +6,7 @@
 /dist/
 /build/
 /.idea
+/react_build
 version.txt
+**/manifest.build.js*
+*.tar.gz
