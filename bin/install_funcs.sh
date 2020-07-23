@@ -108,6 +108,7 @@ initialiser_swarm() {
 
 configurer_swarm() {
   echo "[INFO] Configurer docker swarm"
+  docker network create -d overlay --scope swarm millegrille_net
   docker config rm docker.versions 2> /dev/null || true
   docker config create docker.versions $REP_ETC/docker.versions.json
 
@@ -125,12 +126,15 @@ demarrer_servicemonitor() {
   HOSTNAME_MONITOR=`hostname -f`
 
   docker service create \
-    --name service_monitor \
+    --name monitor \
     --hostname monitor \
     --env HOSTNAME_MONITOR=$HOSTNAME_MONITOR \
+    --network millegrille_net \
     --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
     --mount type=bind,source=$MILLEGRILLES_VAR,destination=/var/opt/millegrilles \
     --user root:115 \
+    --publish 8080:8080 \
     ${SERVICEMONITOR_IMAGE} \
-    -m millegrilles.monitor.ServiceMonitor --info
+    -m millegrilles.monitor.ServiceMonitor --debug \
+    --webroot /opt/millegrilles/dist/installation
 }
