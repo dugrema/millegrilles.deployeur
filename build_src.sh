@@ -41,7 +41,7 @@ package_build() {
 }
 
 telecharger_package() {
-  sftp ${URL_SERVEUR_DEV}:${BUILD_PATH}/$BUILD_FILE
+  sftp ${URL_SERVEUR_DEV}:${PATH_SERVEUR_DEV}/$BUILD_FILE
   if [ $? -ne 0 ]; then
     echo "Erreur download fichier react"
     exit 1
