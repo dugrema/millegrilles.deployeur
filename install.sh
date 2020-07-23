@@ -34,7 +34,7 @@ debug() {
   sudo chmod -R g+w $MILLEGRILLES_VAR
 
   docker service create \
-    --name service_monitor \
+    --name monitor \
     ubuntu /bin/sleep 10000
 }
 
