@@ -25,7 +25,7 @@
       "name": "pki.mongoxp.cert",
       "filename": "/run/secrets/cert.pem"
     },{
-      "name": "pki.web.cert;pki.mongoxp.cert",
+      "name": "pki.mongoxp.cert",
       "filename": "/run/secrets/web.cert.pem"
     },{
       "name": "pki.millegrille.cert",
@@ -40,7 +40,7 @@
     },
     {
       "match_config": true,
-      "name": "pki.web.key;pki.mongoxp.key",
+      "name": "pki.mongoxp.key",
       "filename": "web.key.pem"
     },
     {
