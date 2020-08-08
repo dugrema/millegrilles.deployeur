@@ -19,11 +19,11 @@ class Acteur:
         self.initialiser_bluetooth()
 
     def initialiser_bluetooth(self):
-        ble_present = verifier_presence_bluetooth()
+        ble_present, mainloop = verifier_presence_bluetooth()
         if ble_present:
             self.__logger.info("Bluetooth detecte, on initialise les processus")
             from acteur.BLELoader import ServeurBLE
-            self.serveur_ble = ServeurBLE()
+            self.serveur_ble = ServeurBLE(mainloop)
             self.serveur_ble.demarrer_bluetooth()
         else:
             self.__logger.info("Bluetooth non detecte")

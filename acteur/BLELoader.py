@@ -9,12 +9,18 @@ from random import randint
 
 ble_detecte = False
 logger_module = logging.getLogger(__name__)
+mainloop = None
 try:
     # Importer les dependances optionnelles pour Bluetooth
     from acteur.BLEBaseClasses import find_adapter
+    from gi.repository import GLib
     import dbus
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     bus = dbus.SystemBus()
+    mainloop = GLib.MainLoop()
+    
     adapter = find_adapter(bus)
+    
     if not adapter:
         logger_module.info('BLE adapter not found')
     else:
@@ -25,7 +31,7 @@ except ImportError as ie:
 
 def verifier_presence_bluetooth():
     logger = logging.getLogger(__name__ + '.verifier_presence_bluetooth')
-    return ble_detecte
+    return ble_detecte, mainloop
 
 
 if ble_detecte:

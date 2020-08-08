@@ -1,5 +1,3 @@
-from acteur.BLEBaseClasses import Service, Characteristic, Descriptor
-
 import logging
 import dbus
 import dbus.exceptions
@@ -16,7 +14,7 @@ import sys
 
 from random import randint
 from threading import Thread
-from acteur.BLEBaseClasses import find_adapter
+from acteur.BLEBaseClasses import find_adapter, Application, Service, Characteristic, Descriptor, Advertisement
 
 BLUEZ_SERVICE_NAME = 'org.bluez'
 GATT_MANAGER_IFACE = 'org.bluez.GattManager1'
@@ -50,69 +48,75 @@ class FailedException(dbus.exceptions.DBusException):
 	_dbus_error_name = 'org.bluez.Error.Failed'
 
 
-class Application(dbus.service.Object):
+class UartApplication(Application):
     def __init__(self, bus):
-        self.path = '/'
-        self.services = []
-        dbus.service.Object.__init__(self, bus, self.path)
- 
-    def get_path(self):
-        return dbus.ObjectPath(self.path)
- 
-    def add_service(self, service):
-        self.services.append(service)
- 
-    @dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')
-    def GetManagedObjects(self):
-        response = {}
-        for service in self.services:
-            response[service.get_path()] = service.get_properties()
-            chrcs = service.get_characteristics()
-            for chrc in chrcs:
-                response[chrc.get_path()] = chrc.get_properties()
-        return response
+        Application.__init__(self, bus)
+        # self.add_service(UartService(bus, 0))
+
+class UartAdvertisement(Advertisement):
+    def __init__(self, bus, index):
+        Advertisement.__init__(self, bus, index, 'peripheral')
+        self.add_service_uuid(UART_SERVICE_UUID)
+        self.add_local_name(LOCAL_NAME)
+        self.include_tx_power = True
 
 
 class ServeurBLE:
 
-	def __init__(self):
-		self.logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
-		self.application = None
-		self.mainloop = None
-		self.__thread = None
-		self.adv = None
+    def __init__(self, mainloop):
+        self.logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+        self.application = None
+        self.mainloop = mainloop
+        self.__thread = None
+        self.adv = None
+    
+    def demarrer_bluetooth(self):
+        bus = dbus.SystemBus()
+        adapter = find_adapter(bus)
+        
+        app = UartApplication(bus)
+        self.adv = UartAdvertisement(bus, 0)
 
-	def demarrer_bluetooth(self):
-		dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-		bus = dbus.SystemBus()
-		adapter = find_adapter(bus)
-	 
-		service_manager = dbus.Interface(
-									bus.get_object(BLUEZ_SERVICE_NAME, adapter),
-									GATT_MANAGER_IFACE)
-		ad_manager = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
-									LE_ADVERTISING_MANAGER_IFACE)
-	 
-		# app = UartApplication(bus)
-		# self.adv = UartAdvertisement(bus, 0)
-	 
-		self.mainloop = GLib.MainLoop()
-	 
-		# service_manager.RegisterApplication(app.get_path(), {},
-		#									reply_handler=register_app_cb,
-		#									error_handler=register_app_error_cb)
-		#ad_manager.RegisterAdvertisement(self.adv.get_path(), {},
-		#								 reply_handler=register_ad_cb,
-		#								 error_handler=register_ad_error_cb)
+        service_manager = dbus.Interface(
+                                bus.get_object(BLUEZ_SERVICE_NAME, adapter),
+                                GATT_MANAGER_IFACE)
+        ad_manager = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
+                                LE_ADVERTISING_MANAGER_IFACE)
 
-		self.thread = Thread(name="ble", target=self.run)
-		self.thread.start()
+        service_manager.RegisterApplication(app.get_path(), {},
+                                            reply_handler=self.register_app_cb,
+                                            error_handler=self.register_app_error_cb)
 
-	def run(self):
-		try:
-			self.mainloop.run()
-		finally:
-			self.adv.Release()
+        ad_manager.RegisterAdvertisement(self.adv.get_path(), {},
+                                     reply_handler=self.register_ad_cb,
+                                     error_handler=self.register_ad_error_cb)
+
+        self.thread = Thread(name="ble", target=self.run)
+        self.thread.start()
+
+    def run(self):
+        try:
+            self.mainloop.run()
+        finally:
+            self.adv.Release()
 	
-	def fermer(self):
-		self.mainloop.quit()
+    def fermer(self):
+        self.mainloop.quit()
+
+
+    def register_ad_cb(self):
+        print('Advertisement registered')
+
+
+    def register_ad_error_cb(self, error):
+        print('Failed to register advertisement: ' + str(error))
+        mainloop.quit()
+        
+    def register_app_cb(self):
+        print('GATT application registered')
+
+
+    def register_app_error_cb(self, error):
+        print('Failed to register application: ' + str(error))
+        mainloop.quit()
+        
