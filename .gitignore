@@ -10,3 +10,4 @@
 version.txt
 **/manifest.build.js*
 *.tar.gz
+__pycache__
