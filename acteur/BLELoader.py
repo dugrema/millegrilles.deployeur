@@ -1,0 +1,37 @@
+# Serveur Bluetooth Low-Energy (BLE)
+# Base sur https://scribles.net/creating-ble-gatt-server-uart-service-on-raspberry-pi/
+import logging
+import sys
+import array
+
+from random import randint
+
+
+ble_detecte = False
+logger_module = logging.getLogger(__name__)
+try:
+    # Importer les dependances optionnelles pour Bluetooth
+    from acteur.BLEBaseClasses import find_adapter
+    import dbus
+    bus = dbus.SystemBus()
+    adapter = find_adapter(bus)
+    if not adapter:
+        logger_module.info('BLE adapter not found')
+    else:
+        ble_detecte = True
+except ImportError as ie:
+    logger_module.info("Erreur import bluetooth deps : %s", str(ie))
+
+
+def verifier_presence_bluetooth():
+    logger = logging.getLogger(__name__ + '.verifier_presence_bluetooth')
+    return ble_detecte
+
+
+if ble_detecte:
+	# Bluetooth detecte, chargement de toutes les classes necessaires
+	from acteur.BLEMilleGrilles import ServeurBLE
+else:
+	class ServeurBLE:
+		def __init__(self):
+			pass

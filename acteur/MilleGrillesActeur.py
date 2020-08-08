@@ -5,7 +5,7 @@ import signal
 
 from threading import Event
 
-from acteur.ServeurBLE import verifier_presence_bluetooth
+from acteur.BLELoader import verifier_presence_bluetooth
 
 
 class Acteur:
@@ -13,15 +13,18 @@ class Acteur:
     def __init__(self):
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
         self.stop_event = Event()
-        self._ble_present = False
+        self.serveur_ble = None
 
     def initialiser(self):
         self.initialiser_bluetooth()
 
     def initialiser_bluetooth(self):
-        self._ble_present = verifier_presence_bluetooth()
-        if self._ble_present:
+        ble_present = verifier_presence_bluetooth()
+        if ble_present:
             self.__logger.info("Bluetooth detecte, on initialise les processus")
+            from acteur.BLELoader import ServeurBLE
+            self.serveur_ble = ServeurBLE()
+            self.serveur_ble.demarrer_bluetooth()
         else:
             self.__logger.info("Bluetooth non detecte")
 
@@ -31,8 +34,12 @@ class Acteur:
 
         if not self.stop_event.is_set():
             self.stop_event.set()
-            if self._ble_present:
+            if self.serveur_ble:
                 self.__logger.info("Fermer processus bluetooth")
+                try:
+                    self.serveur_ble.fermer()
+                except Exception as e:
+                    self.__logger.warning("Erreur fermeture BLE : " + e)
 
 
 # --------- Section MAIN ------------
