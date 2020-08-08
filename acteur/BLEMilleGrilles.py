@@ -14,22 +14,22 @@ import sys
 
 from random import randint
 from threading import Thread
-from acteur.BLEBaseClasses import find_adapter, Application, Service, Characteristic, Descriptor, Advertisement
-
-BLUEZ_SERVICE_NAME = 'org.bluez'
-GATT_MANAGER_IFACE = 'org.bluez.GattManager1'
-DBUS_OM_IFACE =      'org.freedesktop.DBus.ObjectManager'
-DBUS_PROP_IFACE =    'org.freedesktop.DBus.Properties'
+from acteur.BLEBaseClasses import find_adapter
+from acteur.BLEBaseClasses import Application, Service, Characteristic, Descriptor, Advertisement
+from acteur.BLEBaseClasses import BLUEZ_SERVICE_NAME, DBUS_OM_IFACE, DBUS_PROP_IFACE
+from acteur.BLEBaseClasses import GATT_MANAGER_IFACE, GATT_CHRC_IFACE
 
 LE_ADVERTISING_MANAGER_IFACE = 'org.bluez.LEAdvertisingManager1'
-GATT_MANAGER_IFACE = 'org.bluez.GattManager1'
-GATT_CHRC_IFACE = 'org.bluez.GattCharacteristic1'
 
-UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
-UART_RX_CHARACTERISTIC_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'
-UART_TX_CHARACTERISTIC_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'
-UART_MSG_CHARACTERISTIC_UUID = '6e400004-b5a3-f393-e0a9-e50e24dcca9e'
-LOCAL_NAME = 'rpi-gatt-server'
+WIFI_SERVICE_UUID = '1a000000-7ef7-42d6-8967-bc01dd822388'
+WIFI_ETAT_CHARACTERISTIC_UUID = '1a000001-7ef7-42d6-8967-bc01dd822388'
+
+CONFIGURATION_SERVICE_UUID = '1a000010-7ef7-42d6-8967-bc01dd822388'
+CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID = '1a000011-7ef7-42d6-8967-bc01dd822388'
+
+INFORMATION_SERVICE_UUID = '1a000020-7ef7-42d6-8967-bc01dd822388'
+
+LOCAL_NAME = 'millegrilles-gatt'
 
 
 class InvalidArgsException(dbus.exceptions.DBusException):
@@ -48,15 +48,58 @@ class FailedException(dbus.exceptions.DBusException):
 	_dbus_error_name = 'org.bluez.Error.Failed'
 
 
-class UartApplication(Application):
+class WifiEtatCharacteristic(Characteristic):
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(self, bus, index, WIFI_ETAT_CHARACTERISTIC_UUID,
+                                ['read'], service)
+ 
+    def ReadValue(self, options):
+        """
+        Etat :
+          - 01 : Pas configure
+          - 02 : Configure, pas connecte
+          - 03[ESSID,SIGNAL] : Connecte, details
+        """
+        return b"\x00"
+
+
+class WifiSetCharacteristic(Characteristic):
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(self, bus, index, CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID,
+                                ['write'], service)
+ 
+    def WriteValue(self, value, options):
+        print('remote: {}'.format(bytearray(value).decode()))
+
+
+class MillegrillesApplication(Application):
     def __init__(self, bus):
         Application.__init__(self, bus)
-        # self.add_service(UartService(bus, 0))
+        self.add_service(WifiService(bus, 0))
+        self.add_service(ConfigurationService(bus, 1))
 
-class UartAdvertisement(Advertisement):
+
+class WifiService(Service):
+    def __init__(self, bus, index):
+        Service.__init__(self, bus, index, WIFI_SERVICE_UUID, True)
+        self.add_characteristic(WifiEtatCharacteristic(bus, 0, self))
+
+
+class ConfigurationService(Service):
+    def __init__(self, bus, index):
+        Service.__init__(self, bus, index, CONFIGURATION_SERVICE_UUID, True)
+        self.add_characteristic(WifiSetCharacteristic(bus, 0, self))
+
+
+class InformationService(Service):
+    def __init__(self, bus, index):
+        Service.__init__(self, bus, index, INFORMATION_SERVICE_UUID, True)
+
+
+class MillegrillesAdvertisement(Advertisement):
     def __init__(self, bus, index):
         Advertisement.__init__(self, bus, index, 'peripheral')
-        self.add_service_uuid(UART_SERVICE_UUID)
+        self.add_service_uuid(WIFI_SERVICE_UUID)
         self.add_local_name(LOCAL_NAME)
         self.include_tx_power = True
 
@@ -74,8 +117,8 @@ class ServeurBLE:
         bus = dbus.SystemBus()
         adapter = find_adapter(bus)
         
-        app = UartApplication(bus)
-        self.adv = UartAdvertisement(bus, 0)
+        app = MillegrillesApplication(bus)
+        self.adv = MillegrillesAdvertisement(bus, 0)
 
         service_manager = dbus.Interface(
                                 bus.get_object(BLUEZ_SERVICE_NAME, adapter),
@@ -103,7 +146,6 @@ class ServeurBLE:
     def fermer(self):
         self.mainloop.quit()
 
-
     def register_ad_cb(self):
         print('Advertisement registered')
 
@@ -114,7 +156,6 @@ class ServeurBLE:
         
     def register_app_cb(self):
         print('GATT application registered')
-
 
     def register_app_error_cb(self, error):
         print('Failed to register application: ' + str(error))

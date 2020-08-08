@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Source : https://scribles.net/creating-ble-gatt-server-uart-service-on-raspberry-pi/
 
 import dbus
 import dbus.exceptions
@@ -19,10 +20,6 @@ from random import randint
 BLUEZ_SERVICE_NAME = 'org.bluez'
 DBUS_OM_IFACE =      'org.freedesktop.DBus.ObjectManager'
 DBUS_PROP_IFACE =    'org.freedesktop.DBus.Properties'
-
-
-LE_ADVERTISING_MANAGER_IFACE = 'org.bluez.LEAdvertisingManager1'
-LE_ADVERTISEMENT_IFACE = 'org.bluez.LEAdvertisement1'
 
 GATT_SERVICE_IFACE = 'org.bluez.GattService1'
 GATT_MANAGER_IFACE = 'org.bluez.GattManager1'
@@ -48,15 +45,12 @@ class FailedException(dbus.exceptions.DBusException):
 
 class Application(dbus.service.Object):
     """
-    org.bluez.GattApplication1 interface implementation
+    org.bluez.GattApplication interface implementation
     """
     def __init__(self, bus):
         self.path = '/'
         self.services = []
         dbus.service.Object.__init__(self, bus, self.path)
-        # self.add_service(HeartRateService(bus, 0))
-        # self.add_service(BatteryService(bus, 1))
-        # self.add_service(TestService(bus, 2))
 
     def get_path(self):
         return dbus.ObjectPath(self.path)
@@ -85,7 +79,7 @@ class Service(dbus.service.Object):
     """
     org.bluez.GattService1 interface implementation
     """
-    PATH_BASE = '/org/bluez/example/service'
+    PATH_BASE = '/org/bluez/millegrilles/service'
 
     def __init__(self, bus, index, uuid, primary):
         self.path = self.PATH_BASE + str(index)
@@ -153,7 +147,6 @@ class Characteristic(dbus.service.Object):
                         'Descriptors': dbus.Array(
                                 self.get_descriptor_paths(),
                                 signature='o'),
-                        'testprop': 'allo'
                 },
         }
 
@@ -268,9 +261,9 @@ class Descriptor(dbus.service.Object):
 
 
 class Advertisement(dbus.service.Object):
-    PATH_BASE = '/org/bluez/example/advertisement'
+    PATH_BASE = '/org/bluez/millegrilles/advertisement'
 
-    def __init__(self, bus, index, advertising_type):
+    def __init__(self, bus, index, advertising_type, interface_name='org.bluez.LEAdvertisement1'):
         self.path = self.PATH_BASE + str(index)
         self.bus = bus
         self.ad_type = advertising_type
@@ -281,6 +274,7 @@ class Advertisement(dbus.service.Object):
         self.local_name = None
         self.include_tx_power = None
         self.data = None
+        self.interface_name = interface_name
         dbus.service.Object.__init__(self, bus, self.path)
 
     def get_properties(self):
@@ -306,7 +300,7 @@ class Advertisement(dbus.service.Object):
         if self.data is not None:
             properties['Data'] = dbus.Dictionary(
                 self.data, signature='yv')
-        return {LE_ADVERTISEMENT_IFACE: properties}
+        return {self.interface_name: properties}
 
     def get_path(self):
         return dbus.ObjectPath(self.path)
@@ -346,14 +340,14 @@ class Advertisement(dbus.service.Object):
                          out_signature='a{sv}')
     def GetAll(self, interface):
         print('GetAll')
-        if interface != LE_ADVERTISEMENT_IFACE:
+        if interface != self.interface_name:
             raise InvalidArgsException()
         print('returning props')
-        return self.get_properties()[LE_ADVERTISEMENT_IFACE]
+        return self.get_properties()[self.interface_name]
 
-    @dbus.service.method(LE_ADVERTISEMENT_IFACE,
-                         in_signature='',
-                         out_signature='')
+    #@dbus.service.method(LE_ADVERTISEMENT_IFACE,
+    #                     in_signature='',
+    #                     out_signature='')
     def Release(self):
         print('%s: Released!' % self.path)
 
