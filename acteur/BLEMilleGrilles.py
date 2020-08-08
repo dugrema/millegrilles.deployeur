@@ -3,6 +3,8 @@ import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
+import json 
+
 from gi.repository import GLib
 
 import array
@@ -64,19 +66,30 @@ class WifiEtatCharacteristic(Characteristic):
 
 
 class WifiSetCharacteristic(Characteristic):
-    def __init__(self, bus, index, service):
+    def __init__(self, bus, index, service, acteur):
+        self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+        self.acteur = acteur
         Characteristic.__init__(self, bus, index, CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID,
                                 ['write'], service)
  
     def WriteValue(self, value, options):
         print('remote: {}'.format(bytearray(value).decode()))
+        try:
+            info_wifi = json.loads(bytearray(value))
+            essid = info_wifi['essid']
+            passwd = info_wifi['passwd']
+            country = info_wifi['country']
+            self.acteur.changer_wifi(essid, passwd, country)
+        except:
+            self.__logger.exception("Erreur reception donnee wifi")
 
 
 class MillegrillesApplication(Application):
-    def __init__(self, bus):
+    def __init__(self, bus, acteur):
+        self.acteur = acteur
         Application.__init__(self, bus)
         self.add_service(WifiService(bus, 0))
-        self.add_service(ConfigurationService(bus, 1))
+        self.add_service(ConfigurationService(bus, 1, acteur))
 
 
 class WifiService(Service):
@@ -86,9 +99,9 @@ class WifiService(Service):
 
 
 class ConfigurationService(Service):
-    def __init__(self, bus, index):
+    def __init__(self, bus, index, acteur):
         Service.__init__(self, bus, index, CONFIGURATION_SERVICE_UUID, True)
-        self.add_characteristic(WifiSetCharacteristic(bus, 0, self))
+        self.add_characteristic(WifiSetCharacteristic(bus, 0, self, acteur))
 
 
 class InformationService(Service):
@@ -106,10 +119,12 @@ class MillegrillesAdvertisement(Advertisement):
 
 class ServeurBLE:
 
-    def __init__(self, mainloop):
+    def __init__(self, mainloop, acteur):
         self.logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
-        self.application = None
         self.mainloop = mainloop
+        self.acteur = acteur
+
+        self.application = None
         self.__thread = None
         self.adv = None
     
@@ -117,7 +132,7 @@ class ServeurBLE:
         bus = dbus.SystemBus()
         adapter = find_adapter(bus)
         
-        app = MillegrillesApplication(bus)
+        app = MillegrillesApplication(bus, self.acteur)
         self.adv = MillegrillesAdvertisement(bus, 0)
 
         service_manager = dbus.Interface(
