@@ -20,11 +20,13 @@ from acteur.BLEBaseClasses import find_adapter
 from acteur.BLEBaseClasses import Application, Service, Characteristic, Descriptor, Advertisement
 from acteur.BLEBaseClasses import BLUEZ_SERVICE_NAME, DBUS_OM_IFACE, DBUS_PROP_IFACE
 from acteur.BLEBaseClasses import GATT_MANAGER_IFACE, GATT_CHRC_IFACE
+from acteur.IpUtils import get_local_ips
 
 LE_ADVERTISING_MANAGER_IFACE = 'org.bluez.LEAdvertisingManager1'
 
 WIFI_SERVICE_UUID = '1a000000-7ef7-42d6-8967-bc01dd822388'
 WIFI_ETAT_CHARACTERISTIC_UUID = '1a000001-7ef7-42d6-8967-bc01dd822388'
+WIFI_GETIPS_CHARACTERISTIC_UUID = '1a000002-7ef7-42d6-8967-bc01dd822388'
 
 CONFIGURATION_SERVICE_UUID = '1a000010-7ef7-42d6-8967-bc01dd822388'
 CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID = '1a000011-7ef7-42d6-8967-bc01dd822388'
@@ -35,19 +37,23 @@ LOCAL_NAME = 'millegrilles-gatt'
 
 
 class InvalidArgsException(dbus.exceptions.DBusException):
-	_dbus_error_name = 'org.freedesktop.DBus.Error.InvalidArgs'
+    _dbus_error_name = 'org.freedesktop.DBus.Error.InvalidArgs'
+
 
 class NotSupportedException(dbus.exceptions.DBusException):
-	_dbus_error_name = 'org.bluez.Error.NotSupported'
+    _dbus_error_name = 'org.bluez.Error.NotSupported'
+
 
 class NotPermittedException(dbus.exceptions.DBusException):
-	_dbus_error_name = 'org.bluez.Error.NotPermitted'
+    _dbus_error_name = 'org.bluez.Error.NotPermitted'
+
 
 class InvalidValueLengthException(dbus.exceptions.DBusException):
-	_dbus_error_name = 'org.bluez.Error.InvalidValueLength'
+    _dbus_error_name = 'org.bluez.Error.InvalidValueLength'
+
 
 class FailedException(dbus.exceptions.DBusException):
-	_dbus_error_name = 'org.bluez.Error.Failed'
+    _dbus_error_name = 'org.bluez.Error.Failed'
 
 
 class WifiEtatCharacteristic(Characteristic):
@@ -63,6 +69,21 @@ class WifiEtatCharacteristic(Characteristic):
           - 03[ESSID,SIGNAL] : Connecte, details
         """
         return b"\x00"
+
+
+class WifiGetipsCharacteristic(Characteristic):
+    def __init__(self, bus, index, service):
+        self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+        Characteristic.__init__(self, bus, index, WIFI_GETIPS_CHARACTERISTIC_UUID,
+                                ['read'], service)
+
+    def ReadValue(self, options):
+        adresses = get_local_ips()
+
+        adresses_str = json.dumps(adresses)
+        self.__logger.debug("Adresses IP : %s" % adresses_str)
+
+        return adresses_str.encode('utf-8')
 
 
 class WifiSetCharacteristic(Characteristic):

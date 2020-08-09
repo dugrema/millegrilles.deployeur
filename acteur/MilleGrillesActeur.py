@@ -10,7 +10,6 @@ from threading import Event
 
 from acteur.BLELoader import verifier_presence_bluetooth
 
-
 class Acteur:
 
     def __init__(self):
