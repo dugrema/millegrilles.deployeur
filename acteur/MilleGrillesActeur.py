@@ -105,14 +105,14 @@ class GestionAvahi:
         contenu_service.append('')
         contenu_service.append('<!DOCTYPE service-group SYSTEM "avahi-service.dtd">')
         contenu_service.append('<service-group>')
-        contenu_service.append('	<name>%s</name>' % nom_service)
-        contenu_service.append('	<service>')
-        contenu_service.append('		<type>%s</type>' % type_service)
-        contenu_service.append('		<port>%d</port>' % port)
+        contenu_service.append('  <name>%s</name>' % nom_service)
+        contenu_service.append('  <service>')
+        contenu_service.append('    <type>%s</type>' % type_service)
+        contenu_service.append('    <port>%d</port>' % port)
         if txt:
             for key, value in txt.items():
-                contenu_service.append('		<txt-record>%s=%s</txt-record>' % (key, value))
-        contenu_service.append('	</service>')
+                contenu_service.append('    <txt-record>%s=%s</txt-record>' % (key, value))
+        contenu_service.append('  </service>')
         contenu_service.append('</service-group>')
 
         service_xml = "\n".join(contenu_service)
