@@ -25,11 +25,8 @@ from acteur.IpUtils import get_local_ips
 LE_ADVERTISING_MANAGER_IFACE = 'org.bluez.LEAdvertisingManager1'
 
 WIFI_SERVICE_UUID = '1a000000-7ef7-42d6-8967-bc01dd822388'
-WIFI_ETAT_CHARACTERISTIC_UUID = '1a000001-7ef7-42d6-8967-bc01dd822388'
-WIFI_GETIPS_CHARACTERISTIC_UUID = '1a000002-7ef7-42d6-8967-bc01dd822388'
 
 CONFIGURATION_SERVICE_UUID = '1a000010-7ef7-42d6-8967-bc01dd822388'
-CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID = '1a000011-7ef7-42d6-8967-bc01dd822388'
 
 INFORMATION_SERVICE_UUID = '1a000020-7ef7-42d6-8967-bc01dd822388'
 
@@ -57,9 +54,12 @@ class FailedException(dbus.exceptions.DBusException):
 
 
 class WifiEtatCharacteristic(Characteristic):
+    WIFI_ETAT_CHARACTERISTIC_UUID = '1a000001-7ef7-42d6-8967-bc01dd822388'
+    
     def __init__(self, bus, index, service):
-        Characteristic.__init__(self, bus, index, WIFI_ETAT_CHARACTERISTIC_UUID,
-                                ['read'], service)
+        Characteristic.__init__(self, bus, index, 
+            WifiEtatCharacteristic.WIFI_ETAT_CHARACTERISTIC_UUID,
+            ['read'], service)
  
     def ReadValue(self, options):
         """
@@ -72,26 +72,42 @@ class WifiEtatCharacteristic(Characteristic):
 
 
 class WifiGetipsCharacteristic(Characteristic):
+    WIFI_GETIPS_CHARACTERISTIC_UUID = '1a000002-7ef7-42d6-8967-bc01dd822388'
+
     def __init__(self, bus, index, service):
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
-        Characteristic.__init__(self, bus, index, WIFI_GETIPS_CHARACTERISTIC_UUID,
-                                ['read'], service)
+        Characteristic.__init__(self, bus, index, 
+            WifiGetipsCharacteristic.WIFI_GETIPS_CHARACTERISTIC_UUID,
+            ['read'], service)
+            
+        self._adresses_cache = None
 
     def ReadValue(self, options):
-        adresses = get_local_ips()
+        
+        try:
+            offset = options.get('offset') or 0
+            if offset == 0:
+                # Nouvelle requete, lire les l'adresse a nouveau
+                adresses = get_local_ips()
+                self._adresses_cache = json.dumps(adresses).encode('utf-8')
+                self.__logger.debug("Adresses IP : %s" % self._adresses_cache)
 
-        adresses_str = json.dumps(adresses)
-        self.__logger.debug("Adresses IP : %s" % adresses_str)
-
-        return adresses_str.encode('utf-8')
+            adresses_bytes = self._adresses_cache[offset:]
+           
+            return adresses_bytes
+        except Exception as e:
+            print("Erreur lecture adresses ip : %s" % str(e))
 
 
 class WifiSetCharacteristic(Characteristic):
+    CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID = '1a000011-7ef7-42d6-8967-bc01dd822388'
+    
     def __init__(self, bus, index, service, acteur):
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
         self.acteur = acteur
-        Characteristic.__init__(self, bus, index, CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID,
-                                ['write'], service)
+        Characteristic.__init__(self, bus, index, 
+            WifiSetCharacteristic.CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID,
+            ['write'], service)
  
     def WriteValue(self, value, options):
         print('remote: {}'.format(bytearray(value).decode()))
@@ -117,6 +133,7 @@ class WifiService(Service):
     def __init__(self, bus, index):
         Service.__init__(self, bus, index, WIFI_SERVICE_UUID, True)
         self.add_characteristic(WifiEtatCharacteristic(bus, 0, self))
+        self.add_characteristic(WifiGetipsCharacteristic(bus, 1, self))
 
 
 class ConfigurationService(Service):
