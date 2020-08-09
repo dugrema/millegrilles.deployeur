@@ -102,6 +102,12 @@ class GestionnaireCommandesActeur:
         
         if nom_commande == 'set_info':
             self._set_info(commande)
+        elif nom_commande == 'reboot':
+            self._acteur.reboot(commande)
+        elif nom_commande == 'shutdown':
+            self._acteur.shutdown(commande)
+        elif nom_commande == 'upgrade':
+            self._acteur.upgrade(commande)
         else:
             self.__logger.error("Commande inconnue : %s" % nom_commande)
 

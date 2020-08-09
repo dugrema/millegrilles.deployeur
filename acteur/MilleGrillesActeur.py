@@ -21,6 +21,7 @@ class Acteur:
         self.maj_wifi = None
         self.gestion_avahi = None
         self.gestion_commandes = None
+        self.gestion_systeme = None
         
         self._certificats: Optional[list] = None
         self._csr: Optional[str] = None
@@ -31,6 +32,7 @@ class Acteur:
         self.maj_wifi = MiseAjourWifiWPASupplicant()
         self.gestion_avahi = GestionAvahi()
         self.gestion_commandes = GestionnaireCommandesActeur(self)
+        self.gestion_systeme = GestionSysteme()
         
         self.publier_https()
         self.gestion_commandes.start()
@@ -82,6 +84,7 @@ class Acteur:
         if self._idmg != idmg:
             self._idmg = idmg
             self.publier_https()  # MAJ info avahi
+            self.serveur_ble.maj_adv()
 
     def fermer(self, signum=None, frame=None):
         if signum:
@@ -100,6 +103,16 @@ class Acteur:
                 self.gestion_commandes.stop()
             except Exception:
                 pass
+
+    def reboot(self, commande):
+        self.gestion_systeme.reboot()
+
+    def shutdown(self, commande):
+        self.gestion_systeme.shutdown()
+
+    def upgrade(self, commande):
+        self.gestion_systeme.upgrade()
+        
 
 
 class MiseAjourWifiWPASupplicant:
@@ -168,6 +181,22 @@ class GestionAvahi:
 
     def redemarrer_avahi(self):
         subprocess.run(['systemctl', 'restart', 'avahi-daemon'])
+
+
+class GestionSysteme:
+    
+    def __init__(self):
+        pass
+
+    def reboot(self):
+        subprocess.run(['reboot'])
+
+    def shutdown(self):
+        subprocess.run(['poweroff'])
+
+    def upgrade(self):
+        subprocess.run(['apt', 'update'])
+        subprocess.run(['apt', 'upgrade'])
 
 
 # --------- Section MAIN ------------

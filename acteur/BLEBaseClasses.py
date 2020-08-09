@@ -328,6 +328,7 @@ class Advertisement(dbus.service.Object):
     def add_local_name(self, name):
         if not self.local_name:
             self.local_name = ""
+        print("Local name, maintenant : %s" % name)
         self.local_name = dbus.String(name)
 
     def add_data(self, ad_type, data):

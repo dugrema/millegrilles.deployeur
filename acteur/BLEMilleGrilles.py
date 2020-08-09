@@ -170,11 +170,21 @@ class InformationService(Service):
 
 
 class MillegrillesAdvertisement(Advertisement):
-    def __init__(self, bus, index):
+    def __init__(self, bus, index, acteur):
         Advertisement.__init__(self, bus, index, 'peripheral')
+        self.acteur = acteur
+        
+        self.update_local_name()
+        
         self.add_service_uuid(WIFI_SERVICE_UUID)
-        self.add_local_name(LOCAL_NAME)
         self.include_tx_power = True
+
+    def update_local_name(self):
+        if self.acteur.idmg:
+            local_name = 'millegrilles-' + self.acteur.idmg
+        else:
+            local_name = 'millegrilles-nouveau'
+        self.add_local_name(local_name)
 
 
 class ServeurBLE:
@@ -193,7 +203,7 @@ class ServeurBLE:
         adapter = find_adapter(bus)
         
         app = MillegrillesApplication(bus, self.acteur)
-        self.adv = MillegrillesAdvertisement(bus, 0)
+        self.adv = MillegrillesAdvertisement(bus, 0, self.acteur)
 
         service_manager = dbus.Interface(
                                 bus.get_object(BLUEZ_SERVICE_NAME, adapter),
@@ -220,10 +230,12 @@ class ServeurBLE:
 	
     def fermer(self):
         self.mainloop.quit()
+        
+    def maj_adv(self):
+        self.adv.update_local_name()
 
     def register_ad_cb(self):
         print('Advertisement registered')
-
 
     def register_ad_error_cb(self, error):
         print('Failed to register advertisement: ' + str(error))
