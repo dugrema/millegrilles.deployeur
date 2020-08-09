@@ -4,6 +4,7 @@ import logging
 import signal
 import shutil
 import subprocess
+from os import path
 
 from threading import Event
 
@@ -17,10 +18,14 @@ class Acteur:
         self.stop_event = Event()
         self.serveur_ble = None
         self.maj_wifi = None
+        self.gestion_avahi = None
 
     def initialiser(self):
         self.initialiser_bluetooth()
         self.maj_wifi = MiseAjourWifiWPASupplicant()
+        self.gestion_avahi = GestionAvahi()
+        
+        self.gestion_avahi.maj_service('millegrilles', '_https._tcp', 443, {'idmg': 'abcd1234'})
 
     def initialiser_bluetooth(self):
         ble_present, mainloop = verifier_presence_bluetooth()
@@ -87,6 +92,35 @@ class MiseAjourWifiWPASupplicant:
             shutil.copyfile(self._fichier, self._fichier + '.old')
         
         
+class GestionAvahi:
+	
+    def __init__(self, services_avahi="/etc/avahi/services"):
+        self.services_avahi = services_avahi
+
+    def maj_service(self, nom_service, type_service, port, txt: dict = None):
+        contenu_service = list()
+        contenu_service.append('')
+        contenu_service.append('<!DOCTYPE service-group SYSTEM "avahi-service.dtd">')
+        contenu_service.append('<service-group>')
+        contenu_service.append('	<name>%s</name>' % nom_service)
+        contenu_service.append('	<service>')
+        contenu_service.append('		<type>%s</type>' % type_service)
+        contenu_service.append('		<port>%d</port>' % port)
+        if txt:
+            for key, value in txt.items():
+                contenu_service.append('		<txt-record>%s=%s</txt-record>' % (key, value))
+        contenu_service.append('	</service>')
+        contenu_service.append('</service-group>')
+
+        service_xml = "\n".join(contenu_service)
+        with open(path.join(self.services_avahi, nom_service + '.service'), 'w') as fichier:
+            fichier.write(service_xml)
+
+        self.redemarrer_avahi()
+
+    def redemarrer_avahi(self):
+        subprocess.run(['systemctl', 'restart', 'avahi-daemon'])
+
 
 # --------- Section MAIN ------------
 
