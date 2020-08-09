@@ -26,8 +26,6 @@ LE_ADVERTISING_MANAGER_IFACE = 'org.bluez.LEAdvertisingManager1'
 
 WIFI_SERVICE_UUID = '1a000000-7ef7-42d6-8967-bc01dd822388'
 
-CONFIGURATION_SERVICE_UUID = '1a000010-7ef7-42d6-8967-bc01dd822388'
-
 INFORMATION_SERVICE_UUID = '1a000020-7ef7-42d6-8967-bc01dd822388'
 
 LOCAL_NAME = 'millegrilles-gatt'
@@ -87,7 +85,7 @@ class WifiGetipsCharacteristic(Characteristic):
         try:
             offset = options.get('offset') or 0
             if offset == 0:
-                # Nouvelle requete, lire les l'adresse a nouveau
+                # Nouvelle requete, lire l'adresse a nouveau
                 adresses = get_local_ips()
                 self._adresses_cache = json.dumps(adresses).encode('utf-8')
                 self.__logger.debug("Adresses IP : %s" % self._adresses_cache)
@@ -99,14 +97,14 @@ class WifiGetipsCharacteristic(Characteristic):
             print("Erreur lecture adresses ip : %s" % str(e))
 
 
-class WifiSetCharacteristic(Characteristic):
+class ConfigurationSetWifiCharacteristic(Characteristic):
     CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID = '1a000011-7ef7-42d6-8967-bc01dd822388'
     
     def __init__(self, bus, index, service, acteur):
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
         self.acteur = acteur
         Characteristic.__init__(self, bus, index, 
-            WifiSetCharacteristic.CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID,
+            ConfigurationSetWifiCharacteristic.CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID,
             ['write'], service)
  
     def WriteValue(self, value, options):
@@ -117,6 +115,27 @@ class WifiSetCharacteristic(Characteristic):
             passwd = info_wifi['passwd']
             country = info_wifi['country']
             self.acteur.changer_wifi(essid, passwd, country)
+        except:
+            self.__logger.exception("Erreur reception donnee wifi")
+
+
+class ConfigurationPrendrePossessionCharacteristic(Characteristic):
+    CONFIGURATION_PRENDREPOSSESSION_CHARACTERISTIC_UUID = '1a000012-7ef7-42d6-8967-bc01dd822388'
+
+    def __init__(self, bus, index, service):
+        self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+        Characteristic.__init__(self, bus, index, 
+            ConfigurationPrendrePossessionCharacteristic.CONFIGURATION_PRENDREPOSSESSION_CHARACTERISTIC_UUID,
+            ['write'], service)
+            
+        self._adresses_cache = None
+
+    def WriteValue(self, value, options):
+        print('Prise de possession: {}'.format(bytearray(value).decode()))
+        try:
+            info_certificats = json.loads(bytearray(value))
+            certificats = info_certificats['certificats']
+            self.acteur.prise_de_possession(certificats)
         except:
             self.__logger.exception("Erreur reception donnee wifi")
 
@@ -137,9 +156,12 @@ class WifiService(Service):
 
 
 class ConfigurationService(Service):
+    CONFIGURATION_SERVICE_UUID = '1a000010-7ef7-42d6-8967-bc01dd822388'
+
     def __init__(self, bus, index, acteur):
-        Service.__init__(self, bus, index, CONFIGURATION_SERVICE_UUID, True)
-        self.add_characteristic(WifiSetCharacteristic(bus, 0, self, acteur))
+        Service.__init__(self, bus, index, ConfigurationService.CONFIGURATION_SERVICE_UUID, True)
+        self.add_characteristic(ConfigurationSetWifiCharacteristic(bus, 0, self, acteur))
+        self.add_characteristic(ConfigurationSetWifiCharacteristic(bus, 1, self, acteur))
 
 
 class InformationService(Service):
