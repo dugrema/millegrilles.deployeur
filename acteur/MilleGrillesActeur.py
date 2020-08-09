@@ -39,6 +39,9 @@ class Acteur:
 
     def changer_wifi(self, essid, password, country):
         self.maj_wifi.set_site(essid, password, country)
+        
+    def changer_avahi(self, nom_service, type_service, port, txt: dict = None):
+        self.gestion_avahi.maj_service(nom_service, type_service, port, txt)
 
     def fermer(self, signum=None, frame=None):
         if signum:
