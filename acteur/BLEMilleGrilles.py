@@ -4,6 +4,7 @@ import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
 import json 
+import struct
 
 from gi.repository import GLib
 
@@ -24,9 +25,7 @@ from acteur.IpUtils import get_local_ips
 
 LE_ADVERTISING_MANAGER_IFACE = 'org.bluez.LEAdvertisingManager1'
 
-WIFI_SERVICE_UUID = '1a000000-7ef7-42d6-8967-bc01dd822388'
-
-INFORMATION_SERVICE_UUID = '1a000020-7ef7-42d6-8967-bc01dd822388'
+MILLEGRILLE_SERVICE_UUID = '1a000000-7ef7-42d6-8967-bc01dd822388'
 
 LOCAL_NAME = 'millegrilles-gatt'
 
@@ -98,7 +97,7 @@ class WifiGetipsCharacteristic(Characteristic):
 
 
 class ConfigurationSetWifiCharacteristic(Characteristic):
-    CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID = '1a000011-7ef7-42d6-8967-bc01dd822388'
+    CONFIGURATION_SETWIFI_CHARACTERISTIC_UUID = '1a000003-7ef7-42d6-8967-bc01dd822388'
     
     def __init__(self, bus, index, service, acteur):
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
@@ -120,7 +119,7 @@ class ConfigurationSetWifiCharacteristic(Characteristic):
 
 
 class ConfigurationPrendrePossessionCharacteristic(Characteristic):
-    CONFIGURATION_PRENDREPOSSESSION_CHARACTERISTIC_UUID = '1a000012-7ef7-42d6-8967-bc01dd822388'
+    CONFIGURATION_PRENDREPOSSESSION_CHARACTERISTIC_UUID = '1a000004-7ef7-42d6-8967-bc01dd822388'
 
     def __init__(self, bus, index, service):
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
@@ -140,33 +139,119 @@ class ConfigurationPrendrePossessionCharacteristic(Characteristic):
             self.__logger.exception("Erreur reception donnee wifi")
 
 
+class InformationGetidmgCharacteristic(Characteristic):
+    INFORMATION_GETIDMG_CHARACTERISTIC_UUID = '1a000005-7ef7-42d6-8967-bc01dd822388'
+
+    def __init__(self, bus, index, service, acteur):
+        Characteristic.__init__(self, bus, index, 
+            InformationGetidmgCharacteristic.INFORMATION_GETIDMG_CHARACTERISTIC_UUID,
+            ['read'], service)
+        self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+        self.acteur = acteur
+
+    def ReadValue(self, options):
+        
+        try:
+            offset = options.get('offset') or 0
+            idmg = self.acteur.idmg
+            if idmg:
+                return idmg.encode('utf-8')[offset:]
+            else:
+                return b'\x01'
+        except Exception as e:
+            self.__logger.error("Erreur lecture adresses ip : %s" % str(e))
+
+
+class InformationCertificatsCharacteristic(Characteristic):
+    INFORMATION_CERTIFICATS_CHARACTERISTIC_UUID = '1a000006-7ef7-42d6-8967-bc01dd822388'
+
+    def __init__(self, bus, index, service, acteur):
+        Characteristic.__init__(self, bus, index, 
+            InformationCertificatsCharacteristic.INFORMATION_CERTIFICATS_CHARACTERISTIC_UUID,
+            ['read'], service)
+        self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+        self.acteur = acteur
+        
+        self.__certificats_bytes = None
+
+    def ReadValue(self, options):
+        
+        try:
+            offset = options.get('offset') or 0
+            if offset == 0 and self.acteur.certificats:
+                cert_str = json.dumps(self.acteur.certificats)
+                self.__certificats_bytes = cert_str.encode('utf-8')
+            
+            if self.__certificats_bytes:
+                return self.__certificats_bytes[offset:]
+            else:
+                return b'\x01'
+        except Exception as e:
+            self.__logger.error("Erreur lecture certificats : %s" % str(e))
+            
+
+class InformationCsrCharacteristic(Characteristic):
+    INFORMATION_CSR_CHARACTERISTIC_UUID = '1a000007-7ef7-42d6-8967-bc01dd822388'
+
+    def __init__(self, bus, index, service, acteur):
+        Characteristic.__init__(self, bus, index, 
+            InformationCsrCharacteristic.INFORMATION_CSR_CHARACTERISTIC_UUID,
+            ['read', 'write'], service)
+        self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+        self.acteur = acteur
+        self.service = service
+        
+        self.__csr_bytes = None
+
+    def ReadValue(self, options):
+        
+        try:
+            offset = options.get('offset') or 0
+            offset = offset + self.service.offset_csr  # Offset haut niveau (vient de Write)
+            if offset == 0 and self.acteur.csr:
+                csr_str = self.acteur.csr
+                self.__csr_bytes = csr_str.encode('utf-8')
+            
+            if self.__csr_bytes:
+                return self.__csr_bytes[offset:]
+            else:
+                return b'\x01'
+        except Exception as e:
+            self.__logger.error("Erreur lecture csr : %s" % str(e))
+
+    def WriteValue(self, value, options):
+        self.__logger.debug('Set du offset InformationCsrCharacteristic : {}'.format(bytearray(value).decode()))
+        try:
+            offset = int(bytearray(value).decode('utf-8'))
+            self.__logger.debug("Valeur offset lue : %d", offset)
+            self.service.offset_csr = offset
+            
+        except:
+            self.__logger.exception("Erreur reception donnee wifi")
+
+
+
 class MillegrillesApplication(Application):
     def __init__(self, bus, acteur):
         self.acteur = acteur
         Application.__init__(self, bus)
-        self.add_service(WifiService(bus, 0))
-        self.add_service(ConfigurationService(bus, 1, acteur))
+        self.add_service(MillegrillesService(bus, 0, acteur))
 
 
-class WifiService(Service):
-    def __init__(self, bus, index):
-        Service.__init__(self, bus, index, WIFI_SERVICE_UUID, True)
+class MillegrillesService(Service):
+    def __init__(self, bus, index, acteur):
+        Service.__init__(self, bus, index, MILLEGRILLE_SERVICE_UUID, True)
+        
+        # Supporter offsets de haut niveau pour certains services (web bluetooth limite)
+        self.offset_csr = 0
+        self.offset_certificats = 0
+        
         self.add_characteristic(WifiEtatCharacteristic(bus, 0, self))
         self.add_characteristic(WifiGetipsCharacteristic(bus, 1, self))
-
-
-class ConfigurationService(Service):
-    CONFIGURATION_SERVICE_UUID = '1a000010-7ef7-42d6-8967-bc01dd822388'
-
-    def __init__(self, bus, index, acteur):
-        Service.__init__(self, bus, index, ConfigurationService.CONFIGURATION_SERVICE_UUID, True)
-        self.add_characteristic(ConfigurationSetWifiCharacteristic(bus, 0, self, acteur))
-        self.add_characteristic(ConfigurationSetWifiCharacteristic(bus, 1, self, acteur))
-
-
-class InformationService(Service):
-    def __init__(self, bus, index):
-        Service.__init__(self, bus, index, INFORMATION_SERVICE_UUID, True)
+        self.add_characteristic(ConfigurationSetWifiCharacteristic(bus, 2, self, acteur))
+        self.add_characteristic(InformationGetidmgCharacteristic(bus, 3, self, acteur))
+        self.add_characteristic(InformationCertificatsCharacteristic(bus, 4, self, acteur))
+        self.add_characteristic(InformationCsrCharacteristic(bus, 5, self, acteur))
 
 
 class MillegrillesAdvertisement(Advertisement):
@@ -176,7 +261,7 @@ class MillegrillesAdvertisement(Advertisement):
         
         self.update_local_name()
         
-        self.add_service_uuid(WIFI_SERVICE_UUID)
+        self.add_service_uuid(MILLEGRILLE_SERVICE_UUID)
         self.include_tx_power = True
 
     def update_local_name(self):
