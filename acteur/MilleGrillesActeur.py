@@ -7,8 +7,10 @@ import subprocess
 from os import path
 
 from threading import Event
+from typing import Optional
 
 from acteur.BLELoader import verifier_presence_bluetooth
+from acteur.GestionnaireCommandesActeur import GestionnaireCommandesActeur
 
 class Acteur:
 
@@ -18,13 +20,29 @@ class Acteur:
         self.serveur_ble = None
         self.maj_wifi = None
         self.gestion_avahi = None
+        self.gestion_commandes = None
+        
+        self._certificats: Optional[list] = None
+        self._csr: Optional[str] = None
+        self._idmg: Optional[str] = None
 
     def initialiser(self):
         self.initialiser_bluetooth()
         self.maj_wifi = MiseAjourWifiWPASupplicant()
         self.gestion_avahi = GestionAvahi()
+        self.gestion_commandes = GestionnaireCommandesActeur(self)
         
-        self.gestion_avahi.maj_service('millegrilles', '_https._tcp', 443, {'idmg': 'abcd1234'})
+        self.publier_https()
+        self.gestion_commandes.start()
+
+    def publier_https(self):
+        params_txt = {
+            'millegrilles': True
+        }
+        if self._idmg:
+            params_txt['idmg'] = self._idmg
+            
+        self.gestion_avahi.maj_service('millegrilles', '_https._tcp', 443, params_txt)
 
     def initialiser_bluetooth(self):
         ble_present, mainloop = verifier_presence_bluetooth()
@@ -42,6 +60,29 @@ class Acteur:
     def changer_avahi(self, nom_service, type_service, port, txt: dict = None):
         self.gestion_avahi.maj_service(nom_service, type_service, port, txt)
 
+    @property
+    def certificats(self) -> list:
+        return self._certificats
+
+    @property
+    def csr(self) -> str:
+        return self._csr
+
+    @property
+    def idmg(self) -> str:
+        return self._idmg
+
+    def set_certificats(self, certificats: list):
+        self._certificats = certificats
+
+    def set_csr(self, csr: str):
+        self._csr = csr
+
+    def set_idmg(self, idmg: str):
+        if self._idmg != idmg:
+            self._idmg = idmg
+            self.publier_https()  # MAJ info avahi
+
     def fermer(self, signum=None, frame=None):
         if signum:
             self.__logger.warning("Fermeture ServiceMonitor, signum=%d", signum)
@@ -54,6 +95,11 @@ class Acteur:
                     self.serveur_ble.fermer()
                 except Exception as e:
                     self.__logger.warning("Erreur fermeture BLE : " + e)
+            
+            try:
+                self.gestion_commandes.stop()
+            except Exception:
+                pass
 
 
 class MiseAjourWifiWPASupplicant:
