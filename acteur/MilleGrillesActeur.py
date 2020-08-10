@@ -86,6 +86,9 @@ class Acteur:
             self.publier_https()  # MAJ info avahi
             self.serveur_ble.maj_adv()
 
+    def prise_de_possession(self, certificats):
+        self.__logger.debug("Recu demande de prise de possession, relai au monitor\n%s" % certificats)
+
     def fermer(self, signum=None, frame=None):
         if signum:
             self.__logger.warning("Fermeture ServiceMonitor, signum=%d", signum)

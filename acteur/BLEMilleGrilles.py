@@ -121,22 +121,44 @@ class ConfigurationSetWifiCharacteristic(Characteristic):
 class ConfigurationPrendrePossessionCharacteristic(Characteristic):
     CONFIGURATION_PRENDREPOSSESSION_CHARACTERISTIC_UUID = '1a000004-7ef7-42d6-8967-bc01dd822388'
 
-    def __init__(self, bus, index, service):
+    def __init__(self, bus, index, service, acteur):
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
         Characteristic.__init__(self, bus, index, 
             ConfigurationPrendrePossessionCharacteristic.CONFIGURATION_PRENDREPOSSESSION_CHARACTERISTIC_UUID,
             ['write'], service)
-            
+        
+        self._acteur = acteur
+        self._service = service
+        
+        self.__contenu = None
         self._adresses_cache = None
 
     def WriteValue(self, value, options):
-        print('Prise de possession: {}'.format(bytearray(value).decode()))
+        print("ConfigurationPrendrePossessionCharacteristic.WriteValue")
+        bavalue = bytearray(value)
+        print(bavalue)
+        # print('Prise de possession: {}'.format(bavalue.decode()))
         try:
-            info_certificats = json.loads(bytearray(value))
-            certificats = info_certificats['certificats']
-            self.acteur.prise_de_possession(certificats)
-        except:
-            self.__logger.exception("Erreur reception donnee wifi")
+            packet = bavalue[0]
+            # print("Packet actuel : %d" % packet)
+            if packet == 0:
+                self.__contenu = bavalue[1:]
+                self.__logger.debug("Paquet 0 recu")
+            elif packet == 0x7f:
+                # Dernier paquet
+                self.__contenu = self.__contenu + bavalue[1:]
+                
+                # Transmettre commande de prise de possession
+                self.__logger.debug("Message complet\n%s" % self.__contenu.decode('utf-8'))
+                self._acteur.prise_de_possession(self.__contenu)
+                self.__contenu = None
+                
+            else:
+                # self.__logger.debug("Paquet %d recu" % packet)
+                self.__contenu = self.__contenu + bavalue[1:]
+            
+        except Exception as e:
+            self.__logger.exception("Erreur reception certificats: " + str(e))
 
 
 class InformationGetidmgCharacteristic(Characteristic):
@@ -249,9 +271,10 @@ class MillegrillesService(Service):
         self.add_characteristic(WifiEtatCharacteristic(bus, 0, self))
         self.add_characteristic(WifiGetipsCharacteristic(bus, 1, self))
         self.add_characteristic(ConfigurationSetWifiCharacteristic(bus, 2, self, acteur))
-        self.add_characteristic(InformationGetidmgCharacteristic(bus, 3, self, acteur))
-        self.add_characteristic(InformationCertificatsCharacteristic(bus, 4, self, acteur))
-        self.add_characteristic(InformationCsrCharacteristic(bus, 5, self, acteur))
+        self.add_characteristic(ConfigurationPrendrePossessionCharacteristic(bus, 3, self, acteur))
+        self.add_characteristic(InformationGetidmgCharacteristic(bus, 4, self, acteur))
+        self.add_characteristic(InformationCertificatsCharacteristic(bus, 5, self, acteur))
+        self.add_characteristic(InformationCsrCharacteristic(bus, 6, self, acteur))
 
 
 class MillegrillesAdvertisement(Advertisement):
