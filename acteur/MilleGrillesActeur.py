@@ -4,9 +4,10 @@ import logging
 import signal
 import shutil
 import subprocess
-from os import path
+import json
 
-from threading import Event
+from os import path
+from threading import Thread, Event
 from typing import Optional
 
 from acteur.BLELoader import verifier_presence_bluetooth
@@ -22,10 +23,14 @@ class Acteur:
         self.gestion_avahi = None
         self.gestion_commandes = None
         self.gestion_systeme = None
-        
+
+        self._noeud_id: Optional[str] = None
+        self._mq_port: Optional[int] = None
         self._certificats: Optional[list] = None
         self._csr: Optional[str] = None
         self._idmg: Optional[str] = None
+
+        self._pipe_monitor = PipeMonitor()
 
     def initialiser(self):
         self.initialiser_bluetooth()
@@ -34,17 +39,31 @@ class Acteur:
         self.gestion_commandes = GestionnaireCommandesActeur(self)
         self.gestion_systeme = GestionSysteme()
         
-        self.publier_https()
+        self.publier_avahi()
         self.gestion_commandes.start()
 
-    def publier_https(self):
+        self._pipe_monitor.transmettre_commande(PipeMonitor.COMMANDE_GET_INFO)
+
+    def run(self):
+        while not self.stop_event.is_set():
+            self.__entretien()
+            self.stop_event.wait(15)
+
+    def __entretien(self):
+        if not self._noeud_id:
+            self._pipe_monitor.transmettre_commande(PipeMonitor.COMMANDE_GET_INFO)
+
+    def publier_avahi(self):
         params_txt = {
             'millegrilles': True
         }
         if self._idmg:
             params_txt['idmg'] = self._idmg
-            
+
         self.gestion_avahi.maj_service('millegrilles', '_https._tcp', 443, params_txt)
+
+        if self._mq_port:
+            self.gestion_avahi.maj_service('millegrilles', '_amqps._tcp', self._mq_port, params_txt)
 
     def initialiser_bluetooth(self):
         ble_present, mainloop = verifier_presence_bluetooth()
@@ -74,6 +93,13 @@ class Acteur:
     def idmg(self) -> str:
         return self._idmg
 
+    def set_noeud_id(self, noeud_id: str):
+        self._noeud_id = noeud_id
+
+    def set_mq_port(self, mq_port: int):
+        if self._mq_port != mq_port:
+            self._mq_port = mq_port
+
     def set_certificats(self, certificats: list):
         self._certificats = certificats
 
@@ -83,7 +109,7 @@ class Acteur:
     def set_idmg(self, idmg: str):
         if self._idmg != idmg:
             self._idmg = idmg
-            self.publier_https()  # MAJ info avahi
+            self.publier_avahi()  # MAJ info avahi
             self.serveur_ble.maj_adv()
 
     def prise_de_possession(self, certificats):
@@ -104,7 +130,12 @@ class Acteur:
             
             try:
                 self.gestion_commandes.stop()
-            except Exception:
+            except:
+                pass
+
+            try:
+                self._pipe_monitor.fermer()
+            except:
                 pass
 
     def reboot(self, commande):
@@ -202,6 +233,60 @@ class GestionSysteme:
         subprocess.run(['apt', 'upgrade'])
 
 
+class PipeMonitor:
+
+    COMMANDE_GET_INFO = {
+        'commande': 'acteur.getInformationNoeud'
+    }
+
+    def __init__(self, path_socket = '/var/opt/millegrilles/monitor.socket'):
+        self.__path_socket = path_socket
+        self.__event_stop = Event()
+        self.__event_action = Event()
+
+        self.__commandes = list()
+
+        self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+        self.__thread = Thread(name='monitor.pipe', target=self.run)
+
+        self.__thread.start()
+
+    def fermer(self):
+        if not self.__event_stop.set():
+            self.__event_stop.set()
+            self.__event_action.set()
+
+    def transmettre_commande(self, commande: dict):
+        self.__commandes.append(commande)
+        self.__event_action.set()
+
+    def _emit_socket(self, commande_str: str):
+        if path.exists(self.__path_socket):
+            with open(self.__path_socket, 'w') as pipe:
+                pipe.write(commande_str)
+        else:
+            raise FileNotFoundError(self.__path_socket)
+
+    def run(self):
+        while not self.__event_stop.is_set():
+            self.__event_action.clear()
+
+            try:
+                while not self.__event_stop.is_set() and len(self.__commandes) > 0:
+                    commande = self.__commandes.pop(0)
+
+                    # Transmettre la commande sur socket monitor
+                    commande_str = json.dumps(commande)
+                    self._emit_socket(commande_str)
+                    self.__event_stop.wait(0.5)  # Donner le temps au monitor d'extraire la commande
+            except FileNotFoundError:
+                if self.__logger.isEnabledFor(logging.DEBUG):
+                    self.__logger.exception("Pipe n'est pas encore cree, on flush toutes les commandes")
+                self.__commandes.clear()
+
+            self.__event_action.wait(10)
+
+
 # --------- Section MAIN ------------
 
 def main():
@@ -219,9 +304,7 @@ def main():
     signal.signal(signal.SIGTERM, acteur.fermer)
 
     acteur.initialiser()
-
-    while not acteur.stop_event.is_set():
-        acteur.stop_event.wait(10)
+    acteur.run()
 
 
 if __name__ == '__main__':

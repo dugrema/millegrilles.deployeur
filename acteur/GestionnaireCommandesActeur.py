@@ -47,7 +47,7 @@ class GestionnaireCommandesActeur:
                 os.mkfifo(GestionnaireCommandesActeur.PATH_FIFO)
             except FileExistsError:
                 self.__logger.debug("Pipe %s deja cree", GestionnaireCommandesActeur.PATH_FIFO)
-            os.chmod(GestionnaireCommandesActeur.PATH_FIFO, 0o420)
+            os.chmod(GestionnaireCommandesActeur.PATH_FIFO, 0o620)
             fileno = os.open(GestionnaireCommandesActeur.PATH_FIFO, os.O_RDONLY | os.O_NONBLOCK)
             socket_fifo = os.fdopen(fileno, 'r')
             
@@ -98,7 +98,7 @@ class GestionnaireCommandesActeur:
     
     def _executer_commande(self, commande):
         self.__logger.debug("Executer commande : %s" % str(commande))
-        nom_commande = commande['nom_commande']
+        nom_commande = commande['commande']
         
         if nom_commande == 'set_info':
             self._set_info(commande)
@@ -112,15 +112,22 @@ class GestionnaireCommandesActeur:
             self.__logger.error("Commande inconnue : %s" % nom_commande)
 
     def _set_info(self, commande):
+        # Identificateur unique du noeud
+        self._acteur.set_noeud_id(commande['noeud_id'])
+
+        # Port de RabbitMQ (pour avahi), ou false si MQ n'est pas actif
+        mq_port = commande.get('mq_port')
+        if mq_port:
+            self._acteur.set_mq_port(mq_port)
+
         idmg = commande.get('idmg')
-        certificats = commande.get('certificats')
-        csr = commande.get('csr')
-        
         if idmg:
             self._acteur.set_idmg(idmg)
 
+        certificats = commande.get('certificats')
         if certificats:
             self._acteur.set_certificats(certificats)
 
+        csr = commande.get('csr')
         if csr:
             self._acteur.set_csr(csr)
