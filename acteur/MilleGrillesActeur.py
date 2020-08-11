@@ -82,6 +82,10 @@ class Acteur:
         self.gestion_avahi.maj_service(nom_service, type_service, port, txt)
 
     @property
+    def noeud_id(self) -> str:
+        return self._noeud_id
+
+    @property
     def certificats(self) -> list:
         return self._certificats
 
@@ -94,6 +98,7 @@ class Acteur:
         return self._idmg
 
     def set_noeud_id(self, noeud_id: str):
+        self.__logger.debug("Setting noeud_id: %s", noeud_id)
         self._noeud_id = noeud_id
 
     def set_mq_port(self, mq_port: int):

@@ -113,7 +113,9 @@ class GestionnaireCommandesActeur:
 
     def _set_info(self, commande):
         # Identificateur unique du noeud
-        self._acteur.set_noeud_id(commande['noeud_id'])
+        noeud_id = commande.get('noeud_id')
+        if noeud_id:
+            self._acteur.set_noeud_id(noeud_id)
 
         # Port de RabbitMQ (pour avahi), ou false si MQ n'est pas actif
         mq_port = commande.get('mq_port')

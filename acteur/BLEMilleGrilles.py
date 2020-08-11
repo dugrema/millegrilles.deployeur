@@ -252,6 +252,27 @@ class InformationCsrCharacteristic(Characteristic):
             self.__logger.exception("Erreur reception donnee wifi")
 
 
+class InformationGetNoeudidCharacteristic(Characteristic):
+    INFORMATION_GETNOEUDID_CHARACTERISTIC_UUID = '1a000008-7ef7-42d6-8967-bc01dd822388'
+
+    def __init__(self, bus, index, service, acteur):
+        Characteristic.__init__(self, bus, index, 
+            InformationGetNoeudidCharacteristic.INFORMATION_GETNOEUDID_CHARACTERISTIC_UUID,
+            ['read'], service)
+        self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+        self.acteur = acteur
+
+    def ReadValue(self, options):
+        
+        try:
+            noeud_id = self.acteur.noeud_id
+            if noeud_id:
+                return noeud_id.encode('utf-8')
+            else:
+                return b'\x01'
+        except Exception as e:
+            self.__logger.error("Erreur lecture noeud_id : %s" % str(e))
+
 
 class MillegrillesApplication(Application):
     def __init__(self, bus, acteur):
@@ -275,6 +296,7 @@ class MillegrillesService(Service):
         self.add_characteristic(InformationGetidmgCharacteristic(bus, 4, self, acteur))
         self.add_characteristic(InformationCertificatsCharacteristic(bus, 5, self, acteur))
         self.add_characteristic(InformationCsrCharacteristic(bus, 6, self, acteur))
+        self.add_characteristic(InformationGetNoeudidCharacteristic(bus, 7, self, acteur))
 
 
 class MillegrillesAdvertisement(Advertisement):
