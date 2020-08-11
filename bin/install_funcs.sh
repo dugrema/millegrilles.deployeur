@@ -102,7 +102,7 @@ configurer_comptes() {
 # Initialiser swarm
 initialiser_swarm() {
   echo "[INFO] Initialiser docker swarm"
-  docker swarm init --advertise-addr 127.0.0.1 > /dev/null 2> /dev/null
+  sudo docker swarm init --advertise-addr 127.0.0.1 > /dev/null 2> /dev/null
   resultat=$?
   if [ $resultat -ne 0 ] && [ $resultat -ne 1 ]; then
     echo $resultat
@@ -113,14 +113,14 @@ initialiser_swarm() {
 
 configurer_swarm() {
   echo "[INFO] Configurer docker swarm"
-  docker network create -d overlay --scope swarm millegrille_net
-  docker config rm docker.versions 2> /dev/null || true
-  docker config create docker.versions $REP_ETC/docker.versions.json
+  sudo docker network create -d overlay --scope swarm millegrille_net
+  sudo docker config rm docker.versions 2> /dev/null || true
+  sudo docker config create docker.versions $REP_ETC/docker.versions.json
 
   for MODULE in "${FICHIERS_CONFIG[@]}"; do
     echo $MODULE
-    docker config rm docker.cfg.$MODULE > /dev/null 2> /dev/null || true
-    docker config create docker.cfg.${MODULE} $REP_ETC/docker.${MODULE}.json
+    sudo docker config rm docker.cfg.$MODULE > /dev/null 2> /dev/null || true
+    sudo docker config create docker.cfg.${MODULE} $REP_ETC/docker.${MODULE}.json
   done
 
   echo "[OK] Configuration docker swarm completee"
@@ -130,7 +130,7 @@ configurer_swarm() {
 demarrer_servicemonitor() {
   HOSTNAME_MONITOR=`hostname -f`
 
-  docker service create \
+  sudo docker service create \
     --name monitor \
     --hostname monitor \
     --env HOSTNAME_MONITOR=$HOSTNAME_MONITOR \
