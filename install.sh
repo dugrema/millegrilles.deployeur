@@ -38,7 +38,7 @@ debug() {
     ubuntu /bin/sleep 10000
 }
 
-if [ $1 == 'config' ]; then
+if [ "$1" == 'config' ]; then
   configurer_swarm
 else
 

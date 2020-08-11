@@ -67,10 +67,15 @@ configurer_docker() {
 configurer_repertoires() {
   echo "[INFO] Configurer les repertoires de MilleGrilles"
 
+  sudo mkdir -p $MILLEGRILLES_VAR $MILLEGRILLES_LOGS
+
+  sudo chown root:syslog $MILLEGRILLES_LOGS
+  if [ $? -ne 0 ]; then
+    sudo chown root:adm $MILLEGRILLES_LOGS
+  fi
+
   set -e
 
-  sudo mkdir -p $MILLEGRILLES_VAR $MILLEGRILLES_LOGS
-  sudo chown root:syslog $MILLEGRILLES_LOGS
   sudo chmod 2770 $MILLEGRILLES_LOGS
   sudo chown mg_monitor:millegrilles $MILLEGRILLES_VAR
   sudo chmod 750 $MILLEGRILLES_VAR
