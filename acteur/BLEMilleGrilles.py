@@ -274,6 +274,35 @@ class InformationGetNoeudidCharacteristic(Characteristic):
             self.__logger.error("Erreur lecture noeud_id : %s" % str(e))
 
 
+class WifiGetWifiCharacteristic(Characteristic):
+    WIFI_GETWIFI_CHARACTERISTIC_UUID = '1a000009-7ef7-42d6-8967-bc01dd822388'
+
+    def __init__(self, bus, index, service, acteur):
+        self.acteur = acteur
+        
+        self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+        Characteristic.__init__(self, bus, index, 
+            WifiGetWifiCharacteristic.WIFI_GETWIFI_CHARACTERISTIC_UUID,
+            ['read'], service)
+            
+        self._info_wifi_cache = None
+
+    def ReadValue(self, options):
+        
+        try:
+            offset = options.get('offset') or 0
+            if offset == 0:
+                # Nouvelle requete, lire l'adresse a nouveau
+                info_wifi = self.acteur.get_information_wifi()
+                self._info_wifi_cache = json.dumps(info_wifi).encode('utf-8')
+                self.__logger.debug("Info wifi : %s" % self._info_wifi_cache)
+
+            adresses_bytes = self._info_wifi_cache[offset:]
+           
+            return adresses_bytes
+        except Exception as e:
+            print("Erreur lecture information Wifi : %s" % str(e))
+
 class MillegrillesApplication(Application):
     def __init__(self, bus, acteur):
         self.acteur = acteur
@@ -297,6 +326,7 @@ class MillegrillesService(Service):
         self.add_characteristic(InformationCertificatsCharacteristic(bus, 5, self, acteur))
         self.add_characteristic(InformationCsrCharacteristic(bus, 6, self, acteur))
         self.add_characteristic(InformationGetNoeudidCharacteristic(bus, 7, self, acteur))
+        self.add_characteristic(WifiGetWifiCharacteristic(bus, 8, self, acteur))
 
 
 class MillegrillesAdvertisement(Advertisement):

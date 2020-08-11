@@ -180,10 +180,15 @@ class WifiInformation:
 
             essid = resultat[0][-1].split(':')[1].replace('"', '')
             access_point = resultat[1][4]
+            
+            configure = essid != 'off/any'
+            connecte = access_point == ''
 
             info = {
                 'essid': essid,
                 'access_point': access_point,
+                'configure': configure,
+                'connecte': connecte,
             }
 
             if access_point != 'Not-Associated':
