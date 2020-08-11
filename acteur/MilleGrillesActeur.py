@@ -47,7 +47,8 @@ class Acteur:
         self._pipe_monitor.transmettre_commande(PipeMonitor.COMMANDE_GET_INFO)
         
         info_wifi = self.wifi_info.charger_information()
-        self.__logger.info("Wifi Information : %s", info_wifi)
+        if info_wifi:
+            self.__logger.info("Wifi Information : %s", info_wifi)
 
     def run(self):
         while not self.stop_event.is_set():
@@ -123,7 +124,8 @@ class Acteur:
         if self._idmg != idmg:
             self._idmg = idmg
             self.publier_avahi()  # MAJ info avahi
-            self.serveur_ble.maj_adv()
+            if self.serveur_ble:
+                self.serveur_ble.maj_adv()
 
     def prise_de_possession(self, certificats):
         self.__logger.debug("Recu demande de prise de possession, relai au monitor\n%s" % certificats)
@@ -167,33 +169,39 @@ class WifiInformation:
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
     
     def charger_information(self):
-        output = subprocess.run(["/sbin/iwconfig", "wlan0"], capture_output=True)
-        resultat = output.stdout.decode('utf-8')
-        
-        resultat = [r.strip().split(' ') for r in resultat.split('\n')]
-        #for r in resultat:
-        #    print(r)
+        try:
+            output = subprocess.run(["/sbin/iwconfig", "wlan0"], capture_output=True)
 
-        essid = resultat[0][-1].split(':')[1].replace('"', '')
-        access_point = resultat[1][4]
+            resultat = output.stdout.decode('utf-8')
 
-        info = {
-            'essid': essid, 
-            'access_point': access_point,
-        }
-        
-        if access_point != 'Not-Associated':
-            try:
-                info['frequency'] = ''.join(resultat[1][2:4]).split(':')[1]
-                info['tx_power'] = resultat[2][5].split('=')[1]
-                info['bitrate'] = ''.join(resultat[2][1:3]).split('=')[1]
-                info['quality'] = resultat[6][1].split('=')[1]
-                info['signal'] = resultat[6][4].split('=')[1]
-            except IndexError as ie:
-                self.__logger.debug("Erreur lecteur WIFI " + str(ie))
-        
-        return info
-        
+            resultat = [r.strip().split(' ') for r in resultat.split('\n')]
+            # for r in resultat:
+            #    print(r)
+
+            essid = resultat[0][-1].split(':')[1].replace('"', '')
+            access_point = resultat[1][4]
+
+            info = {
+                'essid': essid,
+                'access_point': access_point,
+            }
+
+            if access_point != 'Not-Associated':
+                try:
+                    info['frequency'] = ''.join(resultat[1][2:4]).split(':')[1]
+                    info['tx_power'] = resultat[2][5].split('=')[1]
+                    info['bitrate'] = ''.join(resultat[2][1:3]).split('=')[1]
+                    info['quality'] = resultat[6][1].split('=')[1]
+                    info['signal'] = resultat[6][4].split('=')[1]
+                except IndexError as ie:
+                    self.__logger.debug("Erreur lecteur WIFI " + str(ie))
+
+            return info
+        except FileNotFoundError:
+            # iwconfig absent, pas de Wifi
+            self.__logger.info("WIFI n'est pas disponible")
+            return None
+
 
 class MiseAjourWifiWPASupplicant:
     
