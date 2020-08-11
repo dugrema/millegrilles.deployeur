@@ -19,6 +19,7 @@ class Acteur:
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
         self.stop_event = Event()
         self.serveur_ble = None
+        self.wifi_info = None
         self.maj_wifi = None
         self.gestion_avahi = None
         self.gestion_commandes = None
@@ -33,6 +34,7 @@ class Acteur:
         self._pipe_monitor = PipeMonitor()
 
     def initialiser(self):
+        self.wifi_info = WifiInformation()
         self.initialiser_bluetooth()
         self.maj_wifi = MiseAjourWifiWPASupplicant()
         self.gestion_avahi = GestionAvahi()
@@ -43,6 +45,9 @@ class Acteur:
         self.gestion_commandes.start()
 
         self._pipe_monitor.transmettre_commande(PipeMonitor.COMMANDE_GET_INFO)
+        
+        info_wifi = self.wifi_info.charger_information()
+        self.__logger.info("Wifi Information : %s", info_wifi)
 
     def run(self):
         while not self.stop_event.is_set():
@@ -97,6 +102,9 @@ class Acteur:
     def idmg(self) -> str:
         return self._idmg
 
+    def get_information_wifi(self) -> dict:
+        return self.wifi_info.charger_information()
+    
     def set_noeud_id(self, noeud_id: str):
         self.__logger.debug("Setting noeud_id: %s", noeud_id)
         self._noeud_id = noeud_id
@@ -152,7 +160,40 @@ class Acteur:
     def upgrade(self, commande):
         self.gestion_systeme.upgrade()
         
+        
+class WifiInformation:
+    
+    def __init__(self):
+        self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+    
+    def charger_information(self):
+        output = subprocess.run(["/sbin/iwconfig", "wlan0"], capture_output=True)
+        resultat = output.stdout.decode('utf-8')
+        
+        resultat = [r.strip().split(' ') for r in resultat.split('\n')]
+        #for r in resultat:
+        #    print(r)
 
+        essid = resultat[0][-1].split(':')[1].replace('"', '')
+        access_point = resultat[1][4]
+
+        info = {
+            'essid': essid, 
+            'access_point': access_point,
+        }
+        
+        if access_point != 'Not-Associated':
+            try:
+                info['frequency'] = ''.join(resultat[1][2:4]).split(':')[1]
+                info['tx_power'] = resultat[2][5].split('=')[1]
+                info['bitrate'] = ''.join(resultat[2][1:3]).split('=')[1]
+                info['quality'] = resultat[6][1].split('=')[1]
+                info['signal'] = resultat[6][4].split('=')[1]
+            except IndexError as ie:
+                self.__logger.debug("Erreur lecteur WIFI " + str(ie))
+        
+        return info
+        
 
 class MiseAjourWifiWPASupplicant:
     
