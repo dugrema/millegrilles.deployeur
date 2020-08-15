@@ -65,6 +65,8 @@ class Acteur:
         }
         if self._idmg:
             params_txt['idmg'] = self._idmg
+        if self._noeud_id:
+            params_txt['noeud_id'] = self._noeud_id
 
         self.gestion_avahi.maj_service('millegrilles_https', '_mghttps._tcp', 443, params_txt)
 
@@ -252,11 +254,18 @@ class GestionAvahi:
         self.services_avahi = services_avahi
 
     def maj_service(self, nom_service, type_service, port, txt: dict = None):
+
+        nom_service_publie = nom_service
+        if txt:
+            noeud_id = txt.get('noeud_id')
+            if noeud_id:
+                nom_service_publie = noeud_id
+
         contenu_service = list()
         contenu_service.append('')
         contenu_service.append('<!DOCTYPE service-group SYSTEM "avahi-service.dtd">')
         contenu_service.append('<service-group>')
-        contenu_service.append('  <name>%s</name>' % nom_service)
+        contenu_service.append('  <name>%s</name>' % nom_service_publie)
         contenu_service.append('  <service>')
         contenu_service.append('    <type>%s</type>' % type_service)
         contenu_service.append('    <port>%d</port>' % port)
