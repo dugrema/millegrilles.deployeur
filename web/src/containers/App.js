@@ -1,7 +1,7 @@
 import React from 'react'
 import './App.css'
 import path from 'path'
-import {Jumbotron, Container, Row, Col} from 'react-bootstrap'
+import {Jumbotron, Container, Row, Col, Button} from 'react-bootstrap'
 import QRCode from 'qrcode.react'
 
 import { LayoutMillegrilles } from './Layout'
@@ -31,12 +31,12 @@ class App extends React.Component {
     this.setState({page: pageMappee?pageMappee:page})
   }
 
-  setIdmg = idmg => {
-    this.setState({idmg})
-  }
-
-  setDomaine = domaine => {
-    this.setState({domaine})
+  setInfo = info => {
+    const infoUpdate = {...info}
+    if(info.idmg) {
+      info.page = AfficherInformationNoeud
+    }
+    this.setState(info)
   }
 
   componentDidMount() {
@@ -46,7 +46,7 @@ class App extends React.Component {
 
     // console.debug("Nom usager : %s, estProprietaire : %s", this.state.nomUsager, this.state.estProprietaire)
 
-    const rootProps = {...this.state, setIdmg: this.setIdmg,  setDomaine: this.setDomaine}
+    const rootProps = {...this.state, setInfo: this.setInfo}
 
     let PageMappee = this.state.page
     let affichage = <PageMappee rootProps={rootProps} />
@@ -90,6 +90,24 @@ function LayoutApplication(props) {
 
 function _setTitre(titre) {
   document.title = titre
+}
+
+function AfficherInformationNoeud(props) {
+  return (
+    <Container>
+      <h2>Information</h2>
+
+      <p>Le noeud est configure et actif.</p>
+
+      <p>Idmg : {props.rootProps.idmg}</p>
+      <p>Noeud Id: {props.rootProps.noeudId}</p>
+      <p>Domaine : {props.rootProps.domaine}</p>
+      <p>Securite : {props.rootProps.securite}</p>
+
+      <Button href="/millegrilles">Acceder</Button>
+
+    </Container>
+  )
 }
 
 export default App;

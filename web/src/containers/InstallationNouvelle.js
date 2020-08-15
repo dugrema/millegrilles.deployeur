@@ -244,8 +244,9 @@ class GenererIntermediaire extends React.Component {
   installer = event => {
     // Transmettre information d'installation
     const paramsInstallation = {
-      certificatMillegrillePem: this.props.certificatMillegrillePem,
-      certificatIntermediairePem: this.props.certificatIntermediairePem,
+      // certificatMillegrillePem: this.props.certificatMillegrillePem,
+      certificatPem: this.props.certificatIntermediairePem,
+      chainePem: [this.props.certificatIntermediairePem, this.props.certificatMillegrillePem],
       securite: '3.protege',
     }
 

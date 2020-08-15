@@ -16,6 +16,7 @@ export class Installation extends React.Component {
     erreurAcces: false,
 
     fqdnDetecte: '',
+    idmg: '',
   }
 
   componentDidMount() {
@@ -25,8 +26,14 @@ export class Installation extends React.Component {
       // console.debug("Reponse recue\n%O", reponse)
       const dataReponse = reponse.data
 
-      this.props.rootProps.setIdmg(dataReponse.idmg)
-      this.props.rootProps.setDomaine(dataReponse.domaine)
+      const info = {
+        idmg: dataReponse.idmg,
+        domaine: dataReponse.domaine,
+        securite: dataReponse.securite,
+        noeudId: dataReponse.noeud_id,
+      }
+
+      this.props.rootProps.setInfo(info)
 
       var domaineDetecte = window.location.hostname
       if( ! RE_DOMAINE.test(domaineDetecte) ) {
@@ -51,10 +58,7 @@ export class Installation extends React.Component {
     var pageAffichee = null
 
     if(this.state.infoMonitorChargee) {
-      if(this.state.idmg) {
-        // La MilleGrille est deja installee
-        pageAffichee = <PageInfoMillegrille />
-      } else if(this.state.domaine) {
+      if(this.state.domaine) {
         // Domaine est configure, on procede a l'installation
         pageAffichee = <PageInstallation rootProps={this.props.rootProps}/>
       } else {
@@ -76,12 +80,6 @@ export class Installation extends React.Component {
 function PageAttente(props) {
   return (
     <p>Chargement en cours</p>
-  )
-}
-
-function PageInfoMillegrille(props) {
-  return (
-    <p>MilleGrille installee, idmg : {this.state.idmg}</p>
   )
 }
 
