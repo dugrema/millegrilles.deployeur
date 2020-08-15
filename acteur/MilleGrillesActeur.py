@@ -66,10 +66,10 @@ class Acteur:
         if self._idmg:
             params_txt['idmg'] = self._idmg
 
-        self.gestion_avahi.maj_service('millegrilles', '_https._tcp', 443, params_txt)
+        self.gestion_avahi.maj_service('millegrilles_https', '_mghttps._tcp', 443, params_txt)
 
         if self._mq_port:
-            self.gestion_avahi.maj_service('millegrilles', '_amqps._tcp', self._mq_port, params_txt)
+            self.gestion_avahi.maj_service('millegrilles_amqps', '_mgamqps._tcp', self._mq_port, params_txt)
 
     def initialiser_bluetooth(self):
         ble_present, mainloop = verifier_presence_bluetooth()
