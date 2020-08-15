@@ -33,7 +33,7 @@ class App extends React.Component {
 
   setInfo = info => {
     const infoUpdate = {...info}
-    if(info.idmg) {
+    if(info.securite) {  // Securite indique que le noeud est deja configure
       info.page = AfficherInformationNoeud
     }
     this.setState(info)

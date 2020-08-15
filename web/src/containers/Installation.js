@@ -405,7 +405,8 @@ class PageConfigurationDomaineAttente extends React.Component {
       stackErreur: '',
     })
 
-    const urlDomaine = 'https://' + this.props.domaine + '/installation/api/infoMonitor'
+    // const urlDomaine = 'https://' + this.props.domaine + '/installation/api/infoMonitor'
+    const urlDomaine = '/installation/api/infoMonitor'
 
     // Creer instance AXIOS avec timeout court (5 secondes) et
     // qui ignore cert SSL (... parce que c'est justement ce qu'on va installer!)
