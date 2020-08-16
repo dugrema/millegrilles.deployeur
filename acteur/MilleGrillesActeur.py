@@ -81,7 +81,11 @@ class Acteur:
         else:
             self.__logger.info("Bluetooth non detecte")
 
-    def changer_wifi(self, essid, password, country):
+    def changer_wifi(self, commande):
+        essid = commande['essid']
+        password = commande['password']
+        country = commande['country']
+        
         self.maj_wifi.set_site(essid, password, country)
         
     def changer_avahi(self, nom_service, type_service, port, txt: dict = None):

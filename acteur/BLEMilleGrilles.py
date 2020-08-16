@@ -109,11 +109,11 @@ class ConfigurationSetWifiCharacteristic(Characteristic):
     def WriteValue(self, value, options):
         print('remote: {}'.format(bytearray(value).decode()))
         try:
-            info_wifi = json.loads(bytearray(value))
-            essid = info_wifi['essid']
-            passwd = info_wifi['passwd']
-            country = info_wifi['country']
-            self.acteur.changer_wifi(essid, passwd, country)
+            commande_wifi = json.loads(bytearray(value))
+            # essid = info_wifi['essid']
+            # passwd = info_wifi['password']
+            # country = info_wifi['country']
+            self.acteur.changer_wifi(commande_wifi)
         except:
             self.__logger.exception("Erreur reception donnee wifi")
 

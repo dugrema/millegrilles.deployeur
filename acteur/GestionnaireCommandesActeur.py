@@ -108,6 +108,8 @@ class GestionnaireCommandesActeur:
             self._acteur.shutdown(commande)
         elif nom_commande == 'upgrade':
             self._acteur.upgrade(commande)
+        elif nom_commande == 'set_wifi':
+            self._acteur.changer_wifi(commande)
         else:
             self.__logger.error("Commande inconnue : %s" % nom_commande)
 
