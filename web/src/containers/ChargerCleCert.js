@@ -76,13 +76,13 @@ export class ChargerCleCert extends React.Component {
 
         if(clesPrivees) {
           this.setState({clePriveeChargee: true})
-          this.props.rootProps.setIdmg(clesPrivees.idmg)
-
+          this.props.rootProps.setInfo({idmg: clesPrivees.idmg})
           this.props.setCertificat(this.state.certificat)
         } else {
           this.setState({clePriveeChargee: false})
         }
       } catch(err) {
+        console.error("Erreur chargement cle\n%O", err)
         this.setState({erreurChargement: err})
       }
     }
