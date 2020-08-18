@@ -15,7 +15,7 @@
     },
     {
       "name": "pki.nginx.cert;pki.millegrille.cert",
-      "filename": "/usr/share/certs/millegrille.cert.pem"
+      "filename": "/usr/share/nginx/files/certs/millegrille.cert.pem"
     }
   ],
   "secrets": [
