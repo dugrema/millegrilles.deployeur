@@ -14,7 +14,7 @@
       "filename": "/run/secrets/webcert.pem"
     },
     {
-      "name": "pki.nginx.cert;pki.millegrille.cert",
+      "name": "pki.millegrille.cert;pki.nginx.cert",
       "filename": "/usr/share/nginx/files/certs/millegrille.cert.pem"
     }
   ],

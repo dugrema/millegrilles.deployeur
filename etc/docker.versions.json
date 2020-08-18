@@ -9,7 +9,7 @@
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_4"},
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "x86_64_1.31.3"},
         "fichiers": {"image": "millegrilles_fichiers", "version": "x86_64_1.31.1"},
-        "nginx": {"image": "millegrilles_nginx", "version": "1.30.4"},
+        "nginx": {"image": "millegrilles_nginx", "version": "x86_64_1.31.1"},
         "web": {"image": "millegrilles_web", "version": "x86_64_1.31.1"},
         "mongoexpress": {"image": "mg_mongo_express", "version": "0.49_5"}
     }
