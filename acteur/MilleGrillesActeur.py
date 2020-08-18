@@ -135,6 +135,11 @@ class Acteur:
 
     def prise_de_possession(self, certificats):
         self.__logger.debug("Recu demande de prise de possession, relai au monitor\n%s" % certificats)
+        commande = {
+            'commande': 'acteur.prendrePossession',
+            'certificats': certificats
+        }
+        self._pipe_monitor.transmettre_commande(commande)
 
     def fermer(self, signum=None, frame=None):
         if signum:
