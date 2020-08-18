@@ -142,10 +142,8 @@ class Acteur:
 
         commande = {
             'commande': 'initialiserNoeud',
-            'contenu': {
-                'certificatPem': certificat_pem,
-                'chainePem': chaine_list
-            }
+            'certificatPem': certificat_pem,
+            'chainePem': chaine_list,
         }
 
         self._pipe_monitor.transmettre_commande(commande)
