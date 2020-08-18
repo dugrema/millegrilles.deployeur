@@ -135,15 +135,12 @@ class Acteur:
 
     def prise_de_possession(self, certificats):
         self.__logger.debug("Recu demande de prise de possession, relai au monitor\n%s" % certificats)
-
-        separateur_end = "-----END CERTIFICATE-----"
-        chaine_list = [cert + separateur_end for cert in certificats.split(separateur_end)]
-        certificat_pem = chaine_list[0]
+        message = json.loads(certificats)
 
         commande = {
             'commande': 'initialiserNoeud',
-            'certificatPem': certificat_pem,
-            'chainePem': chaine_list,
+            'certificatPem': message['certificat'],
+            'chainePem': message['chaine'],
         }
 
         self._pipe_monitor.transmettre_commande(commande)
