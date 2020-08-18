@@ -149,8 +149,9 @@ class ConfigurationPrendrePossessionCharacteristic(Characteristic):
                 self.__contenu = self.__contenu + bavalue[1:]
                 
                 # Transmettre commande de prise de possession
-                self.__logger.debug("Message complet\n%s" % self.__contenu.decode('utf-8'))
-                self._acteur.prise_de_possession(self.__contenu)
+                contenu_str = self.__contenu.decode('utf-8')
+                self.__logger.debug("Message complet\n%s" % contenu_str)
+                self._acteur.prise_de_possession(contenu_str)
                 self.__contenu = None
                 
             else:
