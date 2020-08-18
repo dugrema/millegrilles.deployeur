@@ -45,7 +45,8 @@
     "ipv6.mapper.network": "mg_ipv6"
   },
   "networks": [{
-    "target": "millegrille_net"
+    "target": "millegrille_net",
+    "aliases": ["nginx"]
   }],
   "resources": {
     "cpu_limit": 500000000,
