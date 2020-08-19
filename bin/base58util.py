@@ -88,6 +88,7 @@ class Base58Util:
         valeur = binascii.unhexlify(self._args.valeur[0])
 
         date_epoch = self._extract_epoch(self._args.date_end_cert)
+        print("!!!! DATE EPOCH : %d" % date_epoch)
         valeur_combinee = struct.pack('=B28sI', VERSION_IDMG, valeur, date_epoch)
         valeur_base58 = base58.b58encode(valeur_combinee).decode('utf-8')
         print(valeur_base58)
