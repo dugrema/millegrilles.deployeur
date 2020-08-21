@@ -59,7 +59,7 @@
     "mode": "vip",
     "ports": [
       {
-        "published_port": 9443,
+        "published_port": 10443,
         "target_port": 443,
         "protocol": "tcp",
         "publish_mode": "host"
