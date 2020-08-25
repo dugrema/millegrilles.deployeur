@@ -1,0 +1,130 @@
+{
+  "nom": "wordpress",
+  "version": "1.31.0",
+  "registries": [""],
+  "images": {
+    "mariadb": {
+      "image": "mariadb",
+      "version": "10.5"
+    },
+    "wordpress": {
+      "image": "wordpress",
+      "version": "5.4"
+    }
+  },
+  "dependances": [
+    {
+      "docker_config_file": "docker.mariadb.sharedapp.json",
+      "shared": true
+    },
+    {
+      "image": "mariadb",
+      "etape_seulement": true,
+      "installation": {
+        "commande": "/usr/local/scripts/script.wordpress.installation.sh",
+        "fichiers": [
+          "script.wordpress.installation.sh"
+        ],
+        "exit_codes_ok": [1]
+      },
+      "backup": {
+        "commande_backup": "/usr/local/scripts/script.wordpress.backup.sh",
+        "commande_restore": "/usr/local/scripts/script.wordpress.restore.sh",
+        "fichiers": [
+          "script.wordpress.backup.sh",
+          "script.wordpress.restore.sh"
+        ],
+        "base_path": "/tmp/backup"
+      },
+      "generer": {
+        "motsdepasse": [{"name": "passwd.wordpress.db"}]
+      },
+      "config": {
+        "name": "mariadb_wordpress_client",
+        "args": ["sleep", "10000"],
+        "env": [
+          "PATH_SCRIPTS=/usr/local/scripts",
+          "WORDPRESS_DB_PASSWORD_FILE=/run/secrets/wordpress-db-passwd",
+          "MARIADB_PASSWORD_FILE=/run/secrets/mariadb-passwd"
+        ],
+        "constraints": [
+          "node.labels.millegrilles.app.wordpress == true"
+        ],
+        "mounts": [
+          "wordpress_files:/tmp/backup/files:rw"
+        ],
+        "secrets": [
+          {
+            "name": "passwd.wordpress.db",
+            "filename": "wordpress-db-passwd"
+          },{
+            "name": "passwd.mariadb",
+            "filename": "mariadb-passwd"
+          }
+        ],
+        "networks": [{
+          "target": "millegrille_net"
+        }],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 1000000000,
+          "mem_limit": 50000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    },
+    {
+      "image": "wordpress",
+      "config": {
+        "name": "wordpress",
+        "env": [
+          "WORDPRESS_DB_PASSWORD_FILE=/run/secrets/wordpress-db-passwd",
+          "WORDPRESS_DB_HOST=mariadb",
+          "WORDPRESS_DB_USER=wordpress",
+          "WORDPRESS_DB_NAME=wordpress"
+        ],
+        "mounts": [
+          "wordpress_files:/var/www/html/wp-content:rw"
+        ],
+        "constraints": [
+          "node.labels.millegrilles.app.wordpress == true"
+        ],
+        "secrets": [
+          {
+            "name": "passwd.wordpress.db",
+            "filename": "wordpress-db-passwd"
+          }
+        ],
+        "networks": [
+          {
+            "target": "millegrille_net",
+            "aliases": ["wordpress"]
+          }
+        ],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 500000000,
+          "mem_limit": 209715200
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ],
+  "nginx": {
+    "server_file": "nginx.wordpress.conf",
+    "subdomain": "wordpress",
+    "params": {
+      "PROXY_PASS_BACKEND": "http://wordpress:80"
+    }
+  }
+}

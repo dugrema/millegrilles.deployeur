@@ -1,0 +1,220 @@
+{
+  "nom": "jitsi",
+  "version": "1.31.0",
+  "registries": [
+    "docker.maceroc.com",
+    "dugremat",
+    "jitsi"
+  ],
+  "images": {
+    "jitsi_jvb": {
+      "image": "mg_jvb",
+      "version": "x86_64_stable-4627-1_0"
+    },
+    "jitsi_jicofo": {
+      "image": "mg_jicofo",
+      "version": "x86_64_stable-4627-1_0"
+    },
+    "jitsi_prosody": {
+      "image": "mg_prosody",
+      "version": "x86_64_stable-4627-1_0"
+    },
+    "jitsi_web": {
+      "image": "web",
+      "version": "stable-4627-1"
+    }
+  },
+  "dependances": [
+    {
+      "image": "jitsi_prosody",
+      "generer": {
+        "motsdepasse": [
+          {"name": "passwd.jitsi.jicofoauth"},
+          {"name": "passwd.jitsi.jicofosecret"},
+          {"name": "passwd.jitsi.jvbauth"}
+        ]
+      },
+      "config": {
+        "name": "jitsi_prosody",
+        "constraints": [
+          "node.labels.millegrilles.app.jitsi == true"
+        ],
+        "env": [
+          "JICOFO_AUTH_USER=focus",
+          "JVB_AUTH_USER=jvb",
+          "TZ=America/Toronto",
+          "XMPP_AUTH_DOMAIN=auth.meet.jitsi",
+          "XMPP_DOMAIN=meet.jitsi",
+          "XMPP_GUEST_DOMAIN=guest.meet.jitsi",
+          "XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi",
+          "XMPP_MUC_DOMAIN=muc.meet.jitsi",
+          "XMPP_RECORDER_DOMAIN=recorder.meet.jitsi"
+        ],
+        "secrets": [
+          {
+            "name": "passwd.jitsi.jicofoauth",
+            "filename": "JICOFO_AUTH_PASSWORD"
+          },{
+            "name": "passwd.jitsi.jicofosecret",
+            "filename": "JICOFO_COMPONENT_SECRET"
+          },{
+            "name": "passwd.jitsi.jvbauth",
+            "filename": "JVB_AUTH_PASSWORD"
+          }
+        ],
+        "networks": [{
+          "target": "mg_${IDMG}_net",
+          "aliases": ["jitsi_prosody"]
+        }],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 320000000,
+          "mem_limit": 50000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    },
+    {
+      "image": "jitsi_jicofo",
+      "config": {
+        "name": "jitsi_jicofo",
+        "constraints": [
+          "node.labels.millegrilles.app.jitsi == true"
+        ],
+        "env": [
+          "JICOFO_AUTH_USER=focus",
+          "JVB_BREWERY_MUC=jvbbrewery",
+          "TZ=America/Toronto",
+          "XMPP_AUTH_DOMAIN=auth.meet.jitsi",
+          "XMPP_DOMAIN=meet.jitsi",
+          "XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi",
+          "XMPP_SERVER=jitsi_prosody"
+        ],
+        "secrets": [
+          {
+            "name": "passwd.jitsi.jicofoauth",
+            "filename": "JICOFO_AUTH_PASSWORD"
+          },{
+            "name": "passwd.jitsi.jicofosecret",
+            "filename": "JICOFO_COMPONENT_SECRET"
+          }
+        ],
+        "networks": [{
+          "target": "mg_${IDMG}_net"
+        }],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 320000000,
+          "mem_limit": 128000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    },
+    {
+      "image": "jitsi_jvb",
+      "config": {
+        "name": "jitsi_jvb",
+        "constraints": [
+          "node.labels.millegrilles.app.jitsi == true"
+        ],
+        "env": [
+          "JVB_TCP_HARVESTER_DISABLED=true",
+          "DOCKER_HOST_ADDRESS=${HOSTNAME}",
+          "JVB_AUTH_USER=jvb",
+          "JVB_BREWERY_MUC=jvbbrewery",
+          "JVB_PORT=10000",
+          "JVB_STUN_SERVERS=meet-jit-si-turnrelay.jitsi.net:443",
+          "TZ=America/Toronto",
+          "XMPP_AUTH_DOMAIN=auth.meet.jitsi",
+          "XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi",
+          "XMPP_SERVER=jitsi_prosody"
+        ],
+        "secrets": [{
+          "name": "passwd.jitsi.jvbauth",
+          "filename": "JVB_AUTH_PASSWORD"
+        }],
+        "endpoint_spec": {
+          "mode": "vip",
+          "ports": [
+            {
+              "published_port": 10000,
+              "target_port": 10000,
+              "protocol": "udp",
+              "publish_mode": "host"
+            }
+          ]
+        },
+        "networks": [
+          {
+            "target": "mg_${IDMG}_net"
+          },
+          {
+            "target": "bridge"
+          }
+        ],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 2000000000,
+          "mem_limit": 512000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    },
+    {
+      "image": "jitsi_web",
+      "config": {
+        "name": "jitsi_web",
+        "constraints": [
+          "node.labels.millegrilles.app.jitsi == true"
+        ],
+        "env": [
+          "JICOFO_AUTH_USER=focus",
+          "TZ=America/Toronto",
+          "XMPP_AUTH_DOMAIN=auth.meet.jitsi",
+          "XMPP_BOSH_URL_BASE=http://jitsi_prosody:5280",
+          "XMPP_DOMAIN=meet.jitsi",
+          "XMPP_GUEST_DOMAIN=guest.meet.jitsi",
+          "XMPP_MUC_DOMAIN=muc.meet.jitsi",
+          "XMPP_RECORDER_DOMAIN=recorder.meet.jitsi"
+        ],
+        "networks": [{
+          "target": "mg_${IDMG}_net",
+          "aliases": ["jitsi_web"]
+        }],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 32000000,
+          "mem_limit": 24000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ],
+  "nginx": {
+    "server_file": "nginx.jitsi.conf",
+    "subdomain": "jitsi",
+    "params": {
+      "PROXY_PASS_BACKEND": "https://jitsi_web:443"
+    }
+  }
+}
