@@ -7,6 +7,7 @@ import tarfile
 import tempfile
 
 from os import listdir, path, mkdir, unlink
+from base64 import b64encode
 
 from millegrilles.dao.Configuration import ContexteRessourcesMilleGrilles
 from millegrilles.SecuritePKI import SignateurTransaction
@@ -51,22 +52,28 @@ class Generateur:
                 'version': config['version']
             }
 
-            # Preparer archive .tar.xz avec le fichier de configuration signe et les scripts
-            copie_config = self.signer(config, ConstantesCatalogueApplications.TRANSACTION_CATALOGUE_APPLICATION)
-
-            with open(path_config_temp, 'w') as output_config_temp:
-                json.dump(copie_config, output_config_temp)
-
-            path_archive_application = path.join(path_archives_application, nom_application + '.tar.xz')
-            with tarfile.open(path_archive_application, 'w:xz') as fichier:
-                fichier.add(path_config_temp, arcname='docker.json')
-
-                # Faire liste de tous les fichiers de configuration de l'application
-                # (exclure docker.json - genere separement)
-                for filename in listdir(rep):
-                    if filename not in ['docker.json']:
+            # Verifier si on doit creer une archive tar pour cette application
+            # Tous les fichiers sauf docker.json sont inclus et sauvegarde sous une archive tar.xz
+            # dans l'entree de catalogue
+            fichier_app = [f for f in listdir(rep) if f not in ['docker.json']]
+            if len(fichier_app) > 0:
+                with tarfile.open(path_config_temp, 'w:xz') as fichier:
+                    # Faire liste de tous les fichiers de configuration de l'application
+                    # (exclure docker.json - genere separement)
+                    for filename in fichier_app:
                         file_path = path.join(rep, filename)
                         fichier.add(file_path, arcname=filename)
+
+                # Lire fichier .tar, convertir en base64
+                with open(path_config_temp, 'rb') as fichier:
+                    contenu_tar_b64 = b64encode(fichier.read())
+                config['tar_xz'] = contenu_tar_b64.decode('utf-8')
+
+            # Preparer archive .json.xz avec le fichier de configuration signe et les scripts
+            config = self.signer(config, ConstantesCatalogueApplications.TRANSACTION_CATALOGUE_APPLICATION)
+            path_archive_application = path.join(path_archives_application, nom_application + '.json.xz')
+            with lzma.open(path_archive_application, 'wt') as output:
+                json.dump(config, output)
 
         unlink(path_config_temp)  # Cleanup fichier temporaire
 
