@@ -1,6 +1,6 @@
 {
   "nom": "jitsi",
-  "version": "1.31.0",
+  "version": "1.31.1",
   "registries": [
     "docker.maceroc.com",
     "dugremat",
@@ -63,7 +63,7 @@
           }
         ],
         "networks": [{
-          "target": "mg_${IDMG}_net",
+          "target": "millegrille_net",
           "aliases": ["jitsi_prosody"]
         }],
         "labels": {
@@ -105,7 +105,7 @@
           }
         ],
         "networks": [{
-          "target": "mg_${IDMG}_net"
+          "target": "millegrille_net"
         }],
         "labels": {
           "millegrille": "${IDMG}"
@@ -156,7 +156,7 @@
         },
         "networks": [
           {
-            "target": "mg_${IDMG}_net"
+            "target": "millegrille_net"
           },
           {
             "target": "bridge"
@@ -193,11 +193,13 @@
           "XMPP_RECORDER_DOMAIN=recorder.meet.jitsi"
         ],
         "networks": [{
-          "target": "mg_${IDMG}_net",
+          "target": "millegrille_net",
           "aliases": ["jitsi_web"]
         }],
         "labels": {
-          "millegrille": "${IDMG}"
+          "millegrille": "${IDMG}",
+          "url": "https://jitsi.${HOSTNAME}",
+          "securite": "2.prive"
         },
         "resources": {
           "cpu_limit": 32000000,
