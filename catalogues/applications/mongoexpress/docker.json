@@ -1,6 +1,6 @@
 {
   "nom": "mongoexpress",
-  "version": "1.31.0",
+  "version": "1.31.1",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -70,9 +70,6 @@
             "filename": "web.password.txt"
           }
         ],
-        "container_labels": {
-          "ipv6.mapper.network": "mg_ipv6"
-        },
         "endpoint_spec": {
           "mode": "vip",
           "ports": [
@@ -93,7 +90,8 @@
           }
         ],
         "labels": {
-          "millegrille": "${IDMG}"
+          "millegrille": "${IDMG}",
+          "url": "https://${HOSTNAME}:10443"
         },
         "resources": {
           "cpu_limit": 500000000,

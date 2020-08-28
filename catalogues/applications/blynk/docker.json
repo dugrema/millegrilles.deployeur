@@ -1,6 +1,6 @@
 {
   "nom": "blynk",
-  "version": "1.31.0",
+  "version": "1.31.1",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -62,7 +62,8 @@
           }
         ],
         "labels": {
-          "millegrille": "${IDMG}"
+          "millegrille": "${IDMG}",
+          "url": "https://${HOSTNAME}:9443"
         },
         "resources": {
           "cpu_limit": 1000000000,
