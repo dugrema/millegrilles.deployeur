@@ -1,6 +1,6 @@
 {
   "nom": "redmine.mariadb",
-  "version": "1.31.0",
+  "version": "1.31.2",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -131,7 +131,9 @@
           }
         ],
         "labels": {
-          "millegrille": "${IDMG}"
+          "millegrille": "${IDMG}",
+          "url": "https://redmine.${HOSTNAME}",
+          "securite": "2.prive"
         },
         "resources": {
           "cpu_limit": 1000000000,

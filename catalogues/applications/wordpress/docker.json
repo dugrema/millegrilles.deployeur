@@ -1,6 +1,6 @@
 {
   "nom": "wordpress",
-  "version": "1.31.0",
+  "version": "1.31.2",
   "registries": [""],
   "images": {
     "mariadb": {
@@ -107,7 +107,9 @@
           }
         ],
         "labels": {
-          "millegrille": "${IDMG}"
+          "millegrille": "${IDMG}",
+          "url": "https://wordpress.${HOSTNAME}",
+          "securite": "2.prive"
         },
         "resources": {
           "cpu_limit": 500000000,

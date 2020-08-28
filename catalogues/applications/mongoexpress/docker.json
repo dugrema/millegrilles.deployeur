@@ -1,6 +1,6 @@
 {
   "nom": "mongoexpress",
-  "version": "1.31.1",
+  "version": "1.31.2",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -91,7 +91,8 @@
         ],
         "labels": {
           "millegrille": "${IDMG}",
-          "url": "https://${HOSTNAME}:10443"
+          "url": "https://${HOSTNAME}:10443",
+          "securite": "3.protege"
         },
         "resources": {
           "cpu_limit": 500000000,
