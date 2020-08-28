@@ -1,6 +1,6 @@
 {
   "nom": "redmine.mariadb",
-  "version": "1.31.11",
+  "version": "1.31.14",
   "registries": [""],
   "images": {
     "mariadb": {
@@ -59,7 +59,7 @@
       "image": "mariadb",
       "etape_seulement": true,
       "installation": {
-        "commande": "/usr/local/scripts/script.redmine.mariadb.installation.sh",
+        "commande": "/tmp/script.redmine.mariadb.installation.sh",
         "fichiers": [
           "script.redmine.mariadb.installation.sh"
         ],
@@ -68,8 +68,8 @@
         ]
       },
       "backup": {
-        "commande_backup": "/usr/local/scripts/script.redmine.mariadb.backup.sh",
-        "commande_restore": "/usr/local/scripts/script.redmine.mariadb.restore.sh",
+        "commande_backup": "/tmp/script.redmine.mariadb.backup.sh",
+        "commande_restore": "/tmp/script.redmine.mariadb.restore.sh",
         "fichiers": [
           "script.redmine.mariadb.backup.sh",
           "script.redmine.mariadb.restore.sh"
