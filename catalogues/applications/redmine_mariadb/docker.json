@@ -1,21 +1,15 @@
 {
   "nom": "redmine.mariadb",
-  "version": "1.31.9",
-  "registries": [
-    "docker.maceroc.com",
-    "dugremat"
-  ],
+  "version": "1.31.11",
+  "registries": [""],
   "images": {
     "mariadb": {
-      "registries": [
-        ""
-      ],
       "image": "mariadb",
       "version": "10.5"
     },
     "redmine": {
-      "image": "mg_redmine",
-      "version": "4.1_0"
+      "image": "redmine",
+      "version": "4.1-alpine"
     }
   },
   "dependances": [
