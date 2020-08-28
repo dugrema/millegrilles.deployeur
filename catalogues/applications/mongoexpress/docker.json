@@ -1,6 +1,6 @@
 {
   "nom": "mongoexpress",
-  "version": "1.31.2",
+  "version": "1.31.5",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -70,17 +70,6 @@
             "filename": "web.password.txt"
           }
         ],
-        "endpoint_spec": {
-          "mode": "vip",
-          "ports": [
-            {
-              "published_port": 10443,
-              "target_port": 443,
-              "protocol": "tcp",
-              "publish_mode": "host"
-            }
-          ]
-        },
         "networks": [
           {
             "target": "millegrille_net",
@@ -91,7 +80,7 @@
         ],
         "labels": {
           "millegrille": "${IDMG}",
-          "url": "https://${HOSTNAME}:10443",
+          "url": "https://mongoexpress.${HOSTNAME}",
           "securite": "3.protege"
         },
         "resources": {
@@ -109,5 +98,12 @@
         }
       }
     }
-  ]
+  ],
+    "nginx": {
+    "server_file": "nginx.mongoexpress.conf",
+    "subdomain": "mongoexpress",
+    "params": {
+      "PROXY_PASS_BACKEND": "https://mongoexpress:443"
+    }
+  }
 }
