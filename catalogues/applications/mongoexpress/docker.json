@@ -1,6 +1,6 @@
 {
   "nom": "mongoexpress",
-  "version": "1.31.5",
+  "version": "1.31.6",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -14,6 +14,9 @@
   "dependances": [
     {
       "image": "mongoexpress",
+      "generer": {
+        "motsdepasse": [{"name": "passwd.mongoxpweb"}]
+      },
       "config": {
         "name": "mongoexpress",
         "certificat_compte": "pki.mongoxp.cert",
@@ -38,11 +41,11 @@
         ],
         "configs": [
           {
-            "name": "pki.mongoxp.cert",
+            "name": "pki.nginx.cert",
             "filename": "/run/secrets/cert.pem"
           },
           {
-            "name": "pki.mongoxp.cert",
+            "name": "pki.nginx.cert",
             "filename": "/run/secrets/web.cert.pem"
           },
           {
@@ -53,12 +56,12 @@
         "secrets": [
           {
             "match_config": true,
-            "name": "pki.mongoxp.key",
+            "name": "pki.nginx.key",
             "filename": "key.pem"
           },
           {
             "match_config": true,
-            "name": "pki.mongoxp.key",
+            "name": "pki.nginx.key",
             "filename": "web.key.pem"
           },
           {
