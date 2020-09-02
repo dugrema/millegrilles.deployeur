@@ -110,6 +110,8 @@ class GestionnaireCommandesActeur:
             self._acteur.upgrade(commande)
         elif nom_commande == 'set_wifi':
             self._acteur.changer_wifi(commande)
+        elif nom_commande == 'get_mdns_services':
+            self._acteur.get_mdns_services(commande)
         else:
             self.__logger.error("Commande inconnue : %s" % nom_commande)
 

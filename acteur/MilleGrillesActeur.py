@@ -12,6 +12,7 @@ from typing import Optional
 
 from acteur.BLELoader import verifier_presence_bluetooth
 from acteur.GestionnaireCommandesActeur import GestionnaireCommandesActeur
+from acteur.ActeurMdns import MdnsGestionnaire
 
 class Acteur:
 
@@ -24,6 +25,7 @@ class Acteur:
         self.gestion_avahi = None
         self.gestion_commandes = None
         self.gestion_systeme = None
+        self.mdns: Optional[MdnsGestionnaire] = None
 
         self._noeud_id: Optional[str] = None
         self._mq_port: Optional[int] = None
@@ -40,7 +42,8 @@ class Acteur:
         self.gestion_avahi = GestionAvahi()
         self.gestion_commandes = GestionnaireCommandesActeur(self)
         self.gestion_systeme = GestionSysteme()
-        
+        self.mdns = MdnsGestionnaire(self)
+
         self.publier_avahi()
         self.gestion_commandes.start()
 
@@ -58,6 +61,7 @@ class Acteur:
     def __entretien(self):
         if not self._noeud_id:
             self._pipe_monitor.transmettre_commande(PipeMonitor.COMMANDE_GET_INFO)
+            self.mdns.entretien()
 
     def publier_avahi(self):
         params_txt = {
@@ -92,6 +96,16 @@ class Acteur:
         
     def changer_avahi(self, nom_service, type_service, port, txt: dict = None):
         self.gestion_avahi.maj_service(nom_service, type_service, port, txt)
+
+    def get_mdns_services(self, commande):
+        idmg_demande = commande.get('idmg')
+        contenu = self.mdns.get_service(idmg_demande)
+
+        reponse = PipeMonitor.COMMANDE_REPONSE_MDNS.copy()
+        reponse['idmg'] = idmg_demande
+        reponse['contenu'] = contenu
+
+        self._pipe_monitor.transmettre_commande(PipeMonitor.COMMANDE_GET_INFO)
 
     @property
     def noeud_id(self) -> str:
@@ -165,6 +179,11 @@ class Acteur:
 
             try:
                 self._pipe_monitor.fermer()
+            except:
+                pass
+
+            try:
+                self.mdns.fermer()
             except:
                 pass
 
@@ -318,6 +337,12 @@ class PipeMonitor:
 
     COMMANDE_GET_INFO = {
         'commande': 'acteur.getInformationNoeud'
+    }
+
+    COMMANDE_REPONSE_MDNS = {
+        'commande': 'acteur.reponseMdns',
+        'idmg': None,
+        'contenu': None,
     }
 
     def __init__(self, path_socket = '/var/opt/millegrilles/monitor.socket'):

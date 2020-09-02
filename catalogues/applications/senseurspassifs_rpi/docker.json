@@ -21,7 +21,6 @@
           "python3",
           "-m",
           "mgraspberry.raspberrypi.Demarreur",
-          "--dev",
           "--debug",
           "--dummy",
           "nofork"
