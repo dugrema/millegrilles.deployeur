@@ -21,7 +21,7 @@ def get_version():
 setup(
     name='millegrilles.deployeur',
     version='%s' % get_version(),
-    packages=['mgdeployeur'],
+    packages=['acteur'],
     url='',
     license='',
     author='Mathieu Dugre',
