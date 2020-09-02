@@ -21,9 +21,9 @@
           "python3",
           "-m",
           "mgraspberry.raspberrypi.Demarreur",
-          "--dev",
-          "--debug",
-          "--dummy",
+          "--rf24master",
+          "--am2302",
+          "18",
           "nofork"
         ],
         "name": "senseurspassifs_rpi",
