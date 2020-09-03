@@ -5,7 +5,7 @@ import socket
 import logging
 import json
 
-from millegrilles.util.IpUtils import get_local_ips
+from acteur.IpUtils import get_local_ips
 
 
 class MdnsGestionnaire:

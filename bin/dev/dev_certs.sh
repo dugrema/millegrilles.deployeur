@@ -20,8 +20,10 @@ docker service create \
   --name mon_secret \
   $PARAMS \
   --mount type=bind,source=/home/mathieu/mgdev/certs,target=/opt/millegrilles/dist/ \
-  --entrypoint "/bin/sleep 10000" \
-  ubuntu
+  --mount type=bind,source=$PWD,target=/opt/millegrilles/scripts \
+  --entrypoint "/bin/bash" \
+  ubuntu \
+  /opt/millegrilles/scripts/bin/dev/copy_keys.sh
 
 CID=`docker container ls | grep mon_secret | awk '{print $1}'`
 docker exec -it $CID bash

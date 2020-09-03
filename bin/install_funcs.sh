@@ -113,7 +113,7 @@ initialiser_swarm() {
 
 configurer_swarm() {
   echo "[INFO] Configurer docker swarm"
-  sudo docker network create -d overlay --scope swarm millegrille_net
+  sudo docker network create -d overlay --attachable --scope swarm millegrille_net
   sudo docker config rm docker.versions 2> /dev/null || true
   sudo docker config create docker.versions $REP_ETC/docker.versions.json
 

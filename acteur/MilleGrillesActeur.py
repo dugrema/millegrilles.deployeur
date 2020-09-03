@@ -103,9 +103,11 @@ class Acteur:
 
         reponse = PipeMonitor.COMMANDE_REPONSE_MDNS.copy()
         reponse['idmg'] = idmg_demande
-        reponse['contenu'] = contenu
+        reponse['contenu'] = list(contenu)
 
-        self._pipe_monitor.transmettre_commande(PipeMonitor.COMMANDE_GET_INFO)
+        self.__logger.debug("Transmettre reponse mdns %s" % reponse)
+
+        self._pipe_monitor.transmettre_commande(reponse)
 
     @property
     def noeud_id(self) -> str:
