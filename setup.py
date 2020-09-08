@@ -19,7 +19,7 @@ def get_version():
     return version
 
 setup(
-    name='millegrilles.deployeur',
+    name='millegrilles.acteur',
     version='%s' % get_version(),
     packages=['acteur'],
     url='',
