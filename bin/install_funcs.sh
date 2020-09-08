@@ -134,12 +134,12 @@ demarrer_servicemonitor() {
     --name monitor \
     --hostname monitor \
     --env HOSTNAME_MONITOR=$HOSTNAME_MONITOR \
+    --env MG_MONGO_HOST=mongo \
     --network millegrille_net \
     --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
     --mount type=bind,source=$MILLEGRILLES_VAR,destination=/var/opt/millegrilles \
     --mount type=volume,source=millegrille-secrets,destination=/var/opt/millegrilles_secrets \
     --user root:115 \
-    --publish 8080:8080 \
     ${SERVICEMONITOR_IMAGE} \
     -m millegrilles.monitor.ServiceMonitor --debug \
     --webroot /opt/millegrilles/dist/installation
