@@ -61,6 +61,9 @@ class MdnsBrowser:
             self.zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
             self.browser = ServiceBrowser(self.zeroconf, service_types, listener=self.listener)
 
+    def entretien(self):
+        pass
+
     def fermer(self):
         self.zeroconf.unregister_all_services()
         self.zeroconf.close()

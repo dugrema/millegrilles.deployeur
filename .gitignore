@@ -2,6 +2,7 @@
 /tmp/
 /work/
 *.egg
+*.egg-info
 /MilleGrilles.deployeur.egg-info/
 /dist/
 /build/

@@ -4,8 +4,7 @@ After=docker.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -m millegrilles.deployeur.MilleGrillesActeur
-User=mg_deployeur
+ExecStart=/usr/bin/python3 -m acteur.MilleGrillesActeur
 Restart=on-failure
 RestartSec=30s
 
