@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs_rpi_rf24_am2302",
-  "version": "1.31.0",
+  "version": "1.31.4",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -8,7 +8,7 @@
   "images": {
     "millegrilles_senseurspassifs_rpi": {
       "image": "millegrilles_senseurspassifs_rpi",
-      "version": "armv7l_1.31.1"
+      "version": "armv7l_1.31.2"
     }
   },
   "dependances": [
@@ -18,7 +18,6 @@
       "injecter_clecert": "/run/secrets",
       "config": {
         "command": [
-          "python3",
           "-m",
           "mgraspberry.raspberrypi.Demarreur",
           "--rf24master",
@@ -41,6 +40,11 @@
           {
             "target": "/opt/dist/config",
             "source": "senseurspassifs-config",
+            "type": "volume"
+          },
+          {
+            "target": "/var/opt/millegrilles/data",
+            "source": "senseurspassifs-data",
             "type": "volume"
           }
         ],
