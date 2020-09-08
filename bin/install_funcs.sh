@@ -137,6 +137,7 @@ demarrer_servicemonitor() {
     --network millegrille_net \
     --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
     --mount type=bind,source=$MILLEGRILLES_VAR,destination=/var/opt/millegrilles \
+    --mount type=volume,source=millegrille-secrets,destination=/var/opt/millegrilles_secrets \
     --user root:115 \
     --publish 8080:8080 \
     ${SERVICEMONITOR_IMAGE} \
