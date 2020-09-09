@@ -128,12 +128,10 @@ configurer_swarm() {
 
 # Installer le service ServiceMonitor
 demarrer_servicemonitor() {
-  HOSTNAME_MONITOR=`hostname -f`
 
   sudo docker service create \
     --name monitor \
     --hostname monitor \
-    --env HOSTNAME_MONITOR=$HOSTNAME_MONITOR \
     --env MG_MONGO_HOST=mongo \
     --network millegrille_net \
     --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
