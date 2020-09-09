@@ -1,5 +1,5 @@
 {
-  "nom": "senseurspassifs_rpi_dummy",
+  "nom": "senseurspassifs_rpi_am2302_24",
   "version": "1.31.6",
   "registries": [
     "docker.maceroc.com",
@@ -20,8 +20,9 @@
         "command": [
           "-m",
           "mgraspberry.raspberrypi.Demarreur",
-          "--debug",
-          "--dummy",
+          "--rf24master",
+          "--am2302",
+          "24",
           "nofork"
         ],
         "name": "senseurspassifs_rpi",
