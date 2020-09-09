@@ -15,6 +15,9 @@ preparer_rpi() {
 
     # Pour RPi 64bit (pip requirement: lxml)
     sudo apt install -y libxml2-dev libxmlsec1-dev python3-cffi
+
+    # Pour bluetooth
+    sudo apt install -y bluetooth bluez python3-bluez
   fi
 }
 
