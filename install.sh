@@ -16,6 +16,7 @@ installer() {
   installer_autres_deps
   installer_docker
   initialiser_swarm
+  installer_sysctl
 }
 
 configurer() {
