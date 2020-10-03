@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs_rpi_dummy",
-  "version": "1.31.6",
+  "version": "1.31.14",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
