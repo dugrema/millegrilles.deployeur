@@ -3,7 +3,7 @@
   "env": [
     "MG_KEY=/run/secrets/key.pem",
     "WEB_KEY=/run/secrets/webkey.pem",
-    "CONFIG_FILE=/etc/rabbitmq/rabbitmq_ipv6management.config"
+    "CONFIG_FILE=/opt/rabbitmq/dist/config/rabbitmq_ipv6management.config"
   ],
   "mounts": [
     "mg-middleware-rabbitmq-data-${IDMG}:/var/lib/rabbitmq:rw"
