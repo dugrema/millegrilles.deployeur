@@ -18,8 +18,7 @@
     "MG_MONGO_HOST=mongo",
     "MG_MONGO_SSL=x509",
     "MG_MONGO_SSL_CA_CERTS=/run/secrets/millegrille.cert.pem",
-    "MG_DOMAINES_DYNAMIQUES=true",
-    "MG_CONSIGNATION_HTTP=https://fichiers"
+    "MG_DOMAINES_DYNAMIQUES=true"
   ],
   "constraints": [
     "node.labels.millegrilles.python == true",
