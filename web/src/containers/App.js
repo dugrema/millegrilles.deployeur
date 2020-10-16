@@ -39,6 +39,10 @@ class App extends React.Component {
     this.setState(info)
   }
 
+  setIdmg = idmg => {
+    this.setState({idmg})
+  }
+
   componentDidMount() {
   }
 
@@ -46,7 +50,7 @@ class App extends React.Component {
 
     // console.debug("Nom usager : %s, estProprietaire : %s", this.state.nomUsager, this.state.estProprietaire)
 
-    const rootProps = {...this.state, setInfo: this.setInfo}
+    const rootProps = {...this.state, setInfo: this.setInfo, setIdmg: this.setIdmg}
 
     let PageMappee = this.state.page
     let affichage = <PageMappee rootProps={rootProps} />

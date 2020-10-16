@@ -1,5 +1,5 @@
 import React from 'react'
-import {Row, Col, Form, Button, ProgressBar} from 'react-bootstrap'
+import {Row, Col, Form, Button, ProgressBar, Alert} from 'react-bootstrap'
 import Dropzone from 'react-dropzone'
 import QrReader from 'react-qr-reader'
 
@@ -45,7 +45,7 @@ export class ChargementClePrivee extends React.Component {
         if(clesPrivees) {
           this.setState({clePriveeChargee: true, motdepasse: '', cleChiffree: ''})
           this.fermerScanQr() // S'assurer que la fenetre codes QR est fermee, on a la cle
-          // this.props.rootProps.setInfo({idmg: clesPrivees.idmg})
+          this.props.rootProps.setIdmg(clesPrivees.idmg)
         } else {
           this.setState({clePriveeChargee: false})
         }
@@ -171,69 +171,32 @@ export class ChargementClePrivee extends React.Component {
                            motdepasse={this.state.motdepasse} />
     }
 
-    var bontonQrScan = ''
-    if(this.state.videoinput) {
-      bontonQrScan = (
-        <Button variant="secondary" onClick={this.activerScanQr}>
-          QR Scan
-        </Button>
-      )
-    }
 
-    var clePrete = ''
-    if(this.props.reponseCertificat) {
-      clePrete = (
-        <span>
-          <i className="fa fa-check"/>
-          Cle OK
-        </span>
+
+    var contenu = ''
+    if(this.state.clePriveeChargee) {
+      contenu = (
+        <Alert variant="success">
+          <Alert.Heading>Cle prete</Alert.Heading>
+          <p>Certificat et cle de MilleGrille charges correctement.</p>
+          <p>IDMG charge : {this.props.rootProps.idmg}</p>
+        </Alert>
       )
+    } else {
+      contenu = <ChargerInformation motdepasse={this.state.motdepasse}
+                                    changerChamp={this.changerChamp}
+                                    recevoirFichiers={this.recevoirFichiers}
+                                    videoinput={this.state.videoinput}
+                                    activerScanQr={this.activerScanQr} />
     }
 
     return (
       <>
         <Row>
-          <Col><h3>Importer cle privee de MilleGrille</h3></Col>
+          <Col><h3>Certificat et cle privee de MilleGrille</h3></Col>
         </Row>
 
-        <Form.Group controlId="formMotdepasse">
-          <Form.Label>Mot de passe de cle</Form.Label>
-          <Form.Control
-            type="text"
-            name="motdepasse"
-            value={this.state.motdepasse}
-            autoComplete="false"
-            onChange={this.changerChamp}
-            placeholder="AAAA-bbbb-1111-2222" />
-        </Form.Group>
-
-        <Row>
-          <Col>
-
-            <Dropzone onDrop={this.recevoirFichiers}>
-              {({getRootProps, getInputProps}) => (
-                <span className="uploadIcon btn btn-secondary">
-                  <span {...getRootProps()}>
-                    <input {...getInputProps()} />
-                    <span className="fa fa-upload fa-2x"/>
-                  </span>
-                </span>
-              )}
-            </Dropzone>
-
-            {bontonQrScan}
-
-          </Col>
-          <Col>
-            {clePrete}
-          </Col>
-        </Row>
-
-        <Row>
-          <Col>
-            <pre>{this.state.cleChiffree}</pre>
-          </Col>
-        </Row>
+        {contenu}
 
         <Row className="boutons-installer">
           <Col>
@@ -245,6 +208,75 @@ export class ChargementClePrivee extends React.Component {
     )
   }
 
+}
+
+function ChargerInformation(props) {
+  return (
+    <Row>
+      <Col md={5}>
+        <h4>Creer une nouvelle MilleGrille</h4>
+        <Button variant="secondary">Nouvelle</Button>
+      </Col>
+      <Col md={2}>
+        <p>|</p>
+        <p>OU</p>
+        <p>|</p>
+      </Col>
+      <Col md={5}>
+        <FormUpload {...props}/>
+      </Col>
+    </Row>
+  )
+}
+
+function FormUpload(props) {
+
+  var bontonQrScan = ''
+  if(props.videoinput) {
+    bontonQrScan = (
+      <Button variant="secondary" onClick={props.activerScanQr}>
+        QR Scan
+      </Button>
+    )
+  }
+
+  return (
+    <>
+      <h4>Importer certificat et cle existants</h4>
+
+      <Form.Group controlId="formMotdepasse">
+        <Form.Label>Mot de passe de cle</Form.Label>
+        <Form.Control
+          type="text"
+          name="motdepasse"
+          value={props.motdepasse}
+          autoComplete="false"
+          onChange={props.changerChamp}
+          placeholder="AAAA-bbbb-1111-2222" />
+      </Form.Group>
+
+      <Row>
+        <Col>
+
+          <Dropzone onDrop={props.recevoirFichiers}>
+            {({getRootProps, getInputProps}) => (
+              <span className="uploadIcon btn btn-secondary">
+                <span {...getRootProps()}>
+                  <input {...getInputProps()} />
+                  <span className="fa fa-upload fa-2x"/>
+                </span>
+              </span>
+            )}
+          </Dropzone>
+
+          {bontonQrScan}
+
+        </Col>
+        <Col>
+        </Col>
+      </Row>
+    </>
+  )
 }
 
 async function traiterUploads(acceptedFiles) {
