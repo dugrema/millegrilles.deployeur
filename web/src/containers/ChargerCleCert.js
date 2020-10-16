@@ -16,6 +16,8 @@ export class ChargementClePrivee extends React.Component {
     motdepasse: '',
     cleChiffree: '',
 
+    afficherErreur: false,
+    erreurChargement: '',
     clePriveeChargee: false,
 
     modeScanQR: false,
@@ -47,11 +49,11 @@ export class ChargementClePrivee extends React.Component {
           this.fermerScanQr() // S'assurer que la fenetre codes QR est fermee, on a la cle
           this.props.rootProps.setIdmg(clesPrivees.idmg)
         } else {
-          this.setState({clePriveeChargee: false})
+          this.setState({clePriveeChargee: false, afficherErreur: true})
         }
       } catch(err) {
         console.error("Erreur chargement cle\n%O", err)
-        this.setState({erreurChargement: err})
+        this.setState({erreurChargement: err, afficherErreur: true})
       }
     } else {
       console.debug("Cle, cert pas pret : %O", this.state)
@@ -157,6 +159,10 @@ export class ChargementClePrivee extends React.Component {
     }
   }
 
+  cacherErreurChargement = event => {
+    this.setState({afficherErreur: false})
+  }
+
   render() {
 
     if(this.state.modeScanQR) {
@@ -187,7 +193,11 @@ export class ChargementClePrivee extends React.Component {
                                     changerChamp={this.changerChamp}
                                     recevoirFichiers={this.recevoirFichiers}
                                     videoinput={this.state.videoinput}
-                                    activerScanQr={this.activerScanQr} />
+                                    activerScanQr={this.activerScanQr}
+                                    setPage={this.props.setPage}
+                                    afficherErreur={this.state.afficherErreur}
+                                    erreurChargement={this.state.erreurChargement}
+                                    cacherErreurChargement={this.cacherErreurChargement} />
     }
 
     return (
@@ -211,11 +221,24 @@ export class ChargementClePrivee extends React.Component {
 }
 
 function ChargerInformation(props) {
+
+  var erreurChargement = ''
+  if(props.afficherErreur) {
+    erreurChargement = (
+      <Alert variant="danger" onClose={props.cacherErreurChargement} dismissible>
+        <Alert.Heading>Cle invalide</Alert.Heading>
+        <p>{''+props.erreurChargement}</p>
+      </Alert>
+    )
+  }
+
   return (
     <Row>
       <Col md={5}>
         <h4>Creer une nouvelle MilleGrille</h4>
-        <Button variant="secondary">Nouvelle</Button>
+        <Button variant="secondary"
+                onClick={props.setPage}
+                value="GenererNouvelleCle">Nouvelle</Button>
       </Col>
       <Col md={2}>
         <p>|</p>
@@ -223,6 +246,7 @@ function ChargerInformation(props) {
         <p>|</p>
       </Col>
       <Col md={5}>
+        {erreurChargement}
         <FormUpload {...props}/>
       </Col>
     </Row>
@@ -406,3 +430,17 @@ function assemblerCertificat(partiesDeCertificat) {
 //     return null
 //   }
 // }
+
+export function InformationCertificat(props) {
+  if(props.certificat) {
+    return (
+      <Row>
+        <Col>
+          <p>IDMG : {props.certificat.subject.getField('O').value}</p>
+          <p>Noeud : {props.certificat.subject.getField('CN').value}</p>
+        </Col>
+      </Row>
+    )
+  }
+  return ''
+}
