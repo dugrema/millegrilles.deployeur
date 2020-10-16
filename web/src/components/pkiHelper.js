@@ -23,7 +23,9 @@ export async function chargerClePriveeForge(clePriveePem, motdepasse) {
   return clePriveeForge
 }
 
-export async function conserverCleChiffree(certificatPem, clePriveePem, motdepasse) {
+export async function preparerCleCertMillegrille(certificatPem, clePriveePem, motdepasse) {
+  // Preparer les cles et calcule le idmg
+
   // console.debug("Conserver cle chiffree, cert\n%s", certificatPem)
   const clePriveeForge = await chargerClePrivee(clePriveePem, {password: motdepasse})
   // console.debug("Cle privee forge\n%O", clePriveeForge)
@@ -37,15 +39,14 @@ export async function conserverCleChiffree(certificatPem, clePriveePem, motdepas
 
   const dictCles = {signer: clePriveeSigner, signerPKCS1_5: clePriveeSignerPKCS1_5, dechiffrer: clePriveeDecrypt}
 
-  sauvegarderRacineMillegrille(idmg, certificatPem, dictCles)
+  // sauvegarderRacineMillegrille(idmg, certificatPem, dictCles)
 
-  return {...dictCles, idmg}
+  return {...dictCles, idmg, certificat: certificatPem}
 }
 
-export async function signerCSRIntermediaire(idmg, csrPem, params) {
-  if( ! params ) params = {}
+export async function signerCSRIntermediaire(csrPem, infoClecertMillegrille) {
+  const {idmg, certificat, signer, signerPKCS1_5} = infoClecertMillegrille  //await chargerClecertMillegrilleSignature(idmg)
 
-  const {certificat, signer, signerPKCS1_5} = await chargerClecertMillegrilleSignature(idmg)
   const certMillegrille = chargerCertificatPEM(certificat)
 
   const {cert, pem: certPem} = await genererCertificatIntermediaire(idmg, certMillegrille, signerPKCS1_5, {csrPEM: csrPem})
@@ -57,7 +58,8 @@ export async function signerCSRIntermediaire(idmg, csrPem, params) {
 export async function genererNouveauCertificatMilleGrille() {
 
   // Generer nouvelles cle privee, cle publique
-  const {clePriveePkcs8, clePubliqueSpki, clePriveeSigner} = await cryptageAsymetriqueHelper.genererKeysNavigateur()
+  const {clePriveePkcs8, clePubliqueSpki, clePriveeSigner} =
+    await cryptageAsymetriqueHelper.genererKeysNavigateur({modulusLength: 4096})
   const clePriveePEM = enveloppePEMPrivee(clePriveePkcs8, true),
         clePubliquePEM = enveloppePEMPublique(clePubliqueSpki)
 

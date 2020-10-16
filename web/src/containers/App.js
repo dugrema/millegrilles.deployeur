@@ -18,6 +18,9 @@ class App extends React.Component {
 
     page: Installation,
 
+    infoClecertMillegrille: '',
+    infoCertificatNoeudProtege: '',
+
     manifest: {
       version: 'DUMMY',
       date: 'DUMMY'
@@ -39,8 +42,13 @@ class App extends React.Component {
     this.setState(info)
   }
 
-  setIdmg = idmg => {
-    this.setState({idmg})
+  setInfoClecertMillegrille = infoClecertMillegrille => {
+    this.setState({infoClecertMillegrille, idmg: infoClecertMillegrille.idmg})
+  }
+
+  setInfoCertificatNoeudProtege = infoCertificatNoeudProtege => {
+    console.debug("Information certificat noeud protege generee : %O", infoCertificatNoeudProtege)
+    this.setState({infoCertificatNoeudProtege})
   }
 
   componentDidMount() {
@@ -50,7 +58,12 @@ class App extends React.Component {
 
     // console.debug("Nom usager : %s, estProprietaire : %s", this.state.nomUsager, this.state.estProprietaire)
 
-    const rootProps = {...this.state, setInfo: this.setInfo, setIdmg: this.setIdmg}
+    const rootProps = {
+      ...this.state,
+      setInfo: this.setInfo,
+      setInfoClecertMillegrille: this.setInfoClecertMillegrille,
+      setInfoCertificatNoeudProtege: this.setInfoCertificatNoeudProtege,
+    }
 
     let PageMappee = this.state.page
     let affichage = <PageMappee rootProps={rootProps} />

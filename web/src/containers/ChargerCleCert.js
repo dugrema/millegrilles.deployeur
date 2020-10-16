@@ -3,11 +3,13 @@ import {Row, Col, Form, Button, ProgressBar, Alert} from 'react-bootstrap'
 import Dropzone from 'react-dropzone'
 import QrReader from 'react-qr-reader'
 
+import axios from 'axios'
+
 import {chargerClePrivee} from 'millegrilles.common/lib/forgecommon'
 import {detecterAppareilsDisponibles} from 'millegrilles.common/lib/detecterAppareils'
-import { genererNouvelleCleMillegrille, dechiffrerCle, conserverCleChiffree, chargerClePriveeForge } from '../components/pkiHelper'
+import { genererNouvelleCleMillegrille, dechiffrerCle, preparerCleCertMillegrille, chargerClePriveeForge } from '../components/pkiHelper'
 
-// import { signerChallengeCertificat } from '../components/pkiHelper'
+import { signerCSRIntermediaire } from '../components/pkiHelper'
 
 export class ChargementClePrivee extends React.Component {
 
@@ -41,13 +43,17 @@ export class ChargementClePrivee extends React.Component {
   async chargerCle() {
     if(this.state.certificat && this.state.motdepasse && this.state.cleChiffree) {
       try {
-        const clesPrivees = await conserverCleChiffree(this.state.certificat, this.state.cleChiffree, this.state.motdepasse)
-        console.debug("Chargement cert, cles : %O", clesPrivees)
+        const infoClecertMillegrille = await preparerCleCertMillegrille(this.state.certificat, this.state.cleChiffree, this.state.motdepasse)
+        console.debug("Chargement cert, cles : %O", infoClecertMillegrille)
 
-        if(clesPrivees) {
+        if(infoClecertMillegrille) {
           this.setState({clePriveeChargee: true, motdepasse: '', cleChiffree: ''})
           this.fermerScanQr() // S'assurer que la fenetre codes QR est fermee, on a la cle
-          this.props.rootProps.setIdmg(clesPrivees.idmg)
+          this.props.rootProps.setInfoClecertMillegrille(infoClecertMillegrille)
+
+          // Generer nouveau certificat de noeud protege
+          this.traiterCsr()
+
         } else {
           this.setState({clePriveeChargee: false, afficherErreur: true})
         }
@@ -58,6 +64,24 @@ export class ChargementClePrivee extends React.Component {
     } else {
       console.debug("Cle, cert pas pret : %O", this.state)
     }
+  }
+
+  async traiterCsr() {
+    const csrResponse = await axios.get('/installation/api/csr')
+    // console.debug("CSR recu :\n%O", csrResponse)
+    // const info = await signerCSRIntermediaire(this.props.idmg, csrResponse.data, {cleForge: this.props.cleForge, clesSubtle: this.props.clesSubtle})
+    const infoClecertMillegrille = this.props.rootProps.infoClecertMillegrille
+    console.debug("Generer certificat intermediaire pour noeud protege : %O", infoClecertMillegrille)
+    const info = await signerCSRIntermediaire(csrResponse.data, this.props.rootProps.infoClecertMillegrille)
+    console.debug("Certificat intermediaire : %O", info)
+
+    // console.debug("Info generer cert intermediaire: \n%O", info)
+    this.setState({
+      certificatintermediairePem: info.pem,
+      certificatintermediaire: info.cert,
+    })
+
+    this.props.rootProps.setInfoCertificatNoeudProtege(info)
   }
 
   changerChamp = event => {
@@ -180,12 +204,17 @@ export class ChargementClePrivee extends React.Component {
 
 
     var contenu = ''
-    if(this.state.clePriveeChargee) {
+    var infoCertificatNoeudProtege = this.props.rootProps.infoCertificatNoeudProtege
+    if(this.state.clePriveeChargee && this.props.rootProps.infoCertificatNoeudProtege) {
       contenu = (
         <Alert variant="success">
           <Alert.Heading>Cle prete</Alert.Heading>
           <p>Certificat et cle de MilleGrille charges correctement.</p>
           <p>IDMG charge : {this.props.rootProps.idmg}</p>
+          <p>
+            Certificat intermediaire genere pour le noeud protege :
+            {infoCertificatNoeudProtege.cert.subject.getField('CN').value}
+          </p>
         </Alert>
       )
     } else {
