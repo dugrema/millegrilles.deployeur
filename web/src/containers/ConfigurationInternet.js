@@ -1,142 +1,11 @@
 import React from 'react'
-import {} from 'react-bootstrap'
+import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } from 'react-bootstrap';
+import axios from 'axios'
+import https from 'https'
 
-function PageConfigurationInternet(props) {
+const RE_DOMAINE = /^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,6}$/
 
-  var flagDomaineInvalide = null;
-  if( ! props.domaineValide ) {
-    flagDomaineInvalide = <i className="fa fa-close btn-outline-danger"/>
-  }
-
-  var configurationAvancee = ''
-  if(props.configurationAvancee) {
-    var cloudnsParams = ''
-    if (props.modeCreation === 'dns_cloudns') {
-      cloudnsParams = (
-        <div>
-          <label htmlFor="cloudns-subid">Configuration ClouDNS</label>
-          <InputGroup className="mb-3">
-            <InputGroup.Prepend>
-              <InputGroup.Text id="cloudns-subid">
-                SubID (numero)
-              </InputGroup.Text>
-            </InputGroup.Prepend>
-            <FormControl id="cloudns-subid"
-                         aria-describedby="cloudns-subid"
-                         name="cloudnsSubid"
-                         value={props.cloudnsSubid}
-                         onChange={props.changerTextfield} />
-          </InputGroup>
-          <InputGroup className="mb-3">
-            <InputGroup.Prepend>
-              <InputGroup.Text id="cloudns-password">
-                Mot de passe
-              </InputGroup.Text>
-            </InputGroup.Prepend>
-            <FormControl id="cloudns-password"
-                         aria-describedby="cloudns-password"
-                         type="password"
-                         name="cloudnsPassword"
-                         value={props.cloudnsPassword}
-                         onChange={props.changerTextfield} />
-          </InputGroup>
-        </div>
-      )
-    }
-
-    configurationAvancee = (
-      <div>
-        <Form.Check id="certificat-test">
-          <Form.Check.Input type='checkbox' name="modeTest" value='true' onChange={props.setCheckbox} value={props.modeTest}/>
-          <Form.Check.Label>Certificat de test</Form.Check.Label>
-        </Form.Check>
-
-        <Form.Group controlId="modeCreationCertificat">
-          <Form.Label>Mode de creation certificat</Form.Label>
-          <Form.Control as="select" value={props.modeCreation} onChange={props.setModeCreation}>
-            <option value="webroot">Mode http (port 80)</option>
-            <option value="dns_cloudns">ClouDNS</option>
-          </Form.Control>
-        </Form.Group>
-
-        {cloudnsParams}
-      </div>
-    )
-  }
-
-  return (
-    <Container>
-      <Row>
-        <Col>
-          <h3>Configurer le domaine de la MilleGrille</h3>
-
-          Nouveau noeud de MilleGrille. Veuillez suivre les etapes pour demarrer votre noeud.
-        </Col>
-      </Row>
-
-      <Row>
-        <Col>
-          <h4>Configuration prealable</h4>
-
-          <ul>
-            <li>Nom de domaine</li>
-            <li>Configurer les ports TCP 443 et 80 sur le routeur</li>
-          </ul>
-
-          <p>
-            Adresse IPv4 detectee pour le noeud : {props.ipDetectee}
-          </p>
-
-          <p>
-            Le domaine est une adresse deja assignee publiquement (sur internet) avec un serveur DNS.
-            Par exemple, le domaine peut etre : www.millegrilles.com, mon.site.org, etc. Si vous n'en
-            avez pas deja une pour votre ordinateur, il est possible d'utiliser un fournisseur gratuit (e.g. dyndns).
-          </p>
-
-          <p>
-            Le port 443 (https) doit etre correctement configure, c'est a dire ouvert et dirige vers la bonne adresse IP.
-            Pour utiliser le mode simple de configuration du certificat SSL, il faut aussi configurer le port 80 (http).
-          </p>
-
-        </Col>
-      </Row>
-
-      <Row>
-        <Col>
-          <h3>Configuration</h3>
-        </Col>
-      </Row>
-      <Form>
-        <label htmlFor="noeud-url">URL d'acces au noeud {flagDomaineInvalide}</label>
-        <InputGroup className="mb-3">
-          <InputGroup.Prepend>
-            <InputGroup.Text id="noeud-addon3">
-              https://
-            </InputGroup.Text>
-          </InputGroup.Prepend>
-          <FormControl id="noeud-url" aria-describedby="noeud-addon3" value={props.domaine} onChange={props.changerDomaine}/>
-        </InputGroup>
-
-        <Form.Check id="configuration-avancee">
-          <Form.Check.Input type='checkbox' name="configurationAvancee" value='true' onChange={props.setCheckbox} value={props.configurationAvancee}/>
-          <Form.Check.Label>Configuration avancee</Form.Check.Label>
-        </Form.Check>
-
-        {configurationAvancee}
-
-      </Form>
-
-      <Row className="boutons-installer">
-        <Col>
-          <Button onClick={props.configurerDomaine} value="true" disabled={!props.domaineValide}>Suivant</Button>
-        </Col>
-      </Row>
-
-    </Container>
-  )
-}
-
-class PageConfigurationDomaine extends React.Component {
+export class PageConfigurationInternet extends React.Component {
   state = {
     domaine: this.props.fqdnDetecte,
     domaineValide: RE_DOMAINE.test(this.props.fqdnDetecte),
@@ -212,6 +81,128 @@ class PageConfigurationDomaine extends React.Component {
 
     return pageAffichee
   }
+}
+
+function PageConfigurationDomaineSetup(props) {
+
+  var flagDomaineInvalide = null;
+  if( ! props.domaineValide ) {
+    flagDomaineInvalide = <i className="fa fa-close btn-outline-danger"/>
+  }
+
+  var configurationAvancee = ''
+  if(props.configurationAvancee) {
+    var cloudnsParams = ''
+    if (props.modeCreation === 'dns_cloudns') {
+      cloudnsParams = (
+        <div>
+          <label htmlFor="cloudns-subid">Configuration ClouDNS</label>
+          <InputGroup className="mb-3">
+            <InputGroup.Prepend>
+              <InputGroup.Text id="cloudns-subid">
+                SubID (numero)
+              </InputGroup.Text>
+            </InputGroup.Prepend>
+            <FormControl id="cloudns-subid"
+                         aria-describedby="cloudns-subid"
+                         name="cloudnsSubid"
+                         value={props.cloudnsSubid}
+                         onChange={props.changerTextfield} />
+          </InputGroup>
+          <InputGroup className="mb-3">
+            <InputGroup.Prepend>
+              <InputGroup.Text id="cloudns-password">
+                Mot de passe
+              </InputGroup.Text>
+            </InputGroup.Prepend>
+            <FormControl id="cloudns-password"
+                         aria-describedby="cloudns-password"
+                         type="password"
+                         name="cloudnsPassword"
+                         value={props.cloudnsPassword}
+                         onChange={props.changerTextfield} />
+          </InputGroup>
+        </div>
+      )
+    }
+
+    configurationAvancee = (
+      <div>
+        <Form.Check id="certificat-test">
+          <Form.Check.Input type='checkbox' name="modeTest" value='true' onChange={props.setCheckbox} value={props.modeTest}/>
+          <Form.Check.Label>Certificat de test</Form.Check.Label>
+        </Form.Check>
+
+        <Form.Group controlId="modeCreationCertificat">
+          <Form.Label>Mode de creation certificat</Form.Label>
+          <Form.Control as="select" value={props.modeCreation} onChange={props.setModeCreation}>
+            <option value="webroot">Mode http (port 80)</option>
+            <option value="dns_cloudns">ClouDNS</option>
+          </Form.Control>
+        </Form.Group>
+
+        {cloudnsParams}
+      </div>
+    )
+  }
+
+  return (
+    <Container>
+      <Row>
+        <Col>
+          <h3>Configurer le domaine de la MilleGrille</h3>
+        </Col>
+      </Row>
+
+      <Row>
+        <Col>
+          <h4>Configuration prealable</h4>
+
+          <ul>
+            <li>Nom de domaine</li>
+            <li>Configurer les ports TCP 443 et 80 sur le routeur</li>
+          </ul>
+
+          <p>
+            Adresse IPv4 detectee pour le noeud : {props.ipDetectee}
+          </p>
+
+        </Col>
+      </Row>
+
+      <Row>
+        <Col>
+          <h3>Configuration</h3>
+        </Col>
+      </Row>
+      <Form>
+        <label htmlFor="noeud-url">URL d'acces au noeud {flagDomaineInvalide}</label>
+        <InputGroup className="mb-3">
+          <InputGroup.Prepend>
+            <InputGroup.Text id="noeud-addon3">
+              https://
+            </InputGroup.Text>
+          </InputGroup.Prepend>
+          <FormControl id="noeud-url" aria-describedby="noeud-addon3" value={props.domaine} onChange={props.changerDomaine}/>
+        </InputGroup>
+
+        <Form.Check id="configuration-avancee">
+          <Form.Check.Input type='checkbox' name="configurationAvancee" value='true' onChange={props.setCheckbox} value={props.configurationAvancee}/>
+          <Form.Check.Label>Configuration avancee</Form.Check.Label>
+        </Form.Check>
+
+        {configurationAvancee}
+
+      </Form>
+
+      <Row className="boutons-installer">
+        <Col>
+          <Button onClick={props.configurerDomaine} value="true" disabled={!props.domaineValide}>Suivant</Button>
+        </Col>
+      </Row>
+
+    </Container>
+  )
 }
 
 class PageConfigurationDomaineAttente extends React.Component {
@@ -379,8 +370,7 @@ class PageConfigurationDomaineAttente extends React.Component {
       etapes.push(<li key="3">Configuration du certificat SSL {etatConfigurationSsl}</li>)
     }
     if(this.state.certificatRecu) {
-      const etatAttenteServeur = this.state.attenteServeur?complet:spinner
-      etapes.push(<li key="4">Attente redemarrage serveur {etatAttenteServeur}</li>)
+      etapes.push(<li key="4">Certificat recu, serveur pret {complet}</li>)
     }
 
     var page = ''
@@ -390,9 +380,6 @@ class PageConfigurationDomaineAttente extends React.Component {
               retour={this.props.retour}
               reessayer={this.testerAccesUrl}
               {...this.state} />
-    } else if(this.state.serveurWebRedemarre) {
-      page = <ConfigurationCompletee
-              domaine={this.props.domaine} />
     }
 
     return (
