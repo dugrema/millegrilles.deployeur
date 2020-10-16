@@ -1,83 +1,51 @@
-import React, {useState} from 'react'
-import { Form, Container, Row, Col, Button, Alert, FormControl, InputGroup } from 'react-bootstrap'
-import { Trans } from 'react-i18next'
+import React from 'react'
+import {Row, Col, Form, Button, ProgressBar} from 'react-bootstrap'
 import Dropzone from 'react-dropzone'
+import QrReader from 'react-qr-reader'
 
+import {chargerClePrivee} from 'millegrilles.common/lib/forgecommon'
+import {detecterAppareilsDisponibles} from 'millegrilles.common/lib/detecterAppareils'
 import { genererNouvelleCleMillegrille, dechiffrerCle, conserverCleChiffree, chargerClePriveeForge } from '../components/pkiHelper'
 
-export class ChargerCleCert extends React.Component {
+// import { signerChallengeCertificat } from '../components/pkiHelper'
+
+export class ChargementClePrivee extends React.Component {
 
   state = {
-    motDePasse: '',
-    cleChiffree: '',
     certificat: '',
+    motdepasse: '',
+    cleChiffree: '',
 
     clePriveeChargee: false,
 
-    erreurChargement: '',
+    modeScanQR: false,
+    videoinput: false,
+
+    resultatScan: '',
+
+    partiesDeCle: {},
+    nombrePartiesDeCle: '',
+    nombrePartiesDeCleScannees: 0,
+
+    partiesDeCertificat: {},
+    nombrePartiesDeCertificatTotal: '',
+    nombrePartiesDeCertificatScannes: 0,
   }
 
-  changerMotDePasse = event => {
-    const {value} = event.currentTarget
-    this.setState({motDePasse: value})
-
-    this.chargerCle()
-  }
-
-  uploadFileProcessor = async acceptedFiles => {
-    // Traitement d'un fichier a uploader.
-    // console.debug(acceptedFiles);
-
-    // console.debug("Fichiers")
-    acceptedFiles.forEach( async file => {
-      // Ajouter le fichier a l'upload queue
-      // console.debug(file)
-      if( file.type === 'application/json' ) {
-        // console.debug("Fichier JSON");
-        var reader = new FileReader();
-        const {contenuFichier} = await new Promise((resolve, reject)=>{
-          reader.onload = () => {
-            var buffer = reader.result;
-            // console.debug("Ficher charge dans buffer, taille " + buffer.byteLength);
-            const contenuFichier =  String.fromCharCode.apply(null, new Uint8Array(buffer));
-            resolve({contenuFichier});
-          }
-          reader.onerror = err => {
-            reject(err);
-          }
-          reader.readAsArrayBuffer(file);
-        });
-
-        // console.debug(contenuFichier);
-        const contenuJson = JSON.parse(contenuFichier);
-        // console.debug(contenuJson);
-
-        const {racine} = contenuJson;
-        const maj = {}
-        if(racine) {
-          if(racine.cleChiffree) {
-            maj.cleChiffree = racine.cleChiffree
-          }
-          if(racine.certificat) {
-            maj.certificat =  racine.certificat
-          }
-        }
-
-        this.setState({...maj}, ()=>{this.chargerCle()})
-      }
-    });
-
+  componentDidMount() {
+    detecterAppareilsDisponibles().then(apps=>{console.debug("Apps detectees : %O", apps); this.setState({...apps})})
   }
 
   async chargerCle() {
-    if(this.state.certificat && this.state.motDePasse && this.state.cleChiffree) {
+    if(this.state.certificat && this.state.motdepasse && this.state.cleChiffree) {
       try {
-        const clesPrivees = await conserverCleChiffree(this.state.certificat, this.state.cleChiffree, this.state.motDePasse)
+        const clesPrivees = await conserverCleChiffree(this.state.certificat, this.state.cleChiffree, this.state.motdepasse)
+        console.debug("Chargement cert, cles : %O", clesPrivees)
 
         if(clesPrivees) {
-          this.setState({clePriveeChargee: true})
-          this.props.rootProps.setInfo({idmg: clesPrivees.idmg})
-          this.props.setCertificat(this.state.certificat)
+          this.setState({clePriveeChargee: true, motdepasse: '', cleChiffree: ''})
+          this.fermerScanQr() // S'assurer que la fenetre codes QR est fermee, on a la cle
+          // this.props.rootProps.setInfo({idmg: clesPrivees.idmg})
         } else {
           this.setState({clePriveeChargee: false})
         }
@@ -85,100 +53,324 @@ export class ChargerCleCert extends React.Component {
         console.error("Erreur chargement cle\n%O", err)
         this.setState({erreurChargement: err})
       }
+    } else {
+      console.debug("Cle, cert pas pret : %O", this.state)
     }
   }
 
-  suivant = event => {
-    this.setState({})
+  changerChamp = event => {
+    const {name, value} = event.currentTarget
+    this.setState({[name]: value}, async _ =>{
+      console.debug("State : %O", this.state)
+    //   if(this.state.cleChiffree && this.state.motdepasse) {
+    //     try {
+    //       const signature = await signerChallengeCertificat(
+    //         this.state.cleChiffree, this.state.motdepasse, this.props.challengeCertificat)
+    //       console.debug("Signature : %O", signature)
+    //       this.props.setReponseCertificat(signature)
+    //     } catch(err) {
+    //       console.warn("Erreur chargement cle : %O", err)
+    //     }
+    //   }
+    })
+  }
+
+  recevoirFichiers = async acceptedFiles => {
+    const resultats = await traiterUploads(acceptedFiles)
+    console.debug("Resultats upload : %O", resultats)
+
+    // Format fichier JSON : {idmg, racine: {cleChiffree, certificat}}
+    if(resultats.length > 0) {
+      const resultat = resultats[0]
+      const cleChiffree = resultat.racine.cleChiffree,
+            certificat = resultat.racine.certificat
+      if(cleChiffree && certificat) {
+        await new Promise((resolve, reject)=>{
+          this.setState({cleChiffree, certificat}, _=>{
+            // Tenter de charger la cle
+            this.chargerCle()
+            resolve()
+          })
+        })
+      }
+    }
+  }
+
+  activerScanQr = _ => {this.setState({modeScanQR: true})}
+  fermerScanQr = _ => {this.setState({modeScanQR: false})}
+  erreurScanQr = event => {console.error("Erreur scan QR: %O", event); this.fermerScanQr()}
+  handleScan = async data => {
+    //console.debug("Scan : %O", data)
+    if (data) {
+      await new Promise((resolve, reject)=>{
+        this.setState({resultatScan: data}, _=>{resolve()})
+      })
+
+      const lignesQR = data.split('\n')
+      if(lignesQR.length === 1) {
+        // Probablement le mot de passe
+        this.setState({motdepasse: data}, _=>{this.chargerCle()})
+      } else if(lignesQR.length === 2) {
+        // Probablement une partie decle ou certificat
+        var tag = lignesQR[0].split(';')
+        if(tag.length === 3) {
+          const type = tag[0],
+                index = tag[1],  // Garder en str pour cle de dict
+                count = Number(tag[2])
+
+          if(type === 'racine.cle') {
+            const partiesDeCle = {...this.state.partiesDeCle, [index]: lignesQR[1]}
+            const comptePartiesDeCle = Object.keys(partiesDeCle).length
+            await new Promise((resolve, reject)=>{
+              this.setState({
+                partiesDeCle,
+                nombrePartiesDeCle: count,
+                nombrePartiesDeCleScannees: comptePartiesDeCle,
+              }, _=>{resolve()})
+            })
+          } else if(type === 'racine.cert') {
+            const partiesDeCertificat = {...this.state.partiesDeCertificat, [index]: lignesQR[1]}
+            const comptePartiesDeCertificat = Object.keys(partiesDeCertificat).length
+            this.setState({
+              partiesDeCertificat,
+              nombrePartiesDeCertificatTotal: count,
+              nombrePartiesDeCertificatScannes: comptePartiesDeCertificat,
+            })
+          }
+        }
+      }
+
+      // Verifier si on a toute l'information (mot de passe et cle)
+      if( this.state.nombrePartiesDeCle === this.state.nombrePartiesDeCleScannees ) {
+        // On a toutes les parties de cle, on les assemble
+        const cleChiffree = assemblerCleChiffree(this.state.partiesDeCle)
+        this.setState({cleChiffree}, _=>{this.chargerCle()})
+      }
+
+      // Verifier si on a toute l'information de certificat
+      if( this.state.nombrePartiesDeCertificatTotal === this.state.nombrePartiesDeCertificatScannes ) {
+        // On a toutes les parties de cle, on les assemble
+        const certificat = assemblerCertificat(this.state.partiesDeCertificat)
+        this.setState({certificat}, _=>{this.chargerCle()})
+      }
+
+    }
   }
 
   render() {
 
-    var erreurChargement = ''
-    if(this.state.erreurChargement) {
-      erreurChargement = <ErreurChargement />
+    if(this.state.modeScanQR) {
+      return <QRCodeReader fermer={this.fermerScanQr}
+                           resultatScan={this.state.resultatScan}
+                           handleError={this.erreurScanQr}
+                           handleScan={this.handleScan}
+                           nombrePartiesDeCleTotal={this.state.nombrePartiesDeCle}
+                           nombrePartiesDeCleScannees={this.state.nombrePartiesDeCleScannees}
+                           nombrePartiesDeCertificatTotal={this.state.nombrePartiesDeCertificatTotal}
+                           nombrePartiesDeCertificatScannes={this.state.nombrePartiesDeCertificatScannes}
+                           motdepasse={this.state.motdepasse} />
+    }
+
+    var bontonQrScan = ''
+    if(this.state.videoinput) {
+      bontonQrScan = (
+        <Button variant="secondary" onClick={this.activerScanQr}>
+          QR Scan
+        </Button>
+      )
+    }
+
+    var clePrete = ''
+    if(this.props.reponseCertificat) {
+      clePrete = (
+        <span>
+          <i className="fa fa-check"/>
+          Cle OK
+        </span>
+      )
     }
 
     return (
-      <Container>
-        <h2>Charger cle et certificat</h2>
+      <>
+        <Row>
+          <Col><h3>Importer cle privee de MilleGrille</h3></Col>
+        </Row>
 
-        {erreurChargement}
+        <Form.Group controlId="formMotdepasse">
+          <Form.Label>Mot de passe de cle</Form.Label>
+          <Form.Control
+            type="text"
+            name="motdepasse"
+            value={this.state.motdepasse}
+            autoComplete="false"
+            onChange={this.changerChamp}
+            placeholder="AAAA-bbbb-1111-2222" />
+        </Form.Group>
 
-        <p>
-          Cette etape sert a verifier que votre copie de surete de la cle et du
-          mot de passe fonctionnent correctement.
-        </p>
+        <Row>
+          <Col>
 
-        <Form>
+            <Dropzone onDrop={this.recevoirFichiers}>
+              {({getRootProps, getInputProps}) => (
+                <span className="uploadIcon btn btn-secondary">
+                  <span {...getRootProps()}>
+                    <input {...getInputProps()} />
+                    <span className="fa fa-upload fa-2x"/>
+                  </span>
+                </span>
+              )}
+            </Dropzone>
 
-          <Row>
-            <Col>
-              <h3>Mot de passe</h3>
-            </Col>
-          </Row>
+            {bontonQrScan}
 
-          <InputGroup>
-            <FormControl
-              placeholder="Mot de passe"
-              aria-label="Mot de passe"
-              aria-describedby="formMotDePasse"
-              onChange={this.changerMotDePasse}
-              value={this.state.motDePasse}
-            />
-            <InputGroup.Append>
-              <Button variant="secondary" className="bouton" onClick={this.chargerMotdepasseQR}>
-                  <Trans>backup.cles.boutonQR</Trans>
-              </Button>
-            </InputGroup.Append>
-          </InputGroup>
+          </Col>
+          <Col>
+            {clePrete}
+          </Col>
+        </Row>
 
-          <Row>
-            <Col>
-              <h3>Charger certificat et cle</h3>
-            </Col>
-          </Row>
+        <Row>
+          <Col>
+            <pre>{this.state.cleChiffree}</pre>
+          </Col>
+        </Row>
 
-          <Row className="boutons-installer">
-            <Col xs={8}>
-              <Button disabled={ ! this.state.motDePasse}>Charger Certificat et Cle QR</Button>
-            </Col>
-            <Col xs={4}>
-              <Dropzone onDrop={this.uploadFileProcessor} disabled={! this.state.motDePasse}>
-                {({getRootProps, getInputProps}) => (
-                  <section className="uploadIcon">
-                    <div {...getRootProps()}>
-                      <input {...getInputProps()} />
-                      <span className="fa fa-upload fa-2x"/>
-                    </div>
-                  </section>
-                )}
-              </Dropzone>
-            </Col>
-          </Row>
-
-          <Row className="boutons-installer">
-            <Col>
-              <Button onClick={this.props.retour} value='false'>Retour</Button>
-              <Button onClick={this.props.suivant} value='true' disabled={!this.state.clePriveeChargee}>Suivant</Button>
-            </Col>
-          </Row>
-
-        </Form>
-      </Container>
+        <Row className="boutons-installer">
+          <Col>
+            <Button onClick={this.props.retour} value='false'>Retour</Button>
+            <Button onClick={this.props.suivant} value='true' disabled={!this.state.clePriveeChargee}>Suivant</Button>
+          </Col>
+        </Row>
+      </>
     )
   }
+
 }
 
-function ErreurChargement(props) {
-  const [show, setShow] = useState(true);
+async function traiterUploads(acceptedFiles) {
 
-  if(show) {
-    return (
-      <Alert variant="danger" onClose={()=>setShow(false)} dismissible >
-        Erreur chargement de la cle
-      </Alert>
-    )
+  const resultats = await Promise.all(acceptedFiles.map(async file =>{
+    if( file.type === 'application/json' ) {
+      var reader = new FileReader();
+      const fichierCharge = await new Promise((resolve, reject)=>{
+        reader.onload = () => {
+          var buffer = reader.result;
+          const contenuFichier =  String.fromCharCode.apply(null, new Uint8Array(buffer));
+          resolve({contenuFichier});
+        }
+        reader.onerror = err => {
+          reject(err);
+        }
+        reader.readAsArrayBuffer(file);
+      })
+
+      console.debug(fichierCharge)
+
+      const contenuJson = JSON.parse(fichierCharge.contenuFichier)
+
+      return contenuJson
+    }
+  }))
+
+  return resultats
+}
+
+function QRCodeReader(props) {
+
+  var progresMotdepasse = 0, labelMotdepasse = 'Non charge'
+  if(props.motdepasse) {
+    progresMotdepasse = 100
+    labelMotdepasse = 'Charge'
   }
-  return ''
+
+  var progresCleMillegrille = 0
+  if(props.nombrePartiesDeCleTotal) {
+    progresCleMillegrille = Math.round(props.nombrePartiesDeCleScannees / props.nombrePartiesDeCleTotal * 100)
+  }
+
+  var progresCertificat = 0
+  if(props.nombrePartiesDeCertificatTotal) {
+    progresCertificat = Math.round(props.nombrePartiesDeCertificatScannes / props.nombrePartiesDeCertificatTotal * 100)
+  }
+
+  return (
+    <>
+      <QrReader
+        delay={300}
+        onError={props.handleError}
+        onScan={props.handleScan}
+        style={{ width: '75%', 'text-align': 'center' }}
+        />
+      <Button onClick={props.fermer}>Fermer</Button>
+
+      <Row>
+        <Col xs={6}>
+          Mot de passe
+        </Col>
+        <Col xs={6}>
+          <ProgressBar variant="secondary" now={progresMotdepasse} label={labelMotdepasse} />
+        </Col>
+      </Row>
+
+      <Row>
+        <Col xs={6}>
+          Cle de MilleGrille
+        </Col>
+        <Col xs={6}>
+          <ProgressBar variant="secondary" now={progresCleMillegrille} label={`${progresCleMillegrille}%`} />
+        </Col>
+      </Row>
+
+      <Row>
+        <Col xs={6}>
+          Certificat
+        </Col>
+        <Col xs={6}>
+          <ProgressBar variant="secondary" now={progresCertificat} label={`${progresCertificat}%`} />
+        </Col>
+      </Row>
+
+      <pre>
+        {props.resultatScan}
+      </pre>
+    </>
+  )
 }
+
+function assemblerCleChiffree(partiesDeCle) {
+  var cleChiffree = '', nombreParties = Object.keys(partiesDeCle).length
+  for( let idx=1; idx <= nombreParties; idx++ ) {
+    cleChiffree += partiesDeCle[''+idx]
+  }
+
+  // Ajouter separateurs cle chiffree
+  const DEBUT_PRIVATE_KEY = '-----BEGIN ENCRYPTED PRIVATE KEY-----\n',
+        FIN_PRIVATE_KEY = '\n-----END ENCRYPTED PRIVATE KEY-----\n'
+  cleChiffree = DEBUT_PRIVATE_KEY + cleChiffree + FIN_PRIVATE_KEY
+
+  return cleChiffree
+}
+
+function assemblerCertificat(partiesDeCertificat) {
+  var certificat = '', nombreParties = Object.keys(partiesDeCertificat).length
+  for( let idx=1; idx <= nombreParties; idx++ ) {
+    certificat += partiesDeCertificat[''+idx]
+  }
+
+  // Ajouter separateurs cle chiffree
+  const DEBUT_CERTIFICATE = '-----BEGIN CERTIFICATE-----\n',
+        FIN_CERTIFICATE = '\n-----END CERTIFICATE-----\n'
+  certificat = DEBUT_CERTIFICATE + certificat + FIN_CERTIFICATE
+
+  return certificat
+}
+
+// function dechiffrerCle(cleChiffree, motdepasse) {
+//   try {
+//     const clePrivee = chargerClePrivee(cleChiffree, {password: motdepasse})
+//     console.debug("Cle privee : %O", clePrivee)
+//     return clePrivee
+//   } catch(err) {
+//     return null
+//   }
+// }

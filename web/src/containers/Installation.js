@@ -5,9 +5,9 @@ import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } fro
 
 // import { InstallationNouvelle } from './InstallationNouvelle'
 import { SelectionnerTypeNoeud } from './SelectionTypeNoeud'
-import { ChargerCleCert } from './ChargerCleCert'
+import { ChargementClePrivee } from './ChargerCleCert'
 
-const MAPPING_PAGES = {SelectionnerTypeNoeud, ChargerCleCert}
+const MAPPING_PAGES = {SelectionnerTypeNoeud, ChargementClePrivee}
 const RE_DOMAINE = /^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,6}$/
 
 export class Installation extends React.Component {
@@ -81,7 +81,7 @@ export class Installation extends React.Component {
     // Transfere l'ecran a la page selon le type d'installation choisi (noeud, internet)
     console.debug("Affiche page, etat %O", this.state)
     if(this.state.typeNoeud === 'protege') {
-      this.setState({page: 'ChargerCleCert'})
+      this.setState({page: 'ChargementClePrivee'})
     } else if(['prive', 'public'].includes(this.state.typeNoeud)) {
       this.setState({page: ''})
     }
