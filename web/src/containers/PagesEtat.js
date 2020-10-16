@@ -4,28 +4,73 @@ import axios from 'axios'
 
 export class ConfigurationCompletee extends React.Component {
 
-  suivant = event => {
-    const url = 'https://' + this.props.domaine + '/installation'
-    window.location = url
+  state = {
+    err: '',
+    attente: false,
   }
+
+  redemarrer = event => {
+    // Transmettre information d'installation
+    // console.debug("Redemarrer, params: %O", this.props)
+    const infoCertificatNoeudProtege = this.props.rootProps.infoCertificatNoeudProtege,
+          infoClecertMillegrille = this.props.rootProps.infoClecertMillegrille
+
+    const paramsInstallation = {
+      certificatPem: infoCertificatNoeudProtege.pem,
+      chainePem: [infoCertificatNoeudProtege.pem, infoClecertMillegrille.certificat],
+      securite: '3.protege',
+    }
+
+    console.debug("Transmettre parametres d'installation: \n%O", paramsInstallation)
+
+    axios.post('/installation/api/initialisation', paramsInstallation)
+    .then(response=>{
+      console.debug("Recu reponse demarrage installation noeud\n%O", response)
+      this.setState({attente: true})
+      setTimeout(_=>{window.location.reload()}, 15000) // Attendre 15 secondes et recharger la page
+    })
+    .catch(err=>{
+      console.error("Erreur demarrage installation noeud\n%O", err)
+      this.setState({err: ''+err})
+    })
+  }
+
 
   render() {
 
+    var etat = (
+      <Alert variant="success">
+        <Alert.Heading>Configuration prete</Alert.Heading>
+        <p>
+          La configuration du noeud est prete.
+        </p>
+        <p>
+          Cliquez sur Redemarrer pour lancer l'installation du logiciel.
+        </p>
+      </Alert>
+    )
+    if(this.state.err) {
+      etat = (
+        <Alert variant="danger">
+          <Alert.Heading>Erreur installation</Alert.Heading>
+          <p>{this.state.err}</p>
+        </Alert>
+      )
+    } else if(this.state.attente) {
+      etat = (
+        <Alert variant="info">
+          <p>Redemarrage en cours</p>
+        </Alert>
+      )
+    }
+
     return (
       <div>
-        <Alert variant="success">
-          <Alert.Heading>Configuration du serveur web completee</Alert.Heading>
-          <p>Domaine : {this.props.domaine}</p>
-          <hr />
-          <p>La premiere partie de configuration du noeud est completee.</p>
-          <p>
-            Cliquez sur Suivant pour poursuivre le processus sur l'adresse
-            officielle du noeud.
-          </p>
-        </Alert>
+        {etat}
+
         <Row>
           <Col>
-            <Button onClick={this.suivant}>Suivant</Button>
+            <Button onClick={this.redemarrer} disabled={this.state.attente}>Redemarrer</Button>
           </Col>
         </Row>
       </div>
