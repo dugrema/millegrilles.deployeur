@@ -5,8 +5,9 @@ import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } fro
 
 // import { InstallationNouvelle } from './InstallationNouvelle'
 import { SelectionnerTypeNoeud } from './SelectionTypeNoeud'
+import { ChargerCleCert } from './ChargerCleCert'
 
-const MAPPING_PAGES = {SelectionnerTypeNoeud}
+const MAPPING_PAGES = {SelectionnerTypeNoeud, ChargerCleCert}
 const RE_DOMAINE = /^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,6}$/
 
 export class Installation extends React.Component {
@@ -70,10 +71,21 @@ export class Installation extends React.Component {
 
     this.setState({typeNoeud: event.currentTarget.value, internetDisponible})
   }
+
   setInternetDisponible = event => {
     const eventInfo = event.currentTarget
-    console.debug("EventInfo : %O", eventInfo)
     this.setState({internetDisponible: event.currentTarget.checked})
+  }
+
+  afficherPageTypeInstallation = event => {
+    // Transfere l'ecran a la page selon le type d'installation choisi (noeud, internet)
+    console.debug("Affiche page, etat %O", this.state)
+    if(this.state.typeNoeud === 'protege') {
+      this.setState({page: 'ChargerCleCert'})
+    } else if(['prive', 'public'].includes(this.state.typeNoeud)) {
+      this.setState({page: ''})
+    }
+
   }
 
   render() {
@@ -81,7 +93,7 @@ export class Installation extends React.Component {
       // Domaine est configure, on procede a l'installation
       var Page = SelectionnerTypeNoeud
 
-      if(this.props.page) {
+      if(this.state.page) {
         Page = MAPPING_PAGES[this.state.page]
       }
 
@@ -90,6 +102,7 @@ export class Installation extends React.Component {
               setPage={this.setPage}
               setTypeNoeud={this.setTypeNoeud}
               setInternetDisponible={this.setInternetDisponible}
+              afficherPageTypeInstallation={this.afficherPageTypeInstallation}
               {...this.state} />
       )
 

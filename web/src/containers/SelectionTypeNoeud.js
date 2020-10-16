@@ -106,7 +106,8 @@ function FormTypeNoeud(props) {
 
       <Row className="boutons-installer">
         <Col>
-          <Button onClick={props.setTypeNoeud} value="true" disabled={!props.typeNoeud}>Suivant</Button>
+          <Button onClick={props.afficherPageTypeInstallation} value="true"
+                  disabled={!props.typeNoeud}>Suivant</Button>
         </Col>
       </Row>
     </>
