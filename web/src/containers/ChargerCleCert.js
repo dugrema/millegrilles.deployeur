@@ -200,7 +200,7 @@ export class ChargementClePrivee extends React.Component {
 
         <Row className="boutons-installer">
           <Col>
-            <Button onClick={this.props.retour} value='false'>Retour</Button>
+            <Button onClick={this.props.setPage} value='SelectionnerTypeNoeud'>Retour</Button>
             <Button onClick={this.props.suivant} value='true' disabled={!this.state.clePriveeChargee}>Suivant</Button>
           </Col>
         </Row>
