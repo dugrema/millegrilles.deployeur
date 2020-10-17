@@ -1,5 +1,5 @@
 import React from 'react'
-import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } from 'react-bootstrap';
+import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } from 'react-bootstrap'
 import axios from 'axios'
 import https from 'https'
 
@@ -18,6 +18,10 @@ export class PageConfigurationInternet extends React.Component {
     cloudnsPassword: '',
 
     attenteServeur: false,
+  }
+
+  componentDidMount() {
+    console.debug("props : %O", this.props)
   }
 
   changerDomaine = event => {
@@ -55,15 +59,16 @@ export class PageConfigurationInternet extends React.Component {
     var pageAffichee = null
     if(this.state.attenteServeur) {
       pageAffichee = <PageConfigurationDomaineAttente
+                        rootProps={this.props.rootProps}
                         domaine={this.state.domaine}
                         modeCreation={this.state.modeCreation}
                         modeTest={this.state.modeTest}
                         cloudnsSubid={this.state.cloudnsSubid}
                         cloudnsPassword={this.state.cloudnsPassword}
-                        retour={this.revenirPageSaisie}
-                        {...this.props} />
+                        retour={this.revenirPageSaisie} />
     } else {
       pageAffichee = <PageConfigurationDomaineSetup
+                        rootProps={this.props.rootProps}
                         domaine={this.state.domaine}
                         domaineValide={this.state.domaineValide}
                         changerDomaine={this.changerDomaine}
@@ -75,8 +80,7 @@ export class PageConfigurationInternet extends React.Component {
                         cloudnsPassword={this.state.cloudnsPassword}
                         setModeCreation={this.setModeCreation}
                         modeCreation={this.state.modeCreation}
-                        configurerDomaine={this.configurerDomaine}
-                        {...this.props} />
+                        configurerDomaine={this.configurerDomaine} />
     }
 
     return pageAffichee
@@ -263,10 +267,23 @@ class PageConfigurationDomaineAttente extends React.Component {
   async configurerDomaine() {
     console.debug("Configurer le domaine " + this.props.domaine)
 
+    const infoCertificatNoeudProtege = this.props.rootProps.infoCertificatNoeudProtege,
+          infoClecertMillegrille = this.props.rootProps.infoClecertMillegrille
+
     const paramsDomaine = {
       domaine: this.props.domaine,
       modeTest: this.props.modeTest,
+      certificatPem: infoCertificatNoeudProtege.pem,
+      chainePem: [infoCertificatNoeudProtege.pem, infoClecertMillegrille.certificat],
+      securite: '3.protege',
     }
+
+    // const paramsInstallation = {
+    //   // certificatMillegrillePem: this.props.certificatMillegrillePem,
+    //   certificatPem: this.props.certificatIntermediairePem,
+    //   chainePem: [this.props.certificatIntermediairePem, this.props.certificatMillegrillePem],
+    //   securite: '3.protege',
+    // }
 
     if(this.props.modeCreation === 'dns_cloudns') {
       paramsDomaine['modeCreation'] = this.props.modeCreation
@@ -275,11 +292,31 @@ class PageConfigurationDomaineAttente extends React.Component {
     }
 
     try {
-      const reponseCreation = await axios.post('/installation/api/configurerDomaine', paramsDomaine)
-      this.setState({domaineConfigure: true}, ()=>{
-        // Declencher attente du certificat
-        this.attendreCertificatWeb()
+      //const reponseCreation = await axios.post('/installation/api/configurerDomaine', paramsDomaine)
+
+      console.debug("Transmettre parametres d'installation, domaine web: \n%O", paramsDomaine)
+
+      axios.post('/installation/api/initialisation', paramsDomaine)
+      .then(response=>{
+        console.debug("Recu reponse demarrage installation noeud\n%O", response)
+        // this.setState({attente: true})
+        // setTimeout(_=>{window.location.reload()}, 15000) // Attendre 15 secondes et recharger la page
+
+        this.setState({domaineConfigure: true}, ()=>{
+          // Declencher attente du certificat
+          this.attendreCertificatWeb()
+        })
+
       })
+      .catch(err=>{
+        console.error("Erreur demarrage installation noeud\n%O", err)
+        this.setState({err: ''+err})
+      })
+
+      // this.setState({domaineConfigure: true}, ()=>{
+      //   // Declencher attente du certificat
+      //   this.attendreCertificatWeb()
+      // })
 
     } catch(err) {
       console.error("Erreur configuration domaine\n%O", err)
