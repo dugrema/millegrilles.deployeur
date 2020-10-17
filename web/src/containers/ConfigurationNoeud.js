@@ -36,7 +36,7 @@ export class ConfigurerNoeud extends React.Component {
 function ConfigurerNoeudPrive(props) {
 
   const installer = event => {
-    configurerNoeudPrive(this.props, {}, err=>{
+    configurerNoeudPrive(props, {}, err=>{
       if(err) {
         console.error("Erreur demarrage installation noeud\n%O", err)
         return
@@ -403,10 +403,27 @@ async function installerNoeudProtege(props, params, callback) {
 
 }
 
-async function configurerNoeudPrive(props, callback) {
+async function configurerNoeudPrive(props, params, callback) {
+
+  const paramsInstallation = {
+    ...params,
+    idmg: props.rootProps.idmg,
+    securite: '2.prive',
+  }
+  console.debug("Transmettre parametres installation noeud prive : %O", paramsInstallation)
+
+  axios.post('/installation/api/configurerIdmg', paramsInstallation)
+  .then(reponse=>{
+    console.debug("Recu reponse demarrage installation noeud\n%O", reponse)
+    callback() // Aucune erreur
+  })
+  .catch(err=>{
+    console.error("Erreur demarrage installation noeud\n%O", err)
+    callback(err)
+  })
 
 }
 
 async function configurerNoeudPublic(props, callback) {
-
+  throw new Error("Pas implemente")
 }
