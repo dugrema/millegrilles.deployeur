@@ -51,6 +51,7 @@ export class Installation extends React.Component {
         domaine: dataReponse.domaine,
         securite: dataReponse.securite,
         noeudId: dataReponse.noeud_id,
+        certificat: dataReponse.certificat,
       }
 
       this.props.rootProps.setInfo(info)

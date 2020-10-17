@@ -1,24 +1,59 @@
 import React from 'react'
-import {Container, Row, Col, Form, InputGroup, FormControl, Button} from 'react-bootstrap'
+import {Container, Row, Col, Form, InputGroup, FormControl, Button, Alert} from 'react-bootstrap'
 
-export function SelectionnerTypeNoeud(props) {
+export class SelectionnerTypeNoeud extends React.Component {
 
+  state = {
+    afficherAide: false,
+  }
+
+  fermerAide = event => {
+    this.setState({afficherAide: false})
+  }
+
+  render() {
+
+    var informationTypes = (
+      <Row>
+        <Col>
+          <Button onClick={event=>{this.setState({afficherAide: true})}}><i className="fa fa-question-circle"/></Button>
+        </Col>
+      </Row>
+    )
+    if(this.state.afficherAide) {
+      informationTypes = <AideTypes fermer={this.fermerAide}/>
+    }
+
+    return (
+      <Container>
+        <Row>
+          <Col>
+            <h3>Configurer le nouveau noeud</h3>
+
+            Nouveau noeud de MilleGrille. Veuillez suivre les etapes pour demarrer votre noeud.
+          </Col>
+        </Row>
+
+        {informationTypes}
+
+        <Row>
+          <Col>
+            <h3>Type de noeud</h3>
+          </Col>
+        </Row>
+
+
+        <FormTypeNoeud {...this.props}/>
+
+      </Container>
+    )
+  }
+}
+
+function AideTypes(props) {
   return (
-    <Container>
-      <Row>
-        <Col>
-          <h3>Configurer le nouveau noeud</h3>
-
-          Nouveau noeud de MilleGrille. Veuillez suivre les etapes pour demarrer votre noeud.
-        </Col>
-      </Row>
-
-      <Row>
-        <Col>
-          <h3>Type de noeud</h3>
-        </Col>
-      </Row>
-
+    <Alert variant="info" onClose={props.fermer} dismissible>
+      <Alert.Heading>Information sur les types de noeud</Alert.Heading>
       <Row>
         <Col md={2}>Protege</Col>
         <Col md={10}>
@@ -57,12 +92,7 @@ export function SelectionnerTypeNoeud(props) {
           </ul>
         </Col>
       </Row>
-
-      <hr />
-
-      <FormTypeNoeud {...props}/>
-
-    </Container>
+    </Alert>
   )
 }
 
