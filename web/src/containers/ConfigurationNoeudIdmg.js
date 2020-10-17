@@ -19,6 +19,12 @@ export class ConfigurerNoeudIdmg extends React.Component {
   }
 
   render() {
+
+    var pageSuivante = 'ConfigurerNoeud'
+    if(this.props.internetDisponible) {
+      pageSuivante = 'PageConfigurationInternet'
+    }
+
     return (
       <>
         <h2>Configurer IDMG</h2>
@@ -31,7 +37,7 @@ export class ConfigurerNoeudIdmg extends React.Component {
         <Row>
           <Col>
             <Button variant="secondary">Retour</Button>
-            <Button onClick={this.suivant} value='ConfigurerNoeud'>Suivant</Button>
+            <Button onClick={this.suivant} value={pageSuivante}>Suivant</Button>
           </Col>
         </Row>
       </>

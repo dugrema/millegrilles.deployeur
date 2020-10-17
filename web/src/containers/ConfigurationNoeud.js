@@ -184,9 +184,9 @@ class PageConfigurationDomaineAttente extends React.Component {
   }
 
   async configurerDomaine() {
-    console.debug("Configurer le domaine " + this.props.domaine)
-
     const infoInternet = this.props.rootProps.infoInternet
+    console.debug("Configurer le domaine %s", infoInternet)
+
     const paramsDomaine = {
       domaine: infoInternet.domaine,
       modeTest: infoInternet.modeTest,
