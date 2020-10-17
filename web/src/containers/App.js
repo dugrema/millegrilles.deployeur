@@ -55,6 +55,10 @@ class App extends React.Component {
     this.setState({infoInternet})
   }
 
+  setIdmg = idmg => {
+    this.setState({idmg})
+  }
+
   componentDidMount() {
   }
 
@@ -68,6 +72,7 @@ class App extends React.Component {
       setInfoClecertMillegrille: this.setInfoClecertMillegrille,
       setInfoCertificatNoeudProtege: this.setInfoCertificatNoeudProtege,
       setInfoInternet: this.setInfoInternet,
+      setIdmg: this.setIdmg,
     }
 
     let PageMappee = this.state.page

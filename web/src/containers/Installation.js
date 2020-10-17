@@ -7,9 +7,9 @@ import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } fro
 import { SelectionnerTypeNoeud } from './SelectionTypeNoeud'
 import { ChargementClePrivee } from './ChargerCleCert'
 import { GenererNouvelleCle } from './GenererNouvelleCle'
-import { GenererCertificatNoeudProtege } from './InitialisationNoeudProtege'
 import { PageConfigurationInternet } from './ConfigurationInternet'
 import { ConfigurationCompletee } from './PagesEtat'
+import { ConfigurerNoeudIdmg } from './ConfigurationNoeudIdmg'
 import { ConfigurerNoeud } from './ConfigurationNoeud'
 
 const RE_DOMAINE = /^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,6}$/
@@ -17,10 +17,10 @@ const MAPPING_PAGES = {
   SelectionnerTypeNoeud,
   ChargementClePrivee,
   GenererNouvelleCle,
-  GenererCertificatNoeudProtege,
   PageConfigurationInternet,
   ConfigurationCompletee,
   ConfigurerNoeud,
+  ConfigurerNoeudIdmg,
 }
 
 export class Installation extends React.Component {
@@ -75,10 +75,6 @@ export class Installation extends React.Component {
   }
 
   setPage = event => { this.setState({page: event.currentTarget.value}) }
-
-  setIdmg = idmg => {
-    this.setState({idmg})
-  }
 
   setTypeNoeud = event => {
     const value = event.currentTarget.value
