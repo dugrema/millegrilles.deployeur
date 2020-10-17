@@ -33,13 +33,36 @@ export class ConfigurerNoeud extends React.Component {
   }
 }
 
-class ConfigurerNoeudPrive extends React.Component {
+function ConfigurerNoeudPrive(props) {
 
-  render() {
-    return (
-      <p>Configurer noeud prive</p>
-    )
+  const installer = event => {
+    configurerNoeudPrive(this.props, {}, err=>{
+      if(err) {
+        console.error("Erreur demarrage installation noeud\n%O", err)
+        return
+      }
+      // Recharger page apres 15 secondes
+      setTimeout(_=>{window.location.reload()}, 2000)
+    })
   }
+
+  const idmg = props.rootProps.idmg
+
+  return (
+    <>
+      <h2>Finaliser la configuration</h2>
+
+      <h3>Noeud prive</h3>
+      <p>Idmg : {idmg}</p>
+
+      <Row>
+        <Col className="bouton">
+          <Button onClick={props.precedent} value='false' variant="secondary">Precedent</Button>
+          <Button onClick={installer} value="true">Demarrer installation</Button>
+        </Col>
+      </Row>
+    </>
+  )
 
 }
 
@@ -47,29 +70,41 @@ function InstallerNoeudProtege(props) {
 
   const installer = event => {
     // Transmettre information d'installation
-    const idmg = props.rootProps.idmg,
-          infoCertificatNoeudProtege = props.rootProps.infoCertificatNoeudProtege,
-          infoClecertMillegrille = props.rootProps.infoClecertMillegrille
+    // const idmg = props.rootProps.idmg,
+    //       infoCertificatNoeudProtege = props.rootProps.infoCertificatNoeudProtege,
+    //       infoClecertMillegrille = props.rootProps.infoClecertMillegrille
+    //
+    // const paramsInstallation = {
+    //   // certificatMillegrillePem: this.props.certificatMillegrillePem,
+    //   certificatPem: infoCertificatNoeudProtege.pem,
+    //   chainePem: [infoCertificatNoeudProtege.pem, infoClecertMillegrille.certificat],
+    //   securite: '3.protege',
+    // }
+    //
+    // console.debug("Transmettre parametres d'installation: \n%O", paramsInstallation)
+    //
+    // axios.post('/installation/api/initialisation', paramsInstallation)
+    // .then(response=>{
+    //   console.debug("Recu reponse demarrage installation noeud\n%O", response)
+    //
+    //   // Recharger page apres 15 secondes
+    //   setTimeout(_=>{window.location.reload()}, 15000)
+    //
+    // })
+    // .catch(err=>{
+    //   console.error("Erreur demarrage installation noeud\n%O", err)
+    // })
+    installerNoeudProtege(props, {}, err=>{
 
-    const paramsInstallation = {
-      // certificatMillegrillePem: this.props.certificatMillegrillePem,
-      certificatPem: infoCertificatNoeudProtege.pem,
-      chainePem: [infoCertificatNoeudProtege.pem, infoClecertMillegrille.certificat],
-      securite: '3.protege',
-    }
+      if(err) {
+        console.error("Erreur demarrage installation noeud\n%O", err)
+        return
+      }
 
-    console.debug("Transmettre parametres d'installation: \n%O", paramsInstallation)
-
-    axios.post('/installation/api/initialisation', paramsInstallation)
-    .then(response=>{
-      console.debug("Recu reponse demarrage installation noeud\n%O", response)
-
+      console.debug("Recu reponse demarrage installation noeud")
       // Recharger page apres 15 secondes
       setTimeout(_=>{window.location.reload()}, 15000)
 
-    })
-    .catch(err=>{
-      console.error("Erreur demarrage installation noeud\n%O", err)
     })
   }
 
