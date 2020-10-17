@@ -229,7 +229,7 @@ export class ChargementClePrivee extends React.Component {
                                     cacherErreurChargement={this.cacherErreurChargement} />
     }
 
-    var pageSuivante = 'ConfigurationCompletee'
+    var pageSuivante = 'ConfigurerNoeud'
     if(this.props.internetDisponible) {
       // On doit passer par la configuration du certificat web SSL
       pageSuivante = 'PageConfigurationInternet'

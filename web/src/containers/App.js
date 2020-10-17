@@ -51,6 +51,10 @@ class App extends React.Component {
     this.setState({infoCertificatNoeudProtege})
   }
 
+  setInfoInternet = infoInternet => {
+    this.setState({infoInternet})
+  }
+
   componentDidMount() {
   }
 
@@ -63,6 +67,7 @@ class App extends React.Component {
       setInfo: this.setInfo,
       setInfoClecertMillegrille: this.setInfoClecertMillegrille,
       setInfoCertificatNoeudProtege: this.setInfoCertificatNoeudProtege,
+      setInfoInternet: this.setInfoInternet,
     }
 
     let PageMappee = this.state.page
