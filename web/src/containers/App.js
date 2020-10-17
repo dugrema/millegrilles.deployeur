@@ -1,7 +1,7 @@
 import React from 'react'
 import './App.css'
 import path from 'path'
-import {Jumbotron, Container, Row, Col, Button} from 'react-bootstrap'
+import {Jumbotron, Container, Row, Col, Button, Alert} from 'react-bootstrap'
 import QRCode from 'qrcode.react'
 
 import { LayoutMillegrilles } from './Layout'
@@ -120,18 +120,61 @@ function _setTitre(titre) {
 }
 
 function AfficherInformationNoeud(props) {
+
+  console.debug("Props - %O", props)
+
+  const listeInfo = []
+  if(props.rootProps.idmg) {
+    listeInfo.push(
+      <Row key='idmg'><Col sm={2}>Idmg</Col><Col sm={10}>{props.rootProps.idmg}</Col></Row>
+    )
+  }
+  listeInfo.push(
+    <Row key='securite'><Col sm={2}>Securite</Col><Col sm={10}>{props.rootProps.securite}</Col></Row>
+  )
+  if(props.rootProps.domaine) {
+    listeInfo.push(
+      <Row key='domaineWeb'><Col sm={2}>Domaine web</Col><Col sm={10}>{props.rootProps.domaine}</Col></Row>
+    )
+  }
+  listeInfo.push(
+    <Row key='noeudId'><Col sm={2}>Noeud Id</Col><Col sm={10}>{props.rootProps.noeudId}</Col></Row>
+  )
+  if(props.rootProps.certificat) {
+    listeInfo.push(
+      <Row key='certificat'>
+        <Col sm={2}>Certificat</Col>
+        <Col sm={10}><pre>{props.rootProps.certificat}</pre></Col>
+      </Row>
+    )
+  }
+
+  var etat = null, pret = false, boutons = ''
+  if(props.rootProps.certificat) {
+    etat = (
+      <Alert variant="success">Le noeud est initialise et actif.</Alert>
+    )
+    pret = true
+    boutons = <Button href="/millegrilles">Acceder</Button>
+  } else if(props.rootProps.idmg) {
+    etat = (
+      <Alert variant="warning">Le noeud est associe a une MilleGrille mais pas encore initialise.</Alert>
+    )
+  } else {
+    etat = (
+      <Alert variant="warning">Le noeud n'est pas associe a une MilleGrille</Alert>
+    )
+  }
+
   return (
     <Container>
       <h2>Information</h2>
 
-      <p>Le noeud est configure et actif.</p>
+      {etat}
 
-      <p>Idmg : {props.rootProps.idmg}</p>
-      <p>Noeud Id: {props.rootProps.noeudId}</p>
-      <p>Domaine : {props.rootProps.domaine}</p>
-      <p>Securite : {props.rootProps.securite}</p>
+      {listeInfo}
 
-      <Button href="/millegrilles">Acceder</Button>
+      {boutons}
 
     </Container>
   )
