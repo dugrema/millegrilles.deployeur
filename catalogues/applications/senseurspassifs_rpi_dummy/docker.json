@@ -1,19 +1,19 @@
 {
   "nom": "senseurspassifs_rpi_dummy",
-  "version": "1.31.14",
+  "version": "1.33.0",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
   ],
   "images": {
-    "millegrilles_senseurspassifs_rpi": {
-      "image": "millegrilles_senseurspassifs_rpi",
-      "version": "armv7l_1.31.4"
+    "millegrilles_consignation_python_main": {
+      "image": "millegrilles_consignation_python_main",
+      "version": "1.33.15"
     }
   },
   "dependances": [
     {
-      "image": "millegrilles_senseurspassifs_rpi",
+      "image": "millegrilles_consignation_python_main",
       "container_mode": true,
       "injecter_clecert": "/run/secrets",
       "config": {
@@ -24,7 +24,7 @@
           "--dummy",
           "nofork"
         ],
-        "name": "senseurspassifs_rpi",
+        "name": "senseurspassifs_rpi_dummy",
         "environment": [
           "MG_IDMG=${IDMG}",
           "MG_MQ_HOST=${MQ_HOST}",
