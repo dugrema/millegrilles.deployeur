@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs_rpi_dummy",
-  "version": "1.33.0",
+  "version": "1.33.2",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -8,7 +8,7 @@
   "images": {
     "millegrilles_consignation_python_main": {
       "image": "millegrilles_consignation_python_main",
-      "version": "1.33.15"
+      "version": "1.33.5"
     }
   },
   "dependances": [
@@ -19,9 +19,9 @@
       "config": {
         "command": [
           "-m",
-          "mgraspberry.raspberrypi.Demarreur",
+          "millegrilles.noeuds.Noeud",
           "--debug",
-          "--dummy",
+          "--dummysenseurs",
           "nofork"
         ],
         "name": "senseurspassifs_rpi_dummy",
