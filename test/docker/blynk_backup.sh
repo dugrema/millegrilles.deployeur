@@ -1,3 +1,3 @@
 #!/bin/sh
 
-tar -c -f /backup/blynk.backup.tar /blynk
+tar -c -f /backup/blynk.backup.tar /mnt
