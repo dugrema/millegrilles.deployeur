@@ -1,6 +1,6 @@
 {
   "nom": "blynk",
-  "version": "1.34.0",
+  "version": "1.34.1",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -10,6 +10,9 @@
       "image": "mg_blynk",
       "version": "0.41.10_2"
     }
+  },
+  "backup": {
+    "volumes": ["blynk_data"]
   },
   "dependances": [
     {
@@ -67,9 +70,6 @@
           "mode": "replicated",
           "replicas": 1
         }
-      },
-      "backup": {
-        "volumes": ["blynk_data"]
       }
     }
   ]

@@ -42,24 +42,28 @@ for VOL in "a b c d"; do echo ${VOL}; done
 
         try:
             # Creer le container
-            container = self.client.containers.run(
+            container = self.client.containers.create(
                 'python:3.8',
-                'sleep 5',
                 name="backup_test",
                 volumes=volumes_mappes,
                 environment=env_vars,
-                detach=True
+                command='/tmp/blynk_backup.sh'
             )
 
             # Injecter le script
             with open('/home/mathieu/PycharmProjects/millegrilles.deployeur/test/docker/scripts.tar') as fichier:
                 container.put_archive('/tmp', fichier)
 
-            resultat = container.exec_run('/tmp/blynk_backup.sh')
+            container.start()
+            container.wait()
+            container.reload()
 
-            self.__logger.debug("Resultats : %s", str(resultat))
-        except docker.errors.APIError:
-            self.__logger.exception("Erreur backup")
+            self.__logger.debug("Backup OK!, resultat : %s" % container.status)
+        except docker.errors.APIError as apie:
+            if apie.status_code == 400:
+                self.__logger.error("Erreur commande de backup")
+            else:
+                self.__logger.exception("Erreur commande de backup")
         finally:
             self.__logger.debug("Suppression container backup_test")
             container = self.client.containers.get('backup_test')
