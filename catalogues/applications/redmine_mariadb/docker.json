@@ -1,5 +1,5 @@
 {
-  "nom": "redmine.mariadb",
+  "nom": "redmine_mariadb",
   "version": "1.34.3",
   "registries": [""],
   "images": {
