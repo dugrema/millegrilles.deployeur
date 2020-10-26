@@ -1,6 +1,6 @@
 {
   "nom": "redmine.mariadb",
-  "version": "1.34.2",
+  "version": "1.34.3",
   "registries": [""],
   "images": {
     "mariadb": {
@@ -16,7 +16,8 @@
     "commande_backup": "script.redmine.mariadb.backup.sh",
     "commande_restore": "script.redmine.mariadb.restore.sh",
     "volumes": ["redmine_files"],
-    "secrets_plusrecents": ["passwd.redmine"]
+    "secrets_plusrecents": ["passwd.redmine"],
+    "constraints": ["node.labels.millegrilles.prive == true"]
   },
   "dependances": [
     {
