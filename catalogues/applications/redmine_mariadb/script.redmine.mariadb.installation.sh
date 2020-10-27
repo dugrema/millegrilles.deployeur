@@ -4,9 +4,6 @@ EXIT_CODE=0
 
 echo "[OK] Demarrage script d'installation de redmine.mariadb"
 
-# Attente mariadb
-sleep 15
-
 SCRIPT=/tmp/redmine_install.sql
 
 echo "Contenu de /run/secrets"
@@ -29,6 +26,9 @@ echo "GRANT ALL PRIVILEGES ON redmine.* TO 'redmine'@'%';" >> $SCRIPT
 echo "SCRIPT INSTALLATION REDMINE"
 cat $SCRIPT
 echo "-----------"
+
+# Attente mariadb
+sleep 15
 
 mysql -h mariadb -p"`cat $ROOT_PASSFILE`" < $SCRIPT
 EXIT_CODE=$?
