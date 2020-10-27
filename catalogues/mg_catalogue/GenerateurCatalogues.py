@@ -67,13 +67,8 @@ class Generateur:
                 # Lire fichier .tar, convertir en base64
                 with open(path_config_temp, 'rb') as fichier:
                     contenu_tar_b64 = b64encode(fichier.read())
-                try:
-                    backup = config['backup']
-                except KeyError:
-                    backup = dict()
-                    config['backup'] = backup
 
-                backup['tar_xz'] = contenu_tar_b64.decode('utf-8')
+                config['scripts'] = contenu_tar_b64.decode('utf-8')
 
             # Preparer archive .json.xz avec le fichier de configuration signe et les scripts
             config = self.signer(config, ConstantesCatalogueApplications.TRANSACTION_CATALOGUE_APPLICATION)

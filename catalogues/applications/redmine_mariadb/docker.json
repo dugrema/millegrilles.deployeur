@@ -1,6 +1,6 @@
 {
   "nom": "redmine_mariadb",
-  "version": "1.34.3",
+  "version": "1.34.7",
   "registries": [""],
   "images": {
     "mariadb": {
@@ -13,17 +13,49 @@
     }
   },
   "backup": {
-    "commande_backup": "script.redmine.mariadb.backup.sh",
-    "commande_restore": "script.redmine.mariadb.restore.sh",
-    "volumes": ["redmine_files"],
-    "secrets_plusrecents": ["passwd.redmine"],
-    "constraints": ["node.labels.millegrilles.prive == true"]
+    "constraints": ["node.labels.millegrilles.app.redmine == true"],
+    "data": {
+      "volumes": ["redmine_files"]
+    },
+    "dependances":[
+      {
+        "image": "mariadb",
+        "commande_backup": "script.redmine.mariadb.backup.sh",
+        "commande_restore": "script.redmine.mariadb.restore.sh",
+        "secrets_plusrecents": ["passwd.redmine", "passwd.mariadb"],
+        "constraints": ["node.labels.millegrilles.app.redmine == true"],
+        "networks": [{"target": "millegrille_net"}]
+      }
+    ]
+  },
+  "installation": {
+    "scripts_mariadb_shared": {
+      "image": "mariadb",
+      "command": "./script.redmine.mariadb.installation.sh",
+      "secrets": [
+        {
+          "name": "passwd.mariadb",
+          "filename": "/run/secrets/passwd.mariadb"
+        },
+        {
+          "name": "passwd.redmine",
+          "filename": "/run/secrets/passwd.redmine"
+        }
+      ],
+      "constraints": [
+        "node.labels.millegrilles.app.redmine == true"
+      ],
+      "exit_codes_ok": [1]
+    }
   },
   "dependances": [
     {
       "image": "mariadb",
       "generer": {
-        "motsdepasse": [{"name": "passwd.mariadb"}]
+        "motsdepasse": [{"name": "passwd.mariadb"},{"name": "passwd.redmine"}]
+      },
+      "installation": {
+        "post_start": ["scripts_mariadb_shared"]
       },
       "config": {
         "name": "mariadb_shared",
@@ -34,7 +66,7 @@
           "shared_mariadb:/var/lib/mysql:rw"
         ],
         "constraints": [
-          "node.labels.millegrilles.prive == true"
+          "node.labels.millegrilles.app.redmine == true"
         ],
         "secrets": [
           {
@@ -55,74 +87,6 @@
         "resources": {
           "cpu_limit": 1000000000,
           "mem_limit": 209715200
-        },
-        "mode": {
-          "mode": "replicated",
-          "replicas": 1
-        }
-      }
-    },
-    {
-      "image": "mariadb",
-      "etape_seulement": true,
-      "installation": {
-        "commande": "/tmp/script.redmine.mariadb.installation.sh",
-        "fichiers": [
-          "script.redmine.mariadb.installation.sh"
-        ],
-        "exit_codes_ok": [
-          1
-        ]
-      },
-      "generer": {
-        "motsdepasse": [
-          {
-            "name": "passwd.redmine"
-          },
-          {
-            "name": "passwd.mariadb"
-          }
-        ]
-      },
-      "config": {
-        "name": "mariadb_redmine_client",
-        "args": [
-          "sleep",
-          "10000"
-        ],
-        "env": [
-          "PATH_SCRIPTS=/usr/local/scripts",
-          "REDMINE_DB_PASSWORD_FILE=/run/secrets/redmine-passwd",
-          "MARIADB_PASSWORD_FILE=/run/secrets/mariadb-passwd"
-        ],
-        "constraints": [
-          "node.labels.millegrilles.app.redmine == true"
-        ],
-        "mounts": [
-          "redmine_files:/tmp/backup/files:rw",
-          "redmine_scripts:/usr/local/scripts:rw"
-        ],
-        "secrets": [
-          {
-            "name": "passwd.redmine",
-            "filename": "redmine-passwd"
-          },
-          {
-            "name": "passwd.mariadb",
-            "filename": "mariadb-passwd"
-          }
-        ],
-        "networks": [
-          {
-            "target": "millegrille_net"
-          }
-        ],
-        "labels": {
-          "millegrille": "${IDMG}"
-        },
-        "resources": {
-          "cpu_limit": 1000000000,
-          "mem_limit": 50000000
         },
         "mode": {
           "mode": "replicated",
@@ -164,7 +128,7 @@
           "millegrille": "${IDMG}",
           "url": "https://redmine.${HOSTNAME}",
           "securite": "2.prive",
-          "dependances": "mariadb"
+          "dependances": "mariadb_shared"
         },
         "resources": {
           "cpu_limit": 1000000000,
