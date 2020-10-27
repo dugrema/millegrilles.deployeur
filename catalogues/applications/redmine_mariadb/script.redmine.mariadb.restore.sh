@@ -10,10 +10,11 @@ if [ -z $PASSWORD ]; then
   exit 1
 fi
 
-# export PGPASSWORD=`cat $REDMINE_DB_PASSWORD_FILE`
-xzcat /mnt/backup.redmine.mariadb.xz | mysql -h mariadb -u redmine -p"$PASSWORD" redmine
+xzcat /backup/backup.redmine_mariadb.xz | mysql -h mariadb -u redmine -p"$PASSWORD" redmine
 EXIT_CODE=$?
 
 echo "[OK] Fin du script de restauration de redmine.mariadb"
 
 echo "{\"exit\": $EXIT_CODE}"
+
+exit $EXIT_CODE

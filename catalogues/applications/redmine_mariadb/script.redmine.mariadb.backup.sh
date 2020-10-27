@@ -10,7 +10,7 @@ if [ -z $PASSWORD ]; then
   exit 1
 fi
 
-mysqldump -h mariadb -u redmine -p"$PASSWORD" redmine | xz - > /backup/backup.redmine.mariadb.xz
+mysqldump -h mariadb -u redmine -p"$PASSWORD" redmine | xz - > /backup/backup.redmine_mariadb.xz
 EXIT_CODE=$?
 
 echo "[OK] Fin du script de backup de redmine.mariadb"
