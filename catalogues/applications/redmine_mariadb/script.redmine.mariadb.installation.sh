@@ -9,8 +9,18 @@ sleep 15
 
 SCRIPT=/tmp/redmine_install.sql
 
-ROOT_PASSFILE=/run/secrets/mariadb-passwd
-REDMINE_PASSWORD=`cat /run/secrets/redmine-passwd`
+echo "Contenu de /run/secrets"
+find /run/secrets
+
+ROOT_PASSFILE=/run/secrets/passwd.mariadb
+if [ ! -f $ROOT_PASSFILE ]; then
+  exit 10
+fi
+
+REDMINE_PASSWORD=`cat /run/secrets/passwd.redmine`
+if [ $? != "0" ]; then
+  exit 11
+fi
 
 echo "CREATE DATABASE redmine CHARACTER SET utf8mb4;" > $SCRIPT
 echo "CREATE USER 'redmine'@'%' IDENTIFIED BY '$REDMINE_PASSWORD';" >> $SCRIPT
@@ -29,3 +39,5 @@ rm $SCRIPT
 echo "[OK] Fin du script d'installation de redmine.mariadb"
 
 echo "{\"exit\": $EXIT_CODE}"
+
+exit $EXIT_CODE

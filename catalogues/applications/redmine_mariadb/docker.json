@@ -1,6 +1,6 @@
 {
   "nom": "redmine_mariadb",
-  "version": "1.34.7",
+  "version": "1.34.11",
   "registries": [""],
   "images": {
     "mariadb": {
@@ -35,11 +35,11 @@
       "secrets": [
         {
           "name": "passwd.mariadb",
-          "filename": "/run/secrets/passwd.mariadb"
+          "filename": "passwd.mariadb"
         },
         {
           "name": "passwd.redmine",
-          "filename": "/run/secrets/passwd.redmine"
+          "filename": "passwd.redmine"
         }
       ],
       "constraints": [
