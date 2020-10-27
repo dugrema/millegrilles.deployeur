@@ -1,6 +1,6 @@
 {
   "nom": "blynk",
-  "version": "1.34.1",
+  "version": "1.34.2",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -12,7 +12,10 @@
     }
   },
   "backup": {
-    "volumes": ["blynk_data"]
+    "constraints": ["node.labels.millegrilles.app.blynk == true"],
+    "data": {
+      "volumes": ["blynk_data"]
+    }
   },
   "dependances": [
     {
