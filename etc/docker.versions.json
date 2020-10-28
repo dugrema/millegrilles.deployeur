@@ -1,7 +1,6 @@
 {
     "registries": [
-        "docker.maceroc.com",
-        "dugremat"
+        "docker.maceroc.com"
     ],
     "images": {
         "acme": {"image": "mg_acme", "version": "3095_1"},
