@@ -1,9 +1,8 @@
 {
   "nom": "senseurspassifs_rpi_rf24_am2302",
-  "version": "1.34.0",
+  "version": "1.34.1",
   "registries": [
-    "docker.maceroc.com",
-    "dugremat"
+    "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_senseurspassifs_rpi": {
