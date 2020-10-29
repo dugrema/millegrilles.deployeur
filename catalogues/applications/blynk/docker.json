@@ -2,8 +2,7 @@
   "nom": "blynk",
   "version": "1.34.2",
   "registries": [
-    "docker.maceroc.com",
-    "dugremat"
+    "docker.maceroc.com"
   ],
   "images": {
     "blynk": {

@@ -2,8 +2,7 @@
   "nom": "mongoexpress",
   "version": "1.31.6",
   "registries": [
-    "docker.maceroc.com",
-    "dugremat"
+    "docker.maceroc.com"
   ],
   "images": {
     "mongoexpress": {
