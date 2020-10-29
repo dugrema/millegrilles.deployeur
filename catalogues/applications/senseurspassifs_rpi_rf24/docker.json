@@ -1,5 +1,5 @@
 {
-  "nom": "senseurspassifs_rpi_rf24_am2302",
+  "nom": "senseurspassifs_rpi_rf24",
   "version": "1.34.2",
   "registries": [
     "docker.maceroc.com"
