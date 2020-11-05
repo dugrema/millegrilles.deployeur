@@ -80,9 +80,9 @@ class MdnsListener(ServiceListener):
         self.__logger.debug("Service %s removed" % (name,))
 
         info = zeroconf.get_service_info(type, name)
-        texte_dict = info.properties
 
         try:
+            texte_dict = info.properties
             idmg = texte_dict[b'idmg'].decode('utf-8')
             info_service = self.service_par_idmg.get(idmg)
 
@@ -90,6 +90,8 @@ class MdnsListener(ServiceListener):
                 service_name = info.name
                 del info_service[service_name]
         except KeyError:
+            pass
+        except AttributeError:
             pass
 
     def add_service(self, zeroconf, type, name):
