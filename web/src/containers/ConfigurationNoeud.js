@@ -69,42 +69,14 @@ function ConfigurerNoeudPrive(props) {
 function InstallerNoeudProtege(props) {
 
   const installer = event => {
-    // Transmettre information d'installation
-    // const idmg = props.rootProps.idmg,
-    //       infoCertificatNoeudProtege = props.rootProps.infoCertificatNoeudProtege,
-    //       infoClecertMillegrille = props.rootProps.infoClecertMillegrille
-    //
-    // const paramsInstallation = {
-    //   // certificatMillegrillePem: this.props.certificatMillegrillePem,
-    //   certificatPem: infoCertificatNoeudProtege.pem,
-    //   chainePem: [infoCertificatNoeudProtege.pem, infoClecertMillegrille.certificat],
-    //   securite: '3.protege',
-    // }
-    //
-    // console.debug("Transmettre parametres d'installation: \n%O", paramsInstallation)
-    //
-    // axios.post('/installation/api/initialisation', paramsInstallation)
-    // .then(response=>{
-    //   console.debug("Recu reponse demarrage installation noeud\n%O", response)
-    //
-    //   // Recharger page apres 15 secondes
-    //   setTimeout(_=>{window.location.reload()}, 15000)
-    //
-    // })
-    // .catch(err=>{
-    //   console.error("Erreur demarrage installation noeud\n%O", err)
-    // })
     installerNoeudProtege(props, {}, err=>{
-
       if(err) {
         console.error("Erreur demarrage installation noeud\n%O", err)
         return
       }
-
       console.debug("Recu reponse demarrage installation noeud")
       // Recharger page apres 15 secondes
       setTimeout(_=>{window.location.reload()}, 15000)
-
     })
   }
 
@@ -221,28 +193,6 @@ class PageConfigurationDomaineAttente extends React.Component {
       } else if(this.props.typeNoeud === 'public') {
         configurerNoeudPublic(this.props, paramsDomaine, callback)
       }
-
-      // axios.post('/installation/api/initialisation', paramsDomaine)
-      // .then(response=>{
-      //   console.debug("Recu reponse demarrage installation noeud\n%O", response)
-      //   // this.setState({attente: true})
-      //   // setTimeout(_=>{window.location.reload()}, 15000) // Attendre 15 secondes et recharger la page
-      //
-      //   this.setState({domaineConfigure: true}, ()=>{
-      //     // Declencher attente du certificat
-      //     this.attendreCertificatWeb()
-      //   })
-      //
-      // })
-      // .catch(err=>{
-      //   console.error("Erreur demarrage installation noeud\n%O", err)
-      //   this.setState({err: ''+err})
-      // })
-
-      // this.setState({domaineConfigure: true}, ()=>{
-      //   // Declencher attente du certificat
-      //   this.attendreCertificatWeb()
-      // })
 
     } catch(err) {
       console.error("Erreur configuration domaine\n%O", err)
@@ -424,6 +374,23 @@ async function configurerNoeudPrive(props, params, callback) {
 
 }
 
-async function configurerNoeudPublic(props, callback) {
-  throw new Error("Pas implemente")
+async function configurerNoeudPublic(props, params, callback) {
+
+  const paramsInstallation = {
+    ...params,
+    idmg: props.rootProps.idmg,
+    securite: '1.public',
+  }
+  console.debug("Transmettre parametres installation noeud public : %O", paramsInstallation)
+
+  axios.post('/installation/api/configurerIdmg', paramsInstallation)
+  .then(reponse=>{
+    console.debug("Recu reponse demarrage installation noeud public\n%O", reponse)
+    callback() // Aucune erreur
+  })
+  .catch(err=>{
+    console.error("Erreur demarrage installation noeud public\n%O", err)
+    callback(err)
+  })
+
 }
