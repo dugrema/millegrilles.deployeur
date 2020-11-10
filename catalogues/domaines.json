@@ -4,17 +4,13 @@
       "module": "millegrilles.domaines.SenseursPassifs",
       "classe": "GestionnaireSenseursPassifs"
     },
-    "Plume": {
-      "module": "millegrilles.domaines.Plume",
-      "classe": "GestionnairePlume"
-    },
-    "Messagerie": {
-      "module": "millegrilles.domaines.Messagerie",
-      "classe": "GestionnaireMessagerie"
-    },
     "GrosFichiers": {
       "module": "millegrilles.domaines.GrosFichiers",
       "classe": "GestionnaireGrosFichiers"
+    },
+    "Publication": {
+      "module": "millegrilles.domaines.Publication",
+      "classe": "GestionnairePublication"
     }
   }
 }
