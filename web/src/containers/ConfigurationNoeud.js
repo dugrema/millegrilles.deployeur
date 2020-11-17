@@ -381,7 +381,9 @@ async function installerNoeudProtege(props, params, callback) {
         infoCertificatNoeudProtege = props.rootProps.infoCertificatNoeudProtege,
         infoClecertMillegrille = props.rootProps.infoClecertMillegrille
 
-  const paramsInstallation = {
+  console.debug("Pour installation, proppys!\n%O", props)
+
+  var paramsInstallation = {
     ...params,
     // certificatMillegrillePem: this.props.certificatMillegrillePem,
     certificatPem: infoCertificatNoeudProtege.pem,
@@ -389,7 +391,10 @@ async function installerNoeudProtege(props, params, callback) {
     securite: '3.protege',
   }
 
-  console.debug("Transmettre parametres installation noeud protege : %O", paramsInstallation)
+  if(props.rootProps.infoInternet) {
+    // Ajouter les parametres de configuration internet
+    paramsInstallation = {...props.rootProps.infoInternet, ...paramsInstallation}
+  }
 
   axios.post('/installation/api/installer', paramsInstallation)
   .then(reponse=>{
@@ -405,12 +410,19 @@ async function installerNoeudProtege(props, params, callback) {
 
 async function configurerNoeudPrive(props, params, callback) {
 
-  const paramsInstallation = {
+  const infoInternet = props.rootProps.infoInternet
+
+  var paramsInstallation = {
     ...params,
     idmg: props.rootProps.idmg,
     securite: '2.prive',
   }
   console.debug("Transmettre parametres installation noeud prive : %O", paramsInstallation)
+
+  if(props.rootProps.infoInternet) {
+    // Ajouter les parametres de configuration internet
+    paramsInstallation = {...props.rootProps.infoInternet, ...paramsInstallation}
+  }
 
   axios.post('/installation/api/configurerIdmg', paramsInstallation)
   .then(reponse=>{
