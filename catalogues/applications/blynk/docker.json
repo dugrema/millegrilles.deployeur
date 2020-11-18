@@ -1,8 +1,9 @@
 {
   "nom": "blynk",
-  "version": "1.34.2",
+  "version": "1.34.3",
   "registries": [
-    "docker.maceroc.com"
+    "docker.maceroc.com",
+    "docker.mg-maple.maple.maceroc.com"
   ],
   "images": {
     "blynk": {
