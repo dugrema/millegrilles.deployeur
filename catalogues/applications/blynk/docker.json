@@ -1,6 +1,6 @@
 {
   "nom": "blynk",
-  "version": "1.34.3",
+  "version": "1.34.4",
   "registries": [
     "docker.maceroc.com",
     "docker.mg-maple.maple.maceroc.com"
@@ -31,13 +31,13 @@
         ],
         "configs": [
           {
-            "name": "pki.web.cert;pki.blynk.cert",
+            "name": "pki.blynk.cert",
             "filename": "/run/secrets/webcert.pem"
           }
         ],
         "secrets": [
           {
-            "name": "pki.web.key;pki.blynk.key",
+            "name": "pki.blynk.key",
             "filename": "webkey.pem"
           }
         ],
