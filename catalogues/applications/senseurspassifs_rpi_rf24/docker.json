@@ -2,7 +2,8 @@
   "nom": "senseurspassifs_rpi_rf24",
   "version": "1.35.0",
   "registries": [
-    "docker.maceroc.com"
+    "docker.maceroc.com",
+    "docker.mg-maple.maple.maceroc.com"
   ],
   "images": {
     "millegrilles_senseurspassifs_rpi": {

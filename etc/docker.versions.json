@@ -1,6 +1,7 @@
 {
     "registries": [
-        "docker.maceroc.com"
+        "docker.maceroc.com",
+        "docker.mg-maple.maple.maceroc.com"
     ],
     "images": {
         "acme": {"image": "mg_acme", "version": "3095_1"},
