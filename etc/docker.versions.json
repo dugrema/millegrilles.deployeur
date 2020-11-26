@@ -10,6 +10,6 @@
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.35.2"},
         "fichiers": {"image": "millegrilles_fichiers", "version": "1.35.2"},
         "nginx": {"image": "millegrilles_nginx", "version": "1.35.1"},
-        "web": {"image": "millegrilles_web", "version": "1.35.4"}
+        "web": {"image": "millegrilles_web", "version": "1.35.5"}
     }
 }
