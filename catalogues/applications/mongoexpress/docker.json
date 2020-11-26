@@ -101,7 +101,7 @@
       }
     }
   ],
-    "nginx": {
+  "nginx": {
     "server_file": "nginx.mongoexpress.conf",
     "subdomain": "mongoexpress",
     "params": {
