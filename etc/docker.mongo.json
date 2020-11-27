@@ -58,6 +58,7 @@
     "delay": 30000000000
   },
   "mode": {
-    "mode": "global"
+    "mode": "replicated",
+    "replicas": 1
   }
 }
