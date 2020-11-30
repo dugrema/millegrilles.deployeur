@@ -149,6 +149,6 @@ demarrer_servicemonitor() {
     --mount type=volume,source=millegrille-secrets,destination=/var/opt/millegrilles_secrets \
     --user root:115 \
     ${SERVICEMONITOR_IMAGE} \
-    -m millegrilles.monitor.ServiceMonitor --debug \
+    -m millegrilles.monitor.ServiceMonitor --info \
     --webroot /opt/millegrilles/dist/installation
 }
