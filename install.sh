@@ -41,6 +41,16 @@ debug() {
 
 if [ "$1" == 'config' ]; then
   configurer_swarm
+elif [ "$1" == 'reset' ]; then
+  docker service rm monitor
+  docker service rm nginx
+  CONFS=`docker config ls -f "name=pki.monitor." -q`; for CONF in ${CONFS[@]}; do docker config rm $CONF; done
+  CONFS=`docker config ls -f "name=pki.nginx." -q`; for CONF in ${CONFS[@]}; do docker config rm $CONF; done
+  CONFS=`docker config ls -f "name=pki.intermediaire." -q`; for CONF in ${CONFS[@]}; do docker config rm $CONF; done
+  CONFS=`docker secret ls -f "name=pki.monitor." -q`; for CONF in ${CONFS[@]}; do docker secret rm $CONF; done
+  CONFS=`docker secret ls -f "name=pki.nginx." -q`; for CONF in ${CONFS[@]}; do docker secret rm $CONF; done
+  CONFS=`docker secret ls -f "name=pki.intermediaire." -q`; for CONF in ${CONFS[@]}; do docker secret rm $CONF; done
+  demarrer
 else
 
   # Main, installer docker, dependances et le service monitor de MilleGrille
