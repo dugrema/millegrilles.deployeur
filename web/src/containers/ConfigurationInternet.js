@@ -18,6 +18,7 @@ export class PageConfigurationInternet extends React.Component {
 
     cloudnsSubid: '',
     cloudnsPassword: '',
+    dnssleep: '240',
 
     attenteServeur: false,
   }
@@ -78,6 +79,7 @@ export class PageConfigurationInternet extends React.Component {
         modeTest={this.state.modeTest}
         cloudnsSubid={this.state.cloudnsSubid}
         cloudnsPassword={this.state.cloudnsPassword}
+        dnssleep={this.state.dnssleep}
         setModeCreation={this.setModeCreation}
         modeCreation={this.state.modeCreation}
         configurerDomaine={this.configurerDomaine} />
@@ -162,7 +164,7 @@ function AfficherFormInternet(props) {
       cloudnsParams = (
         <div>
           <label htmlFor="cloudns-subid">Configuration ClouDNS</label>
-          <InputGroup className="mb-3">
+          <InputGroup>
             <InputGroup.Prepend>
               <InputGroup.Text id="cloudns-subid">
                 SubID (numero)
@@ -174,7 +176,7 @@ function AfficherFormInternet(props) {
                          value={props.cloudnsSubid}
                          onChange={props.changerTextfield} />
           </InputGroup>
-          <InputGroup className="mb-3">
+          <InputGroup>
             <InputGroup.Prepend>
               <InputGroup.Text id="cloudns-password">
                 Mot de passe
@@ -187,6 +189,20 @@ function AfficherFormInternet(props) {
                          value={props.cloudnsPassword}
                          onChange={props.changerTextfield} />
           </InputGroup>
+
+          <InputGroup>
+            <InputGroup.Prepend>
+              <InputGroup.Text id="dns-sleep">
+                DNS sleep
+              </InputGroup.Text>
+            </InputGroup.Prepend>
+            <FormControl id="dns-sleep"
+                         aria-describedby="dns-sleep"
+                         name="dnssleep"
+                         value={props.dnssleep}
+                         onChange={props.changerTextfield} />
+          </InputGroup>
+
         </div>
       )
     }

@@ -14,7 +14,7 @@ export class ConfigurerNoeud extends React.Component {
 
     // Note : le noeud public doit etre configure avec internet
 
-    if(this.props.internetDisponible) {
+    if(this.props.rootProps.internetDisponible) {
       // Configuration du noeud avec certificat web SSL
       // Combine l'installation du certificat et du noeud en un appel
       return (
