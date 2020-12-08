@@ -31,7 +31,6 @@ export class Installation extends React.Component {
 
     domaine: '',
     typeNoeud: '',
-    internetDisponible: false,
 
     page: 'SelectionnerTypeNoeud',
 
@@ -54,11 +53,31 @@ export class Installation extends React.Component {
         certificat: dataReponse.certificat,
       }
 
+      var typeNoeud = this.state.typeNoeud
+      if(info.securite) {
+        typeNoeud = info.securite.split('.')[1]
+      }
+
       this.props.rootProps.setInfo(info)
 
       var domaineDetecte = window.location.hostname
       if( ! RE_DOMAINE.test(domaineDetecte) ) {
         domaineDetecte = dataReponse.fqdn_detecte
+      }
+
+      // Set page courante selon etat de configuration
+      var page = this.state.page
+      if( ! info.securite ) {
+        console.debug("Ouvrir configuration type noeud")
+        page = 'SelectionnerTypeNoeud'
+      } else if( ! info.idmg && info.securite === '3.protege' ) {
+        console.debug("Ouvrir configuration idmg")
+        page = 'ChargementClePrivee'  // Page config cle MilleGrille
+      } else if( ! info.idmg ) {
+        page = 'ConfigurerNoeudIdmg'  // Page set IDMG
+      } else if( ! info.domaine ) {
+        console.debug("Ouvrir configuration domaine internet")
+        page = 'PageConfigurationInternet'
       }
 
       this.setState({
@@ -67,6 +86,7 @@ export class Installation extends React.Component {
         fqdnDetecte: domaineDetecte,
         ipDetectee: dataReponse.ip_detectee,
         domaine: dataReponse.domaine,
+        page, typeNoeud,
       })
     })
     .catch(err=>{
@@ -80,15 +100,10 @@ export class Installation extends React.Component {
   setTypeNoeud = event => {
     const value = event.currentTarget.value
 
-    // Forcer le mode internet si le noeud public est selectionne
-    var internetDisponible = this.state.internetDisponible || value === 'public'
+    // // Forcer le mode internet si le noeud public est selectionne
+    // var internetDisponible = this.state.internetDisponible || value === 'public'
 
-    this.setState({typeNoeud: event.currentTarget.value, internetDisponible})
-  }
-
-  setInternetDisponible = event => {
-    const eventInfo = event.currentTarget
-    this.setState({internetDisponible: event.currentTarget.checked})
+    this.setState({typeNoeud: event.currentTarget.value})
   }
 
   afficherPageTypeInstallation = event => {

@@ -24,6 +24,7 @@ configurer() {
   configurer_repertoires
   configurer_docker
   configurer_swarm
+  set_params
 }
 
 demarrer () {

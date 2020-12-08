@@ -7,6 +7,13 @@ export class ConfigurerNoeudIdmg extends React.Component {
     idmg: '',
   }
 
+  componentDidMount() {
+    if(this.props.rootProps.idmg) {
+      console.debug("ConfigurerNoeudIdmg IDMG = %s, aller a la page suivante", this.props.rootProps.idmg)
+      this.props.setPage({currentTarget: {value: 'ConfigurerNoeud'}})
+    }
+  }
+
   changerChamp = event => {
     const {name, value} = event.currentTarget
     this.setState({[name]: value})
@@ -21,9 +28,9 @@ export class ConfigurerNoeudIdmg extends React.Component {
   render() {
 
     var pageSuivante = 'ConfigurerNoeud'
-    if(this.props.internetDisponible) {
-      pageSuivante = 'PageConfigurationInternet'
-    }
+    // if(this.props.internetDisponible) {
+    //   pageSuivante = 'PageConfigurationInternet'
+    // }
 
     return (
       <>

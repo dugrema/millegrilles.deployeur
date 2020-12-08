@@ -79,19 +79,6 @@ function AideTypes(props) {
           internet (adresse DNS, ports ouverts sur le routeur).
         </Col>
       </Row>
-      <Row>
-        <Col md={2}>Acces internet</Col>
-        <Col md={10}>
-          Les noeuds proteges et prives peuvent etre configures en mode local ou en
-          mode d'acces par internet. Le noeud public fonctionne uniquement avec internet.
-          Le mode local fonctionne par auto-configuration mdns.
-          Le mode internet requiert la configuration suivante :
-          <ul>
-            <li>DNS public</li>
-            <li>ports ouverts sur le routeur</li>
-          </ul>
-        </Col>
-      </Row>
     </Alert>
   )
 }
@@ -121,19 +108,7 @@ function FormTypeNoeud(props) {
           </Form.Group>
         </fieldset>
 
-        <Form.Group>
-          <Form.Check id="installation-internet">
-            <Form.Check.Input type='checkbox'
-                              name="internet-disponible"
-                              value='true'
-                              onChange={props.setInternetDisponible}
-                              checked={props.internetDisponible} />
-            <Form.Check.Label>Disponible sur internet</Form.Check.Label>
-          </Form.Check>
-        </Form.Group>
-
       </Form>
-
       <Row className="boutons-installer">
         <Col>
           <Button onClick={props.afficherPageTypeInstallation} value="true"

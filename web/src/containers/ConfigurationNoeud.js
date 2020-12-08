@@ -9,7 +9,7 @@ import { InformationCertificat } from './ChargerCleCert'
 export class ConfigurerNoeud extends React.Component {
 
   render() {
-    console.debug("Props : %O", this.props)
+    console.debug("ConfigurerNoeud props : %O", this.props)
     const typeNoeud = this.props.typeNoeud
 
     // Note : le noeud public doit etre configure avec internet
@@ -27,6 +27,10 @@ export class ConfigurerNoeud extends React.Component {
     } else if(typeNoeud === 'prive') {
       return (
         <ConfigurerNoeudPrive {...this.props} />
+      )
+    } else if(typeNoeud === 'public') {
+      return (
+        <ConfigurerNoeudPublic {...this.props} />
       )
     }
     return (<Alert variant="danger">Type noeud inconnu</Alert>)
@@ -64,6 +68,37 @@ function ConfigurerNoeudPrive(props) {
     </>
   )
 
+}
+
+function ConfigurerNoeudPublic(props) {
+  const installer = event => {
+    configurerNoeudPublic(props, {}, err=>{
+      if(err) {
+        console.error("Erreur demarrage installation noeud\n%O", err)
+        return
+      }
+      // Recharger page apres 15 secondes
+      setTimeout(_=>{window.location.reload()}, 2000)
+    })
+  }
+
+  const idmg = props.rootProps.idmg
+
+  return (
+    <>
+      <h2>Finaliser la configuration</h2>
+
+      <h3>Noeud public</h3>
+      <p>Idmg : {idmg}</p>
+
+      <Row>
+        <Col className="bouton">
+          <Button onClick={props.precedent} value='false' variant="secondary">Precedent</Button>
+          <Button onClick={installer} value="true">Demarrer installation</Button>
+        </Col>
+      </Row>
+    </>
+  )
 }
 
 function InstallerNoeudProtege(props) {

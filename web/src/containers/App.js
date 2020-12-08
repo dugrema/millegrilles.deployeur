@@ -16,6 +16,8 @@ class App extends React.Component {
     idmg: '',
     domaine: '',
 
+    info: '',
+
     page: Installation,
 
     infoClecertMillegrille: '',
@@ -36,7 +38,8 @@ class App extends React.Component {
 
   setInfo = info => {
     const infoUpdate = {...info}
-    if(info.securite) {  // Securite indique que le noeud est deja configure
+    if(info.securite && info.idmg) {  // Securite indique que le noeud est deja configure
+      console.debug("Configuration MilleGrille completee : %O", info)
       info.page = AfficherInformationNoeud
     }
     this.setState(info)

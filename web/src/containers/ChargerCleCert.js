@@ -229,11 +229,11 @@ export class ChargementClePrivee extends React.Component {
                                     cacherErreurChargement={this.cacherErreurChargement} />
     }
 
-    var pageSuivante = 'ConfigurerNoeud'
-    if(this.props.internetDisponible) {
-      // On doit passer par la configuration du certificat web SSL
-      pageSuivante = 'PageConfigurationInternet'
-    }
+    // var pageSuivante = 'ConfigurerNoeud'
+    // if(this.props.internetDisponible) {
+    //   // On doit passer par la configuration du certificat web SSL
+    //   pageSuivante = 'PageConfigurationInternet'
+    // }
 
     return (
       <>
@@ -246,7 +246,7 @@ export class ChargementClePrivee extends React.Component {
         <Row className="boutons-installer">
           <Col>
             <Button onClick={this.props.setPage} value='SelectionnerTypeNoeud'>Retour</Button>
-            <Button onClick={this.props.setPage} value={pageSuivante} disabled={!this.state.clePriveeChargee}>Suivant</Button>
+            <Button onClick={this.props.setPage} value='PageConfigurationInternet' disabled={!this.state.clePriveeChargee}>Suivant</Button>
           </Col>
         </Row>
       </>

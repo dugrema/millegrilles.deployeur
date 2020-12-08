@@ -152,3 +152,18 @@ demarrer_servicemonitor() {
     -m millegrilles.monitor.ServiceMonitor --info \
     --webroot /opt/millegrilles/dist/installation
 }
+
+# Set les params fourni par env (IDMG, MG_SECURITE)
+set_params() {
+
+  if [ -n "$IDMG" ]; then
+    echo "Set IDMG = $IDMG"
+    echo -n "$IDMG" | docker config create millegrille.idmg -
+  fi
+
+  if [ -n "$MG_SECURITE" ]; then
+    echo "Set type de noeud/securite $MG_SECURITE"
+    echo -n "$MG_SECURITE" | docker config create millegrille.securite -
+  fi
+
+}

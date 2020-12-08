@@ -7,6 +7,8 @@ const RE_DOMAINE = /^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,6}$/
 
 export class PageConfigurationInternet extends React.Component {
   state = {
+    internetDisponible: false,
+
     domaine: this.props.fqdnDetecte,
     domaineValide: RE_DOMAINE.test(this.props.fqdnDetecte),
 
@@ -22,6 +24,11 @@ export class PageConfigurationInternet extends React.Component {
 
   componentDidMount() {
     console.debug("props : %O", this.props)
+  }
+
+  setInternetDisponible = event => {
+    const eventInfo = event.currentTarget
+    this.setState({internetDisponible: event.currentTarget.checked})
   }
 
   changerDomaine = event => {
@@ -62,8 +69,10 @@ export class PageConfigurationInternet extends React.Component {
         rootProps={this.props.rootProps}
         domaine={this.state.domaine}
         domaineValide={this.state.domaineValide}
+        internetDisponible={this.state.internetDisponible}
         changerDomaine={this.changerDomaine}
         changerTextfield={this.changerTextfield}
+        setInternetDisponible={this.setInternetDisponible}
         setCheckbox={this.setCheckbox}
         configurationAvancee={this.state.configurationAvancee}
         modeTest={this.state.modeTest}
@@ -105,6 +114,41 @@ export class PageConfigurationInternet extends React.Component {
 }
 
 function PageConfigurationDomaineSetup(props) {
+
+  return (
+    <Container>
+      <Row>
+        <Col>
+          <h3>Configurer le domaine de la MilleGrille</h3>
+        </Col>
+      </Row>
+
+      <Form.Group>
+        <Form.Check id="installation-internet">
+          <Form.Check.Input type='checkbox'
+                            name="internet-disponible"
+                            value='true'
+                            onChange={props.setInternetDisponible}
+                            checked={props.internetDisponible} />
+          <Form.Check.Label>Disponible sur internet</Form.Check.Label>
+        </Form.Check>
+      </Form.Group>
+
+      <AfficherFormInternet {...props} />
+
+      <Row className="boutons-installer">
+        <Col>
+          <Button onClick={props.configurerDomaine} value="true" disabled={!props.domaineValide}>Suivant</Button>
+        </Col>
+      </Row>
+
+    </Container>
+  )
+}
+
+function AfficherFormInternet(props) {
+
+  if(!props.internetDisponible) return ''
 
   var flagDomaineInvalide = null;
   if( ! props.domaineValide ) {
@@ -168,13 +212,7 @@ function PageConfigurationDomaineSetup(props) {
   }
 
   return (
-    <Container>
-      <Row>
-        <Col>
-          <h3>Configurer le domaine de la MilleGrille</h3>
-        </Col>
-      </Row>
-
+    <>
       <Row>
         <Col>
           <h4>Configuration prealable</h4>
@@ -197,7 +235,7 @@ function PageConfigurationDomaineSetup(props) {
         </Col>
       </Row>
       <Form>
-        <label htmlFor="noeud-url">URL d'acces au noeud {flagDomaineInvalide}</label>
+        <label htmlFor="noeud-url">URL d'acces au noeud {props.flagDomaineInvalide}</label>
         <InputGroup className="mb-3">
           <InputGroup.Prepend>
             <InputGroup.Text id="noeud-addon3">
@@ -215,13 +253,6 @@ function PageConfigurationDomaineSetup(props) {
         {configurationAvancee}
 
       </Form>
-
-      <Row className="boutons-installer">
-        <Col>
-          <Button onClick={props.configurerDomaine} value="true" disabled={!props.domaineValide}>Suivant</Button>
-        </Col>
-      </Row>
-
-    </Container>
+    </>
   )
 }
