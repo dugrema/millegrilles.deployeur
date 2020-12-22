@@ -3,13 +3,13 @@ import { openDB, deleteDB, wrap, unwrap } from 'idb'
 import stringify from 'json-stable-stringify'
 import { util } from 'node-forge'
 
-import { genererCsrNavigateur, genererCertificatMilleGrille, genererCertificatIntermediaire } from 'millegrilles.common/lib/cryptoForge'
+import { genererCsrNavigateur, genererCertificatMilleGrille, genererCertificatIntermediaire } from '@dugrema/millegrilles.common/lib/cryptoForge'
 import {
     enveloppePEMPublique, enveloppePEMPrivee, chiffrerPrivateKeyPEM,
     CertificateStore, matchCertificatKey, signerContenuString, chargerClePrivee,
     calculerIdmg, chargerCertificatPEM, chargerClePubliquePEM, sauvegarderPrivateKeyToPEM,
-  } from 'millegrilles.common/lib/forgecommon'
-import { CryptageAsymetrique, genererAleatoireBase64 } from 'millegrilles.common/lib/cryptoSubtle'
+  } from '@dugrema/millegrilles.common/lib/forgecommon'
+import { CryptageAsymetrique, genererAleatoireBase64 } from '@dugrema/millegrilles.common/lib/cryptoSubtle'
 
 const cryptageAsymetriqueHelper = new CryptageAsymetrique()
 

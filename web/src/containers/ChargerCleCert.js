@@ -5,8 +5,8 @@ import QrReader from 'react-qr-reader'
 
 import axios from 'axios'
 
-import {chargerClePrivee} from 'millegrilles.common/lib/forgecommon'
-import {detecterAppareilsDisponibles} from 'millegrilles.common/lib/detecterAppareils'
+import {chargerClePrivee} from '@dugrema/millegrilles.common/lib/forgecommon'
+import {detecterAppareilsDisponibles} from '@dugrema/millegrilles.common/lib/detecterAppareils'
 import { genererNouvelleCleMillegrille, dechiffrerCle, preparerCleCertMillegrille, chargerClePriveeForge } from '../components/pkiHelper'
 
 import { signerCSRIntermediaire } from '../components/pkiHelper'

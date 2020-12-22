@@ -1,9 +1,9 @@
 {
   "name": "monitor.web",
-  "version": "1.36.4",
+  "version": "1.37.0",
   "private": true,
   "dependencies": {
-    "@dugrema/millegrilles.common": "git+ssh://git.maceroc.com/git/millegrilles.common.nodejs#1.36",
+    "@dugrema/millegrilles.common": "git+ssh://git.maceroc.com/git/millegrilles.common.nodejs#1.37",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
@@ -13,7 +13,6 @@
     "i18next": "^19.8.4",
     "i18next-browser-languagedetector": "^6.0.1",
     "idb": "^5.0.8",
-    "millegrilles.common": "git+ssh://git.maceroc.com/git/millegrilles.common.nodejs#1.36",
     "moment-timezone": "^0.5.32",
     "qrcode.react": "^1.0.0",
     "react": "^16.14.0",
