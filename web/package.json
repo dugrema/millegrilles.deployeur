@@ -1,6 +1,6 @@
 {
   "name": "monitor.web",
-  "version": "1.38.0",
+  "version": "1.38.2",
   "private": true,
   "dependencies": {
     "@dugrema/millegrilles.common": "git+ssh://git.maceroc.com/git/millegrilles.common.nodejs#1.38",
