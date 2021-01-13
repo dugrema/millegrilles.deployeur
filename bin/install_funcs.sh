@@ -143,6 +143,7 @@ demarrer_servicemonitor() {
     --name monitor \
     --hostname monitor \
     --env MG_MONGO_HOST=mongo \
+    --env CERT_DUREE=0 --env CERT_DUREE_HEURES=1 \
     --network millegrille_net \
     --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
     --mount type=bind,source=$MILLEGRILLES_VAR,destination=/var/opt/millegrilles \
