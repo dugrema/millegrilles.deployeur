@@ -42,6 +42,8 @@ debug() {
 
 if [ "$1" == 'config' ]; then
   configurer_swarm
+elif [ "$1" == 'demarrer' ]; then
+  demarrer
 else
 
   # Main, installer docker, dependances et le service monitor de MilleGrille
