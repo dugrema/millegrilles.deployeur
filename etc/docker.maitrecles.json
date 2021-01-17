@@ -35,8 +35,14 @@
   ],
   "secrets": [
     {
+      "match_config": true,
       "name": "pki.maitrecles.key",
       "filename": "key.pem"
+    },
+    {
+      "regex": true,
+      "name": "pki.maitrecles.key.([0-9]+)",
+      "filename": "key.pem.$1"
     }
   ],
   "networks": [{
