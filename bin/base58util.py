@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 import argparse
-import base58
-import binascii
-import math
-import struct
-import datetime
+import sys
+
+from millegrilles.util.IdmgUtil import encoder_idmg, verifier_idmg, expiration_idmg, IdmgInvalide
+
 
 VERSION_IDMG = 1
 
@@ -20,100 +19,60 @@ class Base58Util:
     def parser(self):
         self._parser = argparse.ArgumentParser(description="Fonctionnalite MilleGrilles")
 
-        self._parser.add_argument(
-            '--type', type=str, nargs=1, choices=['hex'], default='hex',
+        subparser_commandes = self._parser.add_subparsers(dest='commande', help='Commande')
+
+        idmg_encoder = subparser_commandes.add_parser('calculer', help='Calculer le IDMG d\'un certificat')
+        idmg_encoder.add_argument('path_pem', type=str, help='Path du fichier PEM de certificat de MilleGrille')
+        idmg_encoder.add_argument(
+            '--hashing', type=str, choices=['sha2-256', 'sha2-512'], default='sha2-256',
             help="Type d'encodage"
         )
 
-        subparser_commandes = self._parser.add_subparsers(dest='commande', help='Commande')
+        idmg_decoder = subparser_commandes.add_parser('verifier', help='Decoder IDMG')
+        idmg_decoder.add_argument('idmg', type=str, help='IDMG a verifier')
+        idmg_decoder.add_argument('path_pem', type=str, help='Path du fichier PEM de certificat de MilleGrille')
 
-        commande_encoder = subparser_commandes.add_parser('encoder', help='Encoder en base58')
-        commande_encoder.add_argument(
-            'valeur', type=str, nargs=1,
-            help='Valeur'
-        )
-
-        commande_decoder = subparser_commandes.add_parser('decoder', help='Decoder en base58')
-        commande_decoder.add_argument(
-            'valeur', type=str, nargs=1,
-            help='Valeur'
-        )
-
-        idmg_encoder = subparser_commandes.add_parser('idmg_enc', help='Encoder IDMG')
-        idmg_encoder.add_argument(
-            'valeur', type=str, nargs=1,
-            help='Valeur'
-        )
-        idmg_encoder.add_argument(
-            'date_end_cert', type=int,
-            help='Date certificat'
-        )
-
-        idmg_decoder = subparser_commandes.add_parser('idmg_dec', help='Decoder IDMG')
-        idmg_decoder.add_argument(
-            'valeur', type=str, nargs=1,
-            help='Valeur'
-        )
-        idmg_decoder.add_argument(
-            '--expiration', action='store_true',
-            help='Affiche la date d\'expiration du IDMG'
-        )
+        idmg_expiration = subparser_commandes.add_parser('expiration', help='Decoder IDMG')
+        idmg_expiration.add_argument('idmg', type=str, help='IDMG a verifier')
 
         self._args = self._parser.parse_args()
 
     def executer(self):
-        if self._args.commande == 'encoder' and self._args.type == 'hex':
-            self.encoder_hex()
-        elif self._args.commande == 'decoder' and self._args.type == 'hex':
-            self.decoder_hex()
-        elif self._args.commande == 'idmg_enc' and self._args.type == 'hex':
+        if self._args.commande == 'calculer':
             self.idmg_encoder()
-        elif self._args.commande == 'idmg_dec' and self._args.type == 'hex':
-            self.idmg_decoder()
+        elif self._args.commande == 'verifier':
+            self.idmg_verifier()
+        elif self._args.commande == 'expiration':
+            self.idmg_expiration()
         else:
-            print("Commande: %s, type: %s" % (self._args.commande, self._args.type))
+            print("Commande: %s" % self._args.commande)
             self._parser.print_help()
 
-    def encoder_hex(self):
-        valeur = binascii.unhexlify(self._args.valeur[0])
-        valeur_base58 = base58.b58encode(valeur).decode('utf-8')
-        print(valeur_base58)
-
-    def decoder_hex(self):
-        valeur = base58.b58decode(self._args.valeur[0])
-        valeur_hex = binascii.hexlify(valeur).decode('utf-8')
-        print(valeur_hex)
-
     def idmg_encoder(self):
-        valeur = binascii.unhexlify(self._args.valeur[0])
+        with open(self._args.path_pem, 'r') as fichier:
+            pem_bytes = fichier.read()
 
-        date_epoch = self._extract_epoch(self._args.date_end_cert)
-        print("!!!! DATE EPOCH : %d" % date_epoch)
-        valeur_combinee = struct.pack('=B28sI', VERSION_IDMG, valeur, date_epoch)
-        valeur_base58 = base58.b58encode(valeur_combinee).decode('utf-8')
-        print(valeur_base58)
+        idmg = encoder_idmg(pem_bytes, hashing_code=self._args.hashing)
+        print("IDMG de %s : %s" % (self._args.path_pem, idmg))
 
-    def idmg_decoder(self):
-        valeur = base58.b58decode(self._args.valeur[0])
-        version, valeur_hachage, date_exp = struct.unpack('=B28sI', valeur)
+    def idmg_verifier(self):
+        with open(self._args.path_pem, 'r') as fichier:
+            pem = fichier.read()
 
-        if version == 0x1:
-            date_epoch_sec = date_exp * 1000
-            hachage_hex = binascii.hexlify(valeur_hachage)
+        try:
+            verifier_idmg(self._args.idmg, pem)
+            print("IDMG OK")
+        except IdmgInvalide:
+            print("IDMG invalide")
+            sys.exit(1)
 
-            if self._args.expiration:
-                date_epoch_dt = datetime.datetime.fromtimestamp(date_epoch_sec)
-                print('Expiration IDMG : %s' % date_epoch_dt)
-            else:
-                print('%s;%d' % (hachage_hex.decode('utf-8'), date_epoch_sec))
-        else:
-            raise ValueError("Version %d non supportee", version)
-
-    def _extract_epoch(self, date_epoch: int):
-        date_float = float(date_epoch)
-        date_int = int(math.ceil(date_float / 1000))
-        # date_bytes = struct.pack('I', date_int)
-        return date_int
+    def idmg_expiration(self):
+        try:
+            expiration = expiration_idmg(self._args.idmg)
+            print("%s" % expiration)
+        except IdmgInvalide:
+            print("IDMG invalide")
+            sys.exit(1)
 
 
 if __name__ == '__main__':
