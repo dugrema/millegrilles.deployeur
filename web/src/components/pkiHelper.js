@@ -3,7 +3,9 @@ import { openDB, deleteDB, wrap, unwrap } from 'idb'
 import stringify from 'json-stable-stringify'
 import { util } from 'node-forge'
 
-import { genererCsrNavigateur, genererCertificatMilleGrille, genererCertificatIntermediaire } from '@dugrema/millegrilles.common/lib/cryptoForge'
+import {
+    genererCsrNavigateur, genererCertificatMilleGrille, genererCertificatIntermediaire
+  } from '@dugrema/millegrilles.common/lib/cryptoForge'
 import {
     enveloppePEMPublique, enveloppePEMPrivee, chiffrerPrivateKeyPEM,
     CertificateStore, matchCertificatKey, signerContenuString, chargerClePrivee,
