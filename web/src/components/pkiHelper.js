@@ -9,8 +9,9 @@ import {
 import {
     enveloppePEMPublique, enveloppePEMPrivee, chiffrerPrivateKeyPEM,
     CertificateStore, matchCertificatKey, signerContenuString, chargerClePrivee,
-    calculerIdmg, chargerCertificatPEM, chargerClePubliquePEM, sauvegarderPrivateKeyToPEM,
+    chargerCertificatPEM, chargerClePubliquePEM, sauvegarderPrivateKeyToPEM,
   } from '@dugrema/millegrilles.common/lib/forgecommon'
+import { encoderIdmg } from '@dugrema/millegrilles.common/lib/idmg'
 import { CryptageAsymetrique, genererAleatoireBase64 } from '@dugrema/millegrilles.common/lib/cryptoSubtle'
 
 const cryptageAsymetriqueHelper = new CryptageAsymetrique()
@@ -33,7 +34,7 @@ export async function preparerCleCertMillegrille(certificatPem, clePriveePem, mo
   // console.debug("Cle privee forge\n%O", clePriveeForge)
   const clePriveeDechiffreePem = sauvegarderPrivateKeyToPEM(clePriveeForge)
 
-  const idmg = calculerIdmg(certificatPem)
+  const idmg = await encoderIdmg(certificatPem)
   // console.debug("IDMG calcule : %s", idmg)
 
   const helperAsymetrique = new CryptageAsymetrique()
@@ -61,7 +62,7 @@ export async function genererNouveauCertificatMilleGrille() {
 
   // Generer nouvelles cle privee, cle publique
   const {clePriveePkcs8, clePubliqueSpki, clePriveeSigner} =
-    await cryptageAsymetriqueHelper.genererKeysNavigateur({modulusLength: 4096})
+    await cryptageAsymetriqueHelper.genererKeysNavigateur({modulusLength: 3072})
   const clePriveePEM = enveloppePEMPrivee(clePriveePkcs8, true),
         clePubliquePEM = enveloppePEMPublique(clePubliqueSpki)
 
@@ -95,7 +96,7 @@ export async function preparerInscription(url, pkiMilleGrille) {
   const clePriveeMillegrille = chargerClePrivee(clePriveeMillegrilleChiffree, {password: motdepasseCleMillegrille})
 
   // Calculer IDMG a partir du certificat de millegrille
-  const idmg = calculerIdmg(certMillegrillePEM)
+  const idmg = await encoderIdmg(certMillegrillePEM)
 
   const parametresRequete = {nomUsager: pkiMilleGrille.nomUsager}
   if(pkiMilleGrille.u2f) {

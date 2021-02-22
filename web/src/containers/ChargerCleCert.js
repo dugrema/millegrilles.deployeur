@@ -43,7 +43,8 @@ export class ChargementClePrivee extends React.Component {
   async chargerCle() {
     if(this.state.certificat && this.state.motdepasse && this.state.cleChiffree) {
       try {
-        const infoClecertMillegrille = await preparerCleCertMillegrille(this.state.certificat, this.state.cleChiffree, this.state.motdepasse)
+        const infoClecertMillegrille = await preparerCleCertMillegrille(
+          this.state.certificat, this.state.cleChiffree, this.state.motdepasse)
         console.debug("Chargement cert, cles : %O", infoClecertMillegrille)
 
         if(infoClecertMillegrille) {
@@ -68,14 +69,12 @@ export class ChargementClePrivee extends React.Component {
 
   async traiterCsr() {
     const csrResponse = await axios.get('/installation/api/csr')
-    // console.debug("CSR recu :\n%O", csrResponse)
-    // const info = await signerCSRIntermediaire(this.props.idmg, csrResponse.data, {cleForge: this.props.cleForge, clesSubtle: this.props.clesSubtle})
+
     const infoClecertMillegrille = this.props.rootProps.infoClecertMillegrille
     console.debug("Generer certificat intermediaire pour noeud protege : %O", infoClecertMillegrille)
     const info = await signerCSRIntermediaire(csrResponse.data, this.props.rootProps.infoClecertMillegrille)
     console.debug("Certificat intermediaire : %O", info)
 
-    // console.debug("Info generer cert intermediaire: \n%O", info)
     this.setState({
       certificatintermediairePem: info.pem,
       certificatintermediaire: info.cert,
@@ -88,16 +87,6 @@ export class ChargementClePrivee extends React.Component {
     const {name, value} = event.currentTarget
     this.setState({[name]: value}, async _ =>{
       console.debug("State : %O", this.state)
-    //   if(this.state.cleChiffree && this.state.motdepasse) {
-    //     try {
-    //       const signature = await signerChallengeCertificat(
-    //         this.state.cleChiffree, this.state.motdepasse, this.props.challengeCertificat)
-    //       console.debug("Signature : %O", signature)
-    //       this.props.setReponseCertificat(signature)
-    //     } catch(err) {
-    //       console.warn("Erreur chargement cle : %O", err)
-    //     }
-    //   }
     })
   }
 
@@ -455,16 +444,6 @@ function assemblerCertificat(partiesDeCertificat) {
 
   return certificat
 }
-
-// function dechiffrerCle(cleChiffree, motdepasse) {
-//   try {
-//     const clePrivee = chargerClePrivee(cleChiffree, {password: motdepasse})
-//     console.debug("Cle privee : %O", clePrivee)
-//     return clePrivee
-//   } catch(err) {
-//     return null
-//   }
-// }
 
 export function InformationCertificat(props) {
   if(props.certificat) {
