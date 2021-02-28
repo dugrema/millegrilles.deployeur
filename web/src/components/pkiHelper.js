@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { openDB, deleteDB, wrap, unwrap } from 'idb'
 import stringify from 'json-stable-stringify'
-import { util } from 'node-forge'
+import { util, pki as forgePki } from 'node-forge'
 
 import {
     genererCsrNavigateur, genererCertificatMilleGrille, genererCertificatIntermediaire
@@ -9,7 +9,7 @@ import {
 import {
     enveloppePEMPublique, enveloppePEMPrivee, chiffrerPrivateKeyPEM,
     CertificateStore, matchCertificatKey, signerContenuString, chargerClePrivee,
-    chargerCertificatPEM, chargerClePubliquePEM, sauvegarderPrivateKeyToPEM,
+    chargerClePubliquePEM, sauvegarderPrivateKeyToPEM,
   } from '@dugrema/millegrilles.common/lib/forgecommon'
 import { encoderIdmg } from '@dugrema/millegrilles.common/lib/idmg'
 import { CryptageAsymetrique, genererAleatoireBase64 } from '@dugrema/millegrilles.common/lib/cryptoSubtle'
@@ -50,7 +50,7 @@ export async function preparerCleCertMillegrille(certificatPem, clePriveePem, mo
 export async function signerCSRIntermediaire(csrPem, infoClecertMillegrille) {
   const {idmg, certificat, signer, signerPKCS1_5} = infoClecertMillegrille  //await chargerClecertMillegrilleSignature(idmg)
 
-  const certMillegrille = chargerCertificatPEM(certificat)
+  const certMillegrille = forgePki.certificateFromPem(certificat)
 
   const {cert, pem: certPem} = await genererCertificatIntermediaire(idmg, certMillegrille, signerPKCS1_5, {csrPEM: csrPem})
 
@@ -92,7 +92,7 @@ export async function preparerInscription(url, pkiMilleGrille) {
   const {certMillegrillePEM, clePriveeMillegrilleChiffree, motdepasseCleMillegrille} = pkiMilleGrille
 
   // Extraire PEM vers objets nodeforge
-  const certMillegrille = chargerCertificatPEM(certMillegrillePEM)
+  const certMillegrille = forgePki.certificateFromPem(certMillegrillePEM)
   const clePriveeMillegrille = chargerClePrivee(clePriveeMillegrilleChiffree, {password: motdepasseCleMillegrille})
 
   // Calculer IDMG a partir du certificat de millegrille
