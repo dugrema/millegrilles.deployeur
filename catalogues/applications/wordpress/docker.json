@@ -1,6 +1,6 @@
 {
   "nom": "wordpress",
-  "version": "1.31.6",
+  "version": "1.39.0",
   "registries": [""],
   "images": {
     "mariadb": {
