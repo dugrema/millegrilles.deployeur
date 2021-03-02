@@ -1,6 +1,6 @@
 {
   "nom": "jitsi",
-  "version": "1.34.0",
+  "version": "1.39.0",
   "registries": [
     "docker.maceroc.com",
     "docker.mg-maple.maple.maceroc.com",
