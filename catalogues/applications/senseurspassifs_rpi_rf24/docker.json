@@ -1,9 +1,8 @@
 {
   "nom": "senseurspassifs_rpi_rf24",
-  "version": "1.39.0",
+  "version": "1.39.2",
   "registries": [
-    "docker.maceroc.com",
-    "docker.mg-maple.maple.maceroc.com"
+    "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_senseurspassifs_rpi": {
@@ -32,7 +31,8 @@
           "MG_MQ_AUTH_CERT=on",
           "MG_MQ_CERTFILE=/run/secrets/cert.pem",
           "MG_MQ_KEYFILE=/run/secrets/key.pem",
-          "MG_MQ_CA_CERTS=/run/secrets/millegrille.cert.pem"
+          "MG_MQ_CA_CERTS=/run/secrets/millegrille.cert.pem",
+          "MG_MQ_EXCHANGE_DEFAUT=2.prive"
         ],
         "mounts": [
           {

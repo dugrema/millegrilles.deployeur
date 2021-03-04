@@ -1,9 +1,8 @@
 {
   "nom": "senseurspassifs_rpi_dummy",
-  "version": "1.39.1",
+  "version": "1.39.3",
   "registries": [
-    "docker.maceroc.com",
-    "dugremat"
+    "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_consignation_python_main": {
@@ -33,7 +32,8 @@
           "MG_MQ_AUTH_CERT=on",
           "MG_MQ_CERTFILE=/run/secrets/cert.pem",
           "MG_MQ_KEYFILE=/run/secrets/key.pem",
-          "MG_MQ_CA_CERTS=/run/secrets/millegrille.cert.pem"
+          "MG_MQ_CA_CERTS=/run/secrets/millegrille.cert.pem",
+          "MG_MQ_EXCHANGE_DEFAUT=2.prive"
         ],
         "mounts": [
           {
