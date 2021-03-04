@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs_rpi_dummy",
-  "version": "1.33.2",
+  "version": "1.39.1",
   "registries": [
     "docker.maceroc.com",
     "dugremat"
@@ -8,7 +8,7 @@
   "images": {
     "millegrilles_consignation_python_main": {
       "image": "millegrilles_consignation_python_main",
-      "version": "1.33.5"
+      "version": "1.39.3"
     }
   },
   "dependances": [
