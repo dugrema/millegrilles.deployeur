@@ -4,11 +4,12 @@ import json
 import lzma
 import logging
 import argparse
+import multibase
 
 from base64 import b64encode, b64decode
 from os import path
 
-from millegrilles.util.Chiffrage import CipherMsg1Dechiffrer
+from millegrilles.util.Chiffrage import CipherMsg2Dechiffrer
 from millegrilles.util.X509Certificate import EnveloppeCleCert
 
 
@@ -17,20 +18,17 @@ class Dechiffreur:
     def __init__(self, args):
         self.__args = args
 
-    def dechiffrer(self, path_src: str, path_dst: str, iv: str, password: bytes):
-        iv_bytes = b64decode(iv)
-        password_bytes = b64decode(password)
-        dechiffreur = CipherMsg1Dechiffrer(iv_bytes, password_bytes)
+    def dechiffrer(self, path_src: str, path_dst: str, iv: str, tag: str, password_bytes: bytes):
+        dechiffreur = CipherMsg2Dechiffrer(iv, password_bytes, tag)
 
         with open(path_src, 'rb') as fichier_in:
             with open(path_dst, 'wb') as fichier_out:
                 fichier_out.write(dechiffreur.update(fichier_in.read()))
                 fichier_out.write(dechiffreur.finalize())
 
-    def dechiffrer_asymmetrique(self, path_src: str, path_dst: str, iv: str, password: str, enveloppe):
-        password_dechiffre = CipherMsg1Dechiffrer.dechiffrer_cle(enveloppe.private_key, password)
-        password_dechiffre_b64 = b64encode(password_dechiffre)
-        return self.dechiffrer(path_src, path_dst, iv, password_dechiffre_b64)
+    def dechiffrer_asymmetrique(self, path_src: str, path_dst: str, iv: str, tag: str, password: str, enveloppe):
+        password_dechiffre = CipherMsg2Dechiffrer.dechiffrer_cle(enveloppe.private_key, password)
+        return self.dechiffrer(path_src, path_dst, iv, tag, password_dechiffre)
 
     def dechiffrer_backup(self):
         path_catalogue = self.__args.catalogue
@@ -52,6 +50,7 @@ class Dechiffreur:
         path_output = path_fichier_transactions.replace('.mgs1', '')
 
         iv = catalogue['iv']
+        tag = catalogue['tag']
         password = catalogue['cle']
 
         # Dechiffrer cle secrete avec cle de millegrille
@@ -64,7 +63,7 @@ class Dechiffreur:
         clecert_millegrille = EnveloppeCleCert()
         clecert_millegrille.key_from_pem_bytes(private_key.encode('utf-8'), pwd_cle_privee)
 
-        self.dechiffrer_asymmetrique(path_fichier_transactions, path_output, iv, password, clecert_millegrille)
+        self.dechiffrer_asymmetrique(path_fichier_transactions, path_output, iv, tag, password, clecert_millegrille)
 
 
 # --------- MAIN -------------
