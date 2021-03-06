@@ -47,7 +47,7 @@ class Dechiffreur:
 
         nom_transaction = catalogue.get('transactions_nomfichier') or catalogue.get('archive_nomfichier')
         path_fichier_transactions = path.join(path_transactions, nom_transaction)
-        path_output = path_fichier_transactions.replace('.mgs1', '')
+        path_output = '.'.join(path_fichier_transactions.split('.')[0:-1])  # Retirer extension .mgs?
 
         iv = catalogue['iv']
         tag = catalogue['tag']
