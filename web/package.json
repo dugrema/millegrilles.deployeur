@@ -1,9 +1,9 @@
 {
   "name": "monitor.web",
-  "version": "1.39.7",
+  "version": "1.40.0",
   "private": true,
   "dependencies": {
-    "@dugrema/millegrilles.common": "git+ssh://git.maceroc.com/git/millegrilles.common.nodejs#1.39",
+    "@dugrema/millegrilles.common": "git+ssh://git.maceroc.com/git/millegrilles.common.nodejs#1.40",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
