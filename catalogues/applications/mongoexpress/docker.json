@@ -1,6 +1,6 @@
 {
   "nom": "mongoexpress",
-  "version": "1.39.0",
+  "version": "1.40.0",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -18,7 +18,7 @@
       },
       "config": {
         "name": "mongoexpress",
-        "certificat_compte": "pki.mongoxp.cert",
+        "certificat_compte": "pki.mongoexpress.cert",
         "env": [
           "ME_CONFIG_BASICAUTH_USERNAME=mongo",
           "ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_INITDB_ROOT_USERNAME}",
