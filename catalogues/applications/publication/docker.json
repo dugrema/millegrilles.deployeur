@@ -1,0 +1,149 @@
+{
+  "nom": "publication",
+  "version": "1.40.0",
+  "registries": [
+    "docker.maceroc.com"
+  ],
+  "images": {
+    "millegrilles_consignation_python_main": {
+      "image": "millegrilles_consignation_python_main",
+      "version": "x86_64_1.40.0"
+    },
+    "millegrilles_web_publication": {
+      "image": "millegrilles_web_publication",
+      "version": "x86_64_1.40.0"
+    }
+  },
+  "dependances": [
+    {
+      "image": "millegrilles_consignation_python_main",
+      "config": {
+        "name": "publication_python",
+        "args": [
+          "demarrer_domaine.py",
+          "--info"
+        ],
+        "env": [
+          "MG_DOMAINES_JSON=/opt/millegrilles/dist/domaines_publication.json",
+          "MG_MQ_HOST=mq",
+          "MG_MQ_PORT=5673",
+          "MG_MQ_SSL=on",
+          "MG_MQ_AUTH_CERT=on",
+          "MG_MQ_CERTFILE=/run/secrets/cert.pem",
+          "MG_MQ_KEYFILE=/run/secrets/key.pem",
+          "MG_MQ_CA_CERTS=/run/secrets/millegrille.cert.pem",
+          "MG_MONGO_HOST=mongo",
+          "MG_MONGO_SSL=x509",
+          "MG_MONGO_SSL_CA_CERTS=/run/secrets/millegrille.cert.pem",
+          "MG_PKI_CERT_MILLEGRILLE=/run/secrets/millegrille.cert.pem"
+        ],
+        "constraints": [
+          "node.labels.millegrilles.publication == true"
+        ],
+        "configs": [
+          {
+            "name": "pki.domaines.cert",
+            "filename": "/run/secrets/cert.pem"
+          },
+          {
+            "name": "pki.domaines.cert",
+            "filename": "/run/secrets/millegrille.cert.pem"
+          }
+        ],
+        "secrets": [
+          {
+            "match_config": true,
+            "name": "pki.domaines.key",
+            "filename": "key.pem"
+          }
+        ],
+        "networks": [
+          {
+            "target": "millegrille_net"
+          }
+        ],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 500000000,
+          "mem_limit": 104857600
+        },
+        "restart_policy": {
+          "condition": "any",
+          "delay": 30000000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    },
+    {
+      "image": "millegrilles_web_publication",
+      "config": {
+        "name": "publication_web",
+        "env": [
+          "MG_MQ_CERTFILE=/run/secrets/cert.pem",
+          "MG_MQ_KEYFILE=/run/secrets/key.pem",
+          "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
+          "WEB_CERT=/run/secrets/cert.pem",
+          "WEB_KEY=/run/secrets/key.pem",
+          "SERVER_TYPE=spdy",
+          "HOST=${HOSTNAME_DOMAINE}",
+          "PORT=443"
+        ],
+        "mounts": [
+          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw"
+        ],
+        "configs": [
+          {
+            "name": "pki.web_protege.cert",
+            "filename": "/run/secrets/cert.pem"
+          },
+          {
+            "name": "pki.millegrille.cert",
+            "filename": "/run/secrets/millegrille.cert.pem"
+          }
+        ],
+        "secrets": [
+          {
+            "match_config": true,
+            "name": "pki.web_protege.key",
+            "filename": "key.pem"
+          }
+        ],
+        "networks": [
+          {
+            "target": "millegrille_net",
+            "aliases": [
+              "publication"
+            ]
+          }
+        ],
+        "labels": {
+          "millegrille": "${IDMG}",
+          "url": "https://${HOSTNAME}/publication",
+          "securite": "3.protege"
+        },
+        "resources": {
+          "cpu_limit": 500000000,
+          "mem_limit": 73741824
+        },
+        "restart_policy": {
+          "condition": "on-failure",
+          "delay": 60000000000,
+          "max_attempts": 5
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ],
+  "nginx": {
+    "path_location": "/publication",
+    "proxypass": "https://publication:443"
+  }
+}
