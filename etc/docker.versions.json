@@ -7,9 +7,9 @@
         "mongo": {"registries": [""], "image": "mongo", "version": "4.0"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_7"},
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.40.2"},
-        "fichiers": {"image": "millegrilles_fichiers", "version": "x86_64_1.40.0"},
-        "nginx": {"image": "millegrilles_nginx", "version": "x86_64_1.40.0"},
-        "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "x86_64_1.40.0"},
-        "web": {"image": "millegrilles_web", "version": "x86_64_1.40.0"}
+        "fichiers": {"image": "millegrilles_fichiers", "version": "1.40.0"},
+        "nginx": {"image": "millegrilles_nginx", "version": "1.40.0"},
+        "web": {"image": "millegrilles_web", "version": "1.40.0"},
+        "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "1.40.0"}
     }
 }

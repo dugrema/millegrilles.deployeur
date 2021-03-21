@@ -1,17 +1,17 @@
 {
   "nom": "senseurspassifs",
-  "version": "1.40.0",
+  "version": "1.40.1",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_consignation_python_main": {
       "image": "millegrilles_consignation_python_main",
-      "version": "x86_64_1.40.0"
+      "version": "1.40.2"
     },
     "millegrilles_web_senseurspassifs": {
       "image": "millegrilles_web_senseurspassifs",
-      "version": "x86_64_1.40.0"
+      "version": "1.40.0"
     }
   },
   "dependances": [
