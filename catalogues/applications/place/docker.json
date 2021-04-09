@@ -1,5 +1,5 @@
 {
-  "nom": "grosfichiers",
+  "nom": "place",
   "version": "1.41.0",
   "registries": [
     "docker.maceroc.com"
@@ -9,8 +9,8 @@
       "image": "millegrilles_consignation_python_main",
       "version": "1.41.0"
     },
-    "millegrilles_web_grosfichiers": {
-      "image": "millegrilles_web_grosfichiers",
+    "millegrilles_web_place": {
+      "image": "millegrilles_web_place",
       "version": "1.41.0"
     }
   },
@@ -18,13 +18,13 @@
     {
       "image": "millegrilles_consignation_python_main",
       "config": {
-        "name": "grosfichiers_python",
+        "name": "forum_python",
         "args": [
           "demarrer_domaine.py",
           "--info"
         ],
         "env": [
-          "MG_DOMAINES_JSON=/opt/millegrilles/dist/domaines_grosfichiers.json",
+          "MG_DOMAINES_JSON=/opt/millegrilles/dist/domaines_forum.json",
           "MG_MQ_HOST=mq",
           "MG_MQ_PORT=5673",
           "MG_MQ_SSL=on",
@@ -38,7 +38,7 @@
           "MG_PKI_CERT_MILLEGRILLE=/run/secrets/millegrille.cert.pem"
         ],
         "constraints": [
-          "node.labels.millegrilles.grosfichiers == true"
+          "node.labels.millegrilles.place == true"
         ],
         "configs": [
           {
@@ -80,9 +80,9 @@
       }
     },
     {
-      "image": "millegrilles_web_grosfichiers",
+      "image": "millegrilles_web_place",
       "config": {
-        "name": "grosfichiers_web",
+        "name": "place_web",
         "env": [
           "MG_MQ_CERTFILE=/run/secrets/cert.pem",
           "MG_MQ_KEYFILE=/run/secrets/key.pem",
@@ -117,14 +117,14 @@
           {
             "target": "millegrille_net",
             "aliases": [
-              "grosfichiers"
+              "place"
             ]
           }
         ],
         "labels": {
           "millegrille": "${IDMG}",
-          "url": "https://${HOSTNAME}/grosfichiers",
-          "securite": "3.protege"
+          "url": "https://${HOSTNAME}/place",
+          "securite": "2.prive"
         },
         "resources": {
           "cpu_limit": 500000000,
@@ -143,7 +143,7 @@
     }
   ],
   "nginx": {
-    "path_location": "/grosfichiers",
-    "proxypass": "https://grosfichiers:443"
+    "path_location": "/place",
+    "proxypass": "https://place:443"
   }
 }
