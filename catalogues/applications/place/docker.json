@@ -1,13 +1,13 @@
 {
   "nom": "place",
-  "version": "1.41.0",
+  "version": "1.41.1",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_consignation_python_main": {
       "image": "millegrilles_consignation_python_main",
-      "version": "1.41.0"
+      "version": "1.41.1"
     },
     "millegrilles_web_place": {
       "image": "millegrilles_web_place",
@@ -144,6 +144,7 @@
   ],
   "nginx": {
     "path_location": "/place",
-    "proxypass": "https://place:443"
+    "proxypass": "https://place:443",
+    "conf_location": "nginx.place.conf"
   }
 }
