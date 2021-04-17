@@ -52,7 +52,7 @@
   "restart_policy": {
     "condition": "on-failure",
     "delay": 30000000000,
-    "max_attempts": 3
+    "max_attempts": 100000
   },
   "mode": {
     "mode": "replicated",
