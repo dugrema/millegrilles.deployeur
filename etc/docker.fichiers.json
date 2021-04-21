@@ -1,6 +1,13 @@
 {
   "name": "fichiers",
   "certificat_compte": "pki.fichiers.cert",
+  "generer": [
+    {
+      "generateur": "ed25519",
+      "format": "openssh",
+      "secret": "pki.fichiers.sftp"
+    }
+  ],
   "env": [
     "MG_MQ_URL=amqps://mq:5673",
     "MG_MQ_CERTFILE=/run/secrets/cert.pem",
@@ -8,10 +15,9 @@
     "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
     "WEB_CERT=/run/secrets/cert.pem",
     "WEB_KEY=/run/secrets/key.pem",
+    "SFTP_KEY=/run/secrets/sftp.key.pem",
     "SERVER_TYPE=https",
-    "MG_CONSIGNATION_PATH=/var/opt/millegrilles/consignation",
-    "TRANSMISSION_HOST=transmission",
-    "TRANSMISSION_PASSWORD=bwahahah1202"
+    "MG_CONSIGNATION_PATH=/var/opt/millegrilles/consignation"
   ],
   "mounts": [
     "millegrilles-consignation:/var/opt/millegrilles/consignation:rw"
@@ -33,12 +39,20 @@
     {
       "name": "pki.fichiers.key",
       "filename": "key.pem"
+    },
+    {
+      "name": "pki.fichiers.sftp",
+      "filename": "sftp.key.pem"
     }
   ],
-  "networks": [{
-    "target": "millegrille_net",
-    "aliases": ["fichiers"]
-  }],
+  "networks": [
+    {
+      "target": "millegrille_net",
+      "aliases": [
+        "fichiers"
+      ]
+    }
+  ],
   "labels": {
     "millegrille": "${IDMG}"
   },
@@ -49,7 +63,7 @@
   "restart_policy": {
     "condition": "on-failure",
     "delay": 30000000000,
-    "max_attempts": 3
+    "max_attempts": 10
   },
   "mode": {
     "mode": "replicated",
