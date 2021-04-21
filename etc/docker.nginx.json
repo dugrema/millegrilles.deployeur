@@ -1,5 +1,9 @@
 {
   "name": "nginx",
+  "env": [
+    "ONIONSERVICE_NAME=nginx",
+    "ONIONSERVICE_PORT=443"
+  ],
   "mounts": [
     "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:ro",
     "${NGINX_CONFIG_VOLUME}:/etc/nginx/conf.d/modules:ro",
