@@ -16,7 +16,8 @@
       "config": {
         "name": "ipfs",
         "mounts": [
-          "/var/opt/millegrilles/consignation/ipfs/staging:/export:rw",
+          "/var/opt/millegrilles/consignation/downloadStaging:/export:rw",
+          "/var/opt/millegrilles/consignation/uploadStaging:/import:rw",
           "/var/opt/millegrilles/consignation/ipfs/data:/data/ipfs:rw",
           "/var/opt/millegrilles/consignation/grosfichiers:/var/opt/millegrilles/consignation/grosfichiers:ro"
         ],
