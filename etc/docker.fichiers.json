@@ -53,6 +53,9 @@
       ]
     }
   ],
+  "hosts": {
+    "ipfs": "${HOST_IPV4}"
+  },
   "labels": {
     "millegrille": "${IDMG}"
   },

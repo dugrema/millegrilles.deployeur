@@ -2,18 +2,19 @@
 
 # Installer le service ServiceMonitor
 redemarrer_ipfs() {
-  docker service rm service_ipfs
+  docker service rm ipfs
 
   docker service create \
-    --name service_ipfs \
+    --name ipfs \
     --hostname ipfs \
-    --env ipfs_staging=/var/opt/millegrilles/consignation/ipfs/staging \
-    --env ipfs_data=/var/opt/millegrilles/consignation/ipfs/data \
     --mount type=bind,source=/var/opt/millegrilles/consignation/ipfs/staging,destination=/export \
     --mount type=bind,source=/var/opt/millegrilles/consignation/ipfs/data,destination=/data/ipfs \
-    --network host \
     --user root:115 \
+    --network host \
     ipfs/go-ipfs
+
+#    --env ipfs_staging=/var/opt/millegrilles/consignation/ipfs/staging \
+#    --env ipfs_data=/var/opt/millegrilles/consignation/ipfs/data \
 
 
 #    --publish published=8081,target=8080,mode=host \
