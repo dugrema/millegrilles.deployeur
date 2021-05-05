@@ -5,7 +5,12 @@
     {
       "generateur": "ed25519",
       "format": "openssh",
-      "secret": "pki.fichiers.sftp"
+      "secret": "pki.fichiers.sftp.ed25519"
+    },
+    {
+      "generateur": "rsa",
+      "format": "openssh",
+      "secret": "pki.fichiers.sftp.rsa"
     }
   ],
   "env": [
@@ -41,8 +46,12 @@
       "filename": "key.pem"
     },
     {
-      "name": "pki.fichiers.sftp",
-      "filename": "sftp.key.pem"
+      "name": "pki.fichiers.sftp.ed25519",
+      "filename": "sftp.ed25519.key.pem"
+    },
+    {
+      "name": "pki.fichiers.sftp.rsa",
+      "filename": "sftp.rsa.key.pem"
     }
   ],
   "networks": [
