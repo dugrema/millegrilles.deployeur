@@ -1,17 +1,17 @@
 {
   "nom": "publication",
-  "version": "1.41.0",
+  "version": "1.42.0",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_consignation_python_main": {
       "image": "millegrilles_consignation_python_main",
-      "version": "1.41.1"
+      "version": "1.42.0"
     },
     "millegrilles_web_publication": {
       "image": "millegrilles_web_publication",
-      "version": "1.41.0"
+      "version": "1.42.0"
     }
   },
   "dependances": [
@@ -35,7 +35,9 @@
           "MG_MONGO_HOST=mongo",
           "MG_MONGO_SSL=x509",
           "MG_MONGO_SSL_CA_CERTS=/run/secrets/millegrille.cert.pem",
-          "MG_PKI_CERT_MILLEGRILLE=/run/secrets/millegrille.cert.pem"
+          "MG_PKI_CERT_MILLEGRILLE=/run/secrets/millegrille.cert.pem",
+          "MG_CONSIGNATIONFICHIERS_HOST=fichiers",
+          "MG_CONSIGNATIONFICHIERS_PORT=443"
         ],
         "constraints": [
           "node.labels.millegrilles.publication == true"

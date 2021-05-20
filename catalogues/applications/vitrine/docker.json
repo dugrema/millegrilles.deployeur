@@ -1,14 +1,13 @@
 {
   "nom": "vitrine",
-  "version": "1.39.1",
+  "version": "1.42.0",
   "registries": [
-    "docker.maceroc.com",
-    "docker.mg.maple.maceroc.com"
+    "docker.maceroc.com"
   ],
   "images": {
     "vitrine": {
       "image": "millegrilles_vitrine",
-      "version": "1.39.0"
+      "version": "1.42.0"
     }
   },
   "dependances": [
@@ -26,10 +25,12 @@
           "WEB_KEY=/run/secrets/key.pem",
           "SERVER_TYPE=spdy",
           "HOST=${HOSTNAME_DOMAINE}",
-          "PORT=443"
+          "PORT=443",
+          "WEBAPPS_SRC_FOLDER=/var/opt/millegrilles/nginx/html/vitrine"
         ],
         "mounts": [
-          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw"
+          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw",
+          "${NGINX_HTML_VOLUME}:/var/opt/millegrilles/nginx/html:rw"
         ],
         "configs": [
           {
