@@ -1,6 +1,6 @@
 {
   "nom": "vitrine",
-  "version": "1.42.2",
+  "version": "1.42.3",
   "registries": [
     "docker.maceroc.com"
   ],
