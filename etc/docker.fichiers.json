@@ -22,10 +22,12 @@
     "WEB_KEY=/run/secrets/key.pem",
     "SFTP_KEY=/run/secrets/sftp.key.pem",
     "SERVER_TYPE=https",
-    "MG_CONSIGNATION_PATH=/var/opt/millegrilles/consignation"
+    "MG_CONSIGNATION_PATH=/var/opt/millegrilles/consignation",
+    "WEBAPPS_SRC_FOLDER=/var/opt/millegrilles/nginx/html"
   ],
   "mounts": [
-    "millegrilles-consignation:/var/opt/millegrilles/consignation:rw"
+    "millegrilles-consignation:/var/opt/millegrilles/consignation:rw",
+    "${NGINX_HTML_VOLUME}:/var/opt/millegrilles/nginx/html:rw"
   ],
   "constraints": [
     "node.labels.millegrilles.fichiers == true"
