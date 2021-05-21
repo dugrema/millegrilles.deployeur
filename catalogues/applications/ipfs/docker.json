@@ -1,6 +1,6 @@
 {
   "nom": "ipfs",
-  "version": "1.42.4",
+  "version": "1.42.5",
   "registries": [
     "ipfs"
   ],
@@ -16,10 +16,10 @@
       "config": {
         "name": "ipfs",
         "mounts": [
-          "/var/opt/millegrilles/consignation/downloadStaging:/export:rw",
-          "/var/opt/millegrilles/consignation/uploadStaging:/import:rw",
-          "/var/opt/millegrilles/consignation/ipfs/data:/data/ipfs:rw",
-          "/var/opt/millegrilles/consignation/grosfichiers:/var/opt/millegrilles/consignation/grosfichiers:ro"
+          "ipfs_staging:/export:rw",
+          "ipfs_import:/import:rw",
+          "ipfs_data:/data/ipfs:rw",
+          "millegrilles-consignation:/var/opt/millegrilles/consignation:ro"
         ],
         "networks": [
           {
