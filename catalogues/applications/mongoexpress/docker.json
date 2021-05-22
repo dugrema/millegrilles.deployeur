@@ -7,7 +7,7 @@
   "images": {
     "mongoexpress": {
       "image": "mg_mongo_express",
-      "version": "0.49_5"
+      "version": "0.49_6"
     }
   },
   "dependances": [
