@@ -1,6 +1,6 @@
 {
   "nom": "publication",
-  "version": "1.42.1",
+  "version": "1.42.2",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -65,6 +65,7 @@
           }
         ],
         "labels": {
+          "application": "publication",
           "millegrille": "${IDMG}"
         },
         "resources": {
@@ -124,6 +125,7 @@
           }
         ],
         "labels": {
+          "application": "publication",
           "millegrille": "${IDMG}",
           "url": "https://${HOSTNAME}/publication",
           "securite": "3.protege"

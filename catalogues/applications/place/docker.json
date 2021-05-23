@@ -1,6 +1,6 @@
 {
   "nom": "place",
-  "version": "1.41.1",
+  "version": "1.41.2",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -63,6 +63,7 @@
           }
         ],
         "labels": {
+          "application": "place",
           "millegrille": "${IDMG}"
         },
         "resources": {
@@ -122,6 +123,7 @@
           }
         ],
         "labels": {
+          "application": "place",
           "millegrille": "${IDMG}",
           "url": "https://${HOSTNAME}/place",
           "securite": "2.prive"

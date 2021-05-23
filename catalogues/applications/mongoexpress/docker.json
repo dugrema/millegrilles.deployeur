@@ -1,6 +1,6 @@
 {
   "nom": "mongoexpress",
-  "version": "1.40.0",
+  "version": "1.42.0",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -81,6 +81,7 @@
           }
         ],
         "labels": {
+          "application": "mongoexpress",
           "millegrille": "${IDMG}",
           "url": "https://mongoexpress.${HOSTNAME}",
           "securite": "3.protege"

@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs_rpi_rf24",
-  "version": "1.40.0",
+  "version": "1.40.1",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -47,7 +47,10 @@
           }
         ],
         "network": "millegrille_net",
-        "privileged": true
+        "privileged": true,
+        "labels": {
+          "application": "senseurspassifs_rpi_rf24"
+        }
       }
     }
   ]

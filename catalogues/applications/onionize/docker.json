@@ -1,6 +1,6 @@
 {
   "nom": "onionize",
-  "version": "1.42.0",
+  "version": "1.42.1",
   "registries": [
     "torservers"
   ],
@@ -25,6 +25,7 @@
           }
         ],
         "labels": {
+          "application": "onionize",
           "millegrille": "${IDMG}"
         },
         "resources": {

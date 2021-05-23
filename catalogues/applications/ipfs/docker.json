@@ -1,6 +1,6 @@
 {
   "nom": "ipfs",
-  "version": "1.42.5",
+  "version": "1.42.6",
   "registries": [
     "ipfs"
   ],
@@ -27,6 +27,7 @@
           }
         ],
         "labels": {
+          "application": "ipfs",
           "millegrille": "${IDMG}"
         },
         "resources": {

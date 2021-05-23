@@ -1,6 +1,6 @@
 {
   "nom": "grosfichiers",
-  "version": "1.42.1",
+  "version": "1.42.2",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -63,6 +63,7 @@
           }
         ],
         "labels": {
+          "application": "grosfichiers",
           "millegrille": "${IDMG}"
         },
         "resources": {
@@ -122,6 +123,7 @@
           }
         ],
         "labels": {
+          "application": "grosfichiers",
           "millegrille": "${IDMG}",
           "url": "https://${HOSTNAME}/grosfichiers",
           "securite": "3.protege"

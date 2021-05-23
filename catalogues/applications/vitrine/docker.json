@@ -58,6 +58,7 @@
           }
         ],
         "labels": {
+          "application": "vitrine",
           "millegrille": "${IDMG}",
           "url": "https://${HOSTNAME}/vitrine",
           "securite": "1.public"

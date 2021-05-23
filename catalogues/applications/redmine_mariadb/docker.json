@@ -1,6 +1,6 @@
 {
   "nom": "redmine_mariadb",
-  "version": "1.39.0",
+  "version": "1.42.0",
   "registries": [""],
   "images": {
     "mariadb": {
@@ -84,6 +84,7 @@
           }
         ],
         "labels": {
+          "application": "mariadb_shared",
           "millegrille": "${IDMG}",
           "shared": "true"
         },
@@ -128,6 +129,7 @@
           }
         ],
         "labels": {
+          "application": "redmine_mariadb",
           "millegrille": "${IDMG}",
           "url": "https://redmine.${HOSTNAME}",
           "securite": "2.prive",

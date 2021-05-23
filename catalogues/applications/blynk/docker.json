@@ -1,6 +1,6 @@
 {
   "nom": "blynk",
-  "version": "1.39.0",
+  "version": "1.42.0",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -60,6 +60,7 @@
           }
         ],
         "labels": {
+          "application": "blynk",
           "millegrille": "${IDMG}",
           "url": "https://${HOSTNAME}:9443",
           "securite": "2.prive"
