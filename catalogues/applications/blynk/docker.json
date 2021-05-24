@@ -1,13 +1,13 @@
 {
   "nom": "blynk",
-  "version": "1.42.0",
+  "version": "1.42.1",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "blynk": {
       "image": "mg_blynk",
-      "version": "0.41.10_2"
+      "version": "0.41.16_3"
     }
   },
   "backup": {
