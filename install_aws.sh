@@ -12,15 +12,12 @@ source ${REP_BIN}/install_funcs_aws.sh
 # Execution de l'installation
 installer() {
   # Au besoin, preparer l'environnement du RPi avant le reste. Ajoute swapfile et autres dependances
-  #installer_autres_deps
   initialiser_swarm
-  #installer_sysctl
 }
 
 configurer() {
   configurer_comptes
   configurer_repertoires
-  #configurer_docker
   configurer_swarm
   set_params
 }

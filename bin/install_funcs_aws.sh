@@ -3,14 +3,8 @@ configurer_repertoires() {
 
   sudo mkdir -p $MILLEGRILLES_VAR
 
-  #sudo chown root:syslog $MILLEGRILLES_LOGS
-  #if [ $? -ne 0 ]; then
-  #  sudo chown root:adm $MILLEGRILLES_LOGS
-  #fi
-
   set -e
 
-  #sudo chmod 2770 $MILLEGRILLES_LOGS
   sudo chown root:millegrilles $MILLEGRILLES_VAR
   sudo chmod 750 $MILLEGRILLES_VAR
 
@@ -18,16 +12,10 @@ configurer_repertoires() {
 }
 
 configurer_comptes() {
-  # set -e  # Arreter execution sur erreur
   echo "[INFO] Preparer comptes millegrilles"
 
   # Comptes utilises par containers pour acceder au systeme de fichiers local
   sudo groupadd -g $MILLEGRILLES_GROUP_GID $MILLEGRILLES_GROUP || true
-#  sudo useradd -u $MILLEGRILLES_USER_FICHIERS_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_FICHIERS || true
-
-  # Compte service monitor, donner acces au socket unix de docker
-#  sudo useradd -u $MILLEGRILLES_USER_MONITOR_UID -g $MILLEGRILLES_GROUP $MILLEGRILLES_USER_MONITOR || true
-#  sudo adduser $MILLEGRILLES_USER_MONITOR docker || true
 
   echo "[OK] Comptes millegrilles prets"
 }
@@ -62,10 +50,18 @@ configurer_swarm() {
 # Installer le service ServiceMonitor
 demarrer_servicemonitor() {
 
+  PARAMS_DUREE=""
+  if [ -n $CERT_DUREE ]; then
+    PARAMS_DUREE="$PARAMS_DUREE --env CERT_DUREE=$CERT_DUREE"
+  fi
+  if [ -n $CERT_DUREE_HEURES ]; then
+    PARAMS_DUREE="$PARAMS_DUREE --env CERT_DUREE_HEURES=$CERT_DUREE_HEURES"
+  fi
+
   sudo docker service create \
     --name monitor \
     --hostname monitor \
-    --env MG_MONGO_HOST=mongo \
+    --env MG_MONGO_HOST=mongo $PARAMS_DUREE \
     --network millegrille_net \
     --mount type=bind,source=/var/run/docker.sock,destination=/run/docker.sock \
     --mount type=bind,source=$MILLEGRILLES_VAR,destination=/var/opt/millegrilles \
