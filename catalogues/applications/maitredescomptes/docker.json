@@ -1,0 +1,77 @@
+{
+  "nom": "maitredescomptes",
+  "version": "1.43.0",
+  "registries": [
+    "docker.maceroc.com"
+  ],
+  "images": {
+    "web_protege": {
+      "image": "millegrilles_web",
+      "version": "1.43.0"
+    }
+  },
+  "dependances": [
+    {
+      "image": "web_protege",
+      "config": {
+        "name": "web_protege",
+        "env": [
+          "MG_MQ_CERTFILE=/run/secrets/cert.pem",
+          "MG_MQ_KEYFILE=/run/secrets/key.pem",
+          "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
+          "WEB_CERT=/run/secrets/cert.pem",
+          "WEB_KEY=/run/secrets/key.pem",
+          "SERVER_TYPE=spdy",
+          "HOST=${HOSTNAME_DOMAINE}",
+          "PORT=443",
+          "DATA_FOLDER=${MOUNTS}/nginx/data"
+        ],
+        "mounts": [
+          "${NGINX_DATA_VOLUME}:${MOUNTS}/nginx/data:rw"
+        ],
+        "configs": [
+          {
+            "name": "pki.web_protege.cert;pki.monitor.cert",
+            "filename": "/run/secrets/cert.pem"
+          },
+          {
+            "name": "pki.millegrille.cert",
+            "filename": "/run/secrets/millegrille.cert.pem"
+          }
+        ],
+        "secrets": [
+          {
+            "match_config": true,
+            "name": "pki.web_protege.key;pki.monitor.key",
+            "filename": "key.pem"
+          }
+        ],
+        "networks": [
+          {
+            "target": "millegrille_net",
+            "aliases": [
+              "web",
+              "web_protege"
+            ]
+          }
+        ],
+        "labels": {
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 1000000000,
+          "mem_limit": 209715200
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ],
+  "nginx": {
+    "path_location": "/millegrilles",
+    "proxypass": "https://millegrilles:443",
+    "conf_location": "nginx.maitredescomptes.conf"
+  }
+}
