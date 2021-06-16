@@ -1,6 +1,6 @@
 {
   "nom": "maitredescomptes",
-  "version": "1.43.1",
+  "version": "1.43.2",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -19,6 +19,7 @@
           "MG_MQ_CERTFILE=/run/secrets/cert.pem",
           "MG_MQ_KEYFILE=/run/secrets/key.pem",
           "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
+          "MG_EXCHANGE_DEFAUT=2.prive",
           "WEB_CERT=/run/secrets/cert.pem",
           "WEB_KEY=/run/secrets/key.pem",
           "SERVER_TYPE=spdy",
