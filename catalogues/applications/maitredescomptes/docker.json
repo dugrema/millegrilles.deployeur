@@ -1,6 +1,6 @@
 {
   "nom": "maitredescomptes",
-  "version": "1.43.0",
+  "version": "1.43.1",
   "registries": [
     "docker.maceroc.com"
   ],
