@@ -1,0 +1,84 @@
+{
+  "nom": "place_web",
+  "version": "1.43.0",
+  "registries": [
+    "docker.maceroc.com"
+  ],
+  "images": {
+    "millegrilles_web_place": {
+      "image": "millegrilles_web_place",
+      "version": "1.43.0"
+    }
+  },
+  "dependances": [
+    {
+      "image": "millegrilles_web_place",
+      "config": {
+        "name": "place_web",
+        "env": [
+          "MG_MQ_CERTFILE=/run/secrets/cert.pem",
+          "MG_MQ_KEYFILE=/run/secrets/key.pem",
+          "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
+          "MG_EXCHANGE_DEFAUT=2.prive",
+          "WEB_CERT=/run/secrets/cert.pem",
+          "WEB_KEY=/run/secrets/key.pem",
+          "SERVER_TYPE=spdy",
+          "HOST=${HOSTNAME_DOMAINE}",
+          "PORT=443"
+        ],
+        "mounts": [
+          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw"
+        ],
+        "configs": [
+          {
+            "name": "pki.web_protege.cert;pki.monitor.cert",
+            "filename": "/run/secrets/cert.pem"
+          },
+          {
+            "name": "pki.millegrille.cert",
+            "filename": "/run/secrets/millegrille.cert.pem"
+          }
+        ],
+        "secrets": [
+          {
+            "match_config": true,
+            "name": "pki.web_protege.key;pki.monitor.key",
+            "filename": "key.pem"
+          }
+        ],
+        "networks": [
+          {
+            "target": "millegrille_net",
+            "aliases": [
+              "place"
+            ]
+          }
+        ],
+        "labels": {
+          "application": "place",
+          "millegrille": "${IDMG}",
+          "url": "https://${HOSTNAME}/place",
+          "securite": "2.prive"
+        },
+        "resources": {
+          "cpu_limit": 500000000,
+          "mem_limit": 73741824
+        },
+        "restart_policy": {
+          "condition": "on-failure",
+          "delay": 60000000000,
+          "max_attempts": 5
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ],
+  "nginx": {
+    "path_location": "/place",
+    "proxypass": "https://place:443",
+    "conf_location": "nginx.place.conf"
+  }
+}

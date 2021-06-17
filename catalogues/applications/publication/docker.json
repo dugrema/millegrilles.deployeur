@@ -1,17 +1,17 @@
 {
   "nom": "publication",
-  "version": "1.42.2",
+  "version": "1.43.0",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_consignation_python_main": {
       "image": "millegrilles_consignation_python_main",
-      "version": "1.42.1"
+      "version": "1.43.0"
     },
     "millegrilles_web_publication": {
       "image": "millegrilles_web_publication",
-      "version": "1.42.1"
+      "version": "1.43.0"
     }
   },
   "dependances": [
