@@ -1,13 +1,13 @@
 {
   "nom": "vitrine",
-  "version": "1.42.4",
+  "version": "1.43.0",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "vitrine": {
       "image": "millegrilles_vitrine",
-      "version": "1.42.1"
+      "version": "1.43.0"
     }
   },
   "dependances": [
