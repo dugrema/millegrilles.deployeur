@@ -1,6 +1,6 @@
 {
   "nom": "place_web",
-  "version": "1.43.0",
+  "version": "1.43.1",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -24,7 +24,8 @@
           "WEB_KEY=/run/secrets/key.pem",
           "SERVER_TYPE=spdy",
           "HOST=${HOSTNAME_DOMAINE}",
-          "PORT=443"
+          "PORT=443",
+          "URL_UPLOAD_PROTEGE=mq"
         ],
         "mounts": [
           "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw"
