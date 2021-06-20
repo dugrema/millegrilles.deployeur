@@ -10,7 +10,8 @@ done
 
 for CONFIG in ${CONFIG[@]}; do
   if [ $CONFIG != 'NAME' ]; then
-    PARAMS="${PARAMS} --config ${CONFIG}"
+    CONFIG_INFO="source=${CONFIG},target=/${CONFIG},mode=0400"
+    PARAMS="${PARAMS} --config ${CONFIG_INFO}"
   fi
 done
 
@@ -21,8 +22,8 @@ docker service create \
   $PARAMS \
   --mount type=bind,source=/home/mathieu/mgdev/certs,target=/opt/millegrilles/dist/ \
   --mount type=bind,source=$PWD,target=/opt/millegrilles/scripts \
-  --entrypoint "/bin/bash" \
-  ubuntu \
+  --entrypoint "/bin/sh" \
+  alpine \
   /opt/millegrilles/scripts/bin/dev/copy_keys.sh
 
 CID=`docker container ls | grep mon_secret | awk '{print $1}'`
