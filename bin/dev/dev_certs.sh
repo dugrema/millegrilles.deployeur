@@ -29,3 +29,4 @@ docker service create \
 CID=`docker container ls | grep mon_secret | awk '{print $1}'`
 docker exec -it $CID bash
 docker service rm mon_secret
+sudo chown -R mathieu:mathieu /home/mathieu/mgdev/certs
