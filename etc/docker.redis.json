@@ -1,0 +1,46 @@
+{
+  "name": "redis",
+  "env": [],
+  "generer": [
+    {
+      "generateur": "motdepasse",
+      "longueur": 32,
+      "secret": "passwd.redis"
+    }
+  ],
+  "args": [
+    "redis-server",
+    "--appendonly yes"
+  ],
+  "mounts": [
+    "mg-redis:/data:rw"
+  ],
+  "secrets": [
+    {
+      "name": "passwd.redis",
+      "filename": "passwd.redis.txt"
+    }
+  ],
+  "constraints": [
+    "node.labels.millegrilles.redis == true"
+  ],
+  "networks": [{
+    "target": "millegrille_net",
+    "aliases": ["redis"]
+  }],
+  "labels": {
+    "millegrille": "${IDMG}"
+  },
+  "resources": {
+    "cpu_limit": 500000000,
+    "mem_limit": 629145600
+  },
+  "restart_policy": {
+    "condition": "any",
+    "delay": 30000000000
+  },
+  "mode": {
+    "mode": "replicated",
+    "replicas": 1
+  }
+}

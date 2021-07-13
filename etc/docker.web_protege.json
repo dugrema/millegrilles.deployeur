@@ -1,6 +1,13 @@
 {
   "name": "web_protege",
   "certificat_compte": "pki.web_protege.cert",
+  "generer": [
+    {
+      "generateur": "motdepasse",
+      "longueur": 32,
+      "secret": "passwd.maitrecomptessession"
+    }
+  ],
   "env": [
     "MG_MQ_URL=amqps://mq:5673",
     "MG_MQ_CERTFILE=/run/secrets/cert.pem",
@@ -8,6 +15,9 @@
     "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
     "WEB_CERT=/run/secrets/webcert.pem",
     "WEB_KEY=/run/secrets/webkey.pem",
+    "MG_SESSION_PASSWORD=/run/secrets/passwd.maitrecomptessession.txt",
+    "MG_REDIS_HOST=redis",
+    "MG_REDIS_PORT=6379",
     "SERVER_TYPE=spdy",
     "HOST=${HOSTNAME_DOMAINE}",
     "PORT=443",
@@ -42,6 +52,10 @@
     {
       "name": "pki.web.key;pki.web_protege.key",
       "filename": "webkey.pem"
+    },
+    {
+      "name": "passwd.maitrecomptessession",
+      "filename": "passwd.maitrecomptessession.txt"
     }
   ],
   "container_labels": {

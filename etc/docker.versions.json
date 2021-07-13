@@ -10,6 +10,7 @@
         "fichiers": {"image": "millegrilles_fichiers", "version": "1.44.0"},
         "nginx": {"image": "millegrilles_nginx", "version": "1.43.0"},
         "web": {"image": "millegrilles_web", "version": "1.43.0"},
-        "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "1.43.0"}
+        "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "1.43.0"},
+        "redis": {"image": "redis", "version": "6-alpine"}
     }
 }
