@@ -1,13 +1,13 @@
 {
   "nom": "maitredescomptes",
-  "version": "1.43.2",
+  "version": "1.44.0",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "web_protege": {
       "image": "millegrilles_web",
-      "version": "1.43.0"
+      "version": "1.44.0"
     }
   },
   "dependances": [

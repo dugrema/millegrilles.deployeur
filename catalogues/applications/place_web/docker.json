@@ -1,13 +1,13 @@
 {
   "nom": "place_web",
-  "version": "1.43.2",
+  "version": "1.44.0",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_web_place": {
       "image": "millegrilles_web_place",
-      "version": "1.43.0"
+      "version": "1.44.0"
     }
   },
   "dependances": [
