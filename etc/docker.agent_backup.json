@@ -1,6 +1,6 @@
 {
   "name": "agent_backup",
-  "certificat_compte": "pki.domaines.cert",
+  "certificat_compte": "pki.backup.cert",
   "args": [
     "-m",
     "millegrilles.util.BackupAgent",
@@ -25,7 +25,7 @@
   ],
   "configs": [
     {
-      "name": "pki.domaines.cert",
+      "name": "pki.backup.cert",
       "filename": "/run/secrets/cert.pem"
     },
     {
@@ -35,7 +35,7 @@
   ],
   "secrets": [
     {
-      "name": "pki.domaines.key",
+      "name": "pki.backup.key",
       "filename": "key.pem"
     }
   ],
