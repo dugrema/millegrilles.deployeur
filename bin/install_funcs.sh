@@ -72,6 +72,9 @@ configurer_repertoires() {
 
   sudo mkdir -p $MILLEGRILLES_VAR $MILLEGRILLES_LOGS
 
+  # Repertoire pour backup/restaurer applications
+  sudo mkdir -p $MILLEGRILLES_VAR/consignation/backup_app_work
+
   sudo chown root:syslog $MILLEGRILLES_LOGS
   if [ $? -ne 0 ]; then
     sudo chown root:adm $MILLEGRILLES_LOGS
@@ -82,6 +85,8 @@ configurer_repertoires() {
   sudo chmod 2770 $MILLEGRILLES_LOGS
   sudo chown mg_monitor:millegrilles $MILLEGRILLES_VAR
   sudo chmod 750 $MILLEGRILLES_VAR
+  sudo chown mg_monitor:millegrilles $MILLEGRILLES_VAR/consignation/backup_app_work
+  sudo chmod 770 $MILLEGRILLES_VAR/consignation/backup_app_work
 
   echo "[OK] Deployeur Python et dependances installes"
 }
