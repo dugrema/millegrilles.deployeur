@@ -6,11 +6,11 @@
         "acme": {"image": "mg_acme", "version": "3095_3"},
         "mongo": {"registries": [""], "image": "mongo", "version": "4.0"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_8"},
-        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.44.0"},
-        "fichiers": {"image": "millegrilles_fichiers", "version": "1.44.0"},
+        "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.45.0"},
+        "fichiers": {"image": "millegrilles_fichiers", "version": "1.45.0"},
         "nginx": {"image": "millegrilles_nginx", "version": "1.43.0"},
         "web": {"image": "millegrilles_web", "version": "1.44.0"},
-        "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "1.44.0"},
+        "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "1.45.0"},
         "redis": {"image": "redis", "version": "6-alpine"},
         "elasticsearch": {"image": "elasticsearch", "version": "7.13.4"}
     }
