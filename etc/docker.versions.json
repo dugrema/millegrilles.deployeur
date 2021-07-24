@@ -12,6 +12,6 @@
         "web": {"image": "millegrilles_web", "version": "1.44.0"},
         "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "1.45.0"},
         "redis": {"image": "redis", "version": "6-alpine"},
-        "elasticsearch": {"image": "elasticsearch", "version": "7.13.4"}
+        "elasticsearch": {"registries": [""], "image": "elasticsearch", "version": "7.13.4"}
     }
 }
