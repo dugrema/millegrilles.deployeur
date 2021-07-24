@@ -1,17 +1,17 @@
 {
   "nom": "grosfichiers",
-  "version": "1.44.1",
+  "version": "1.45.0",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_consignation_python_main": {
       "image": "millegrilles_consignation_python_main",
-      "version": "1.44.0"
+      "version": "1.45.0"
     },
     "millegrilles_web_grosfichiers": {
       "image": "millegrilles_web_grosfichiers",
-      "version": "1.44.0"
+      "version": "1.45.0"
     }
   },
   "dependances": [
