@@ -86,7 +86,7 @@ configurer_repertoires() {
   sudo chown mg_monitor:millegrilles $MILLEGRILLES_VAR
   sudo chmod 750 $MILLEGRILLES_VAR
   sudo chown mg_monitor:millegrilles $MILLEGRILLES_VAR/consignation/backup_app_work
-  sudo chmod 770 $MILLEGRILLES_VAR/consignation/backup_app_work
+  sudo chmod 2770 $MILLEGRILLES_VAR/consignation/backup_app_work
 
   echo "[OK] Deployeur Python et dependances installes"
 }
