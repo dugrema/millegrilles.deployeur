@@ -10,6 +10,7 @@ ExecStart=/usr/local/bin/6tunnel_https.sh 5673
 Restart=on-failure
 RestartSec=10
 KillMode=process
+PIDFile=/var/run/6tunnel_5673.pid
 
 [Install]
 WantedBy=multi-user.target
