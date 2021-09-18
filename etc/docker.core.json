@@ -18,7 +18,7 @@
   ],
   "configs": [
     {
-      "name": "pki.domaines.cert",
+      "name": "pki.Core.cert",
       "filename": "/run/secrets/cert.pem"
     },
     {
@@ -28,7 +28,7 @@
   ],
   "secrets": [
     {
-      "name": "pki.domaines.key",
+      "name": "pki.Core.key",
       "filename": "key.pem"
     }
   ],
