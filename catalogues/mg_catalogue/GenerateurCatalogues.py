@@ -71,22 +71,22 @@ class Generateur:
                 config['scripts'] = contenu_tar_b64.decode('utf-8')
 
             # Preparer archive .json.xz avec le fichier de configuration signe et les scripts
-            config = self.signer(config, ConstantesCatalogueApplications.TRANSACTION_CATALOGUE_APPLICATION)
+            config = self.signer(config, 'CoreCatalogues', 'catalogueApplications')
             path_archive_application = path.join(path_archives_application, nom_application + '.json.xz')
             with lzma.open(path_archive_application, 'wt') as output:
                 json.dump(config, output)
 
         unlink(path_config_temp)  # Cleanup fichier temporaire
 
-        catalogue = {
-            'applications': catalogue_apps
-        }
-        catalogue = self.signer(catalogue, ConstantesCatalogueApplications.TRANSACTION_CATALOGUE_APPLICATIONS)
-
-        # Exporter fichier de catalogue
-        path_output = path.join(path_catalogues, 'generes', 'catalogue.applications.json.xz')
-        with lzma.open(path_output, 'wt') as output:
-            json.dump(catalogue, output)
+        # catalogue = {
+        #     'applications': catalogue_apps
+        # }
+        # catalogue = self.signer(catalogue, 'CoreCatalogues', 'catalogueApplications')
+        #
+        # # Exporter fichier de catalogue
+        # path_output = path.join(path_catalogues, 'generes', 'catalogue.applications.json.xz')
+        # with lzma.open(path_output, 'wt') as output:
+        #     json.dump(catalogue, output)
 
     def generer_catalogue_domaines(self):
         """
@@ -113,9 +113,9 @@ class Generateur:
         with lzma.open(path_output, 'wt') as output:
             json.dump(catalogue, output)
 
-    def signer(self, contenu: dict, domaine_action: str):
+    def signer(self, contenu: dict, domaine_action: str, action: str = None):
         message_signe, uuid_enveloppe = self._formatteur.signer_message(
-            contenu, domaine_action, ajouter_chaine_certs=True)
+            contenu, domaine_action, ajouter_chaine_certs=True, action=action)
         return message_signe
 
     def generer(self):
