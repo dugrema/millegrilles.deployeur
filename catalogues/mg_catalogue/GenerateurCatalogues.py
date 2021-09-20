@@ -71,7 +71,7 @@ class Generateur:
                 config['scripts'] = contenu_tar_b64.decode('utf-8')
 
             # Preparer archive .json.xz avec le fichier de configuration signe et les scripts
-            config = self.signer(config, 'CoreCatalogues', 'catalogueApplications')
+            config = self.signer(config, 'CoreCatalogues', 'catalogueApplication')
             path_archive_application = path.join(path_archives_application, nom_application + '.json.xz')
             with lzma.open(path_archive_application, 'wt') as output:
                 json.dump(config, output)
