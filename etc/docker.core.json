@@ -1,6 +1,6 @@
 {
   "name": "core",
-  "certificat_compte": "pki.domaines.cert",
+  "certificat_compte": "pki.core.cert",
   "env": [
     "MG_MQ_HOST=mq",
     "MG_MQ_PORT=5673",
@@ -18,7 +18,7 @@
   ],
   "configs": [
     {
-      "name": "pki.Core.cert",
+      "name": "pki.core.cert",
       "filename": "/run/secrets/cert.pem"
     },
     {
@@ -28,7 +28,7 @@
   ],
   "secrets": [
     {
-      "name": "pki.Core.key",
+      "name": "pki.core.key",
       "filename": "key.pem"
     }
   ],
