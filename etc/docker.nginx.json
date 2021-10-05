@@ -65,6 +65,6 @@
   },
   "mode": {
     "mode": "replicated",
-    "replicas": 2
+    "replicas": 1
   }
 }

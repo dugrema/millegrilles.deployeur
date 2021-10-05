@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs",
-  "version": "1.45.0",
+  "version": "1.46.4",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -18,7 +18,8 @@
     {
       "image": "millegrilles_consignation_python_main",
       "config": {
-        "name": "senseurspassifs_python",
+        "name": "senseurspassifs",
+        "certificat_compte": "pki.senseurspassifs.cert",
         "args": [
           "demarrer_domaine.py",
           "--info"
@@ -42,18 +43,18 @@
         ],
         "configs": [
           {
-            "name": "pki.domaines.cert",
+            "name": "pki.senseurspassifs.cert",
             "filename": "/run/secrets/cert.pem"
           },
           {
-            "name": "pki.domaines.cert",
+            "name": "pki.millegrille.cert",
             "filename": "/run/secrets/millegrille.cert.pem"
           }
         ],
         "secrets": [
           {
             "match_config": true,
-            "name": "pki.domaines.key",
+            "name": "pki.senseurspassifs.key",
             "filename": "key.pem"
           }
         ],
@@ -68,7 +69,7 @@
         },
         "resources": {
           "cpu_limit": 500000000,
-          "mem_limit": 104857600
+          "mem_limit": 30000000
         },
         "restart_policy": {
           "condition": "any",
@@ -101,7 +102,7 @@
         ],
         "configs": [
           {
-            "name": "pki.web_protege.cert",
+            "name": "pki.senseurspassifs.cert",
             "filename": "/run/secrets/cert.pem"
           },
           {
@@ -112,7 +113,7 @@
         "secrets": [
           {
             "match_config": true,
-            "name": "pki.web_protege.key",
+            "name": "pki.senseurspassifs.key",
             "filename": "key.pem"
           }
         ],
@@ -137,7 +138,7 @@
         "restart_policy": {
           "condition": "on-failure",
           "delay": 60000000000,
-          "max_attempts": 5
+          "max_attempts": 1000
         },
         "mode": {
           "mode": "replicated",
