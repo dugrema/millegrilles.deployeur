@@ -1,42 +1,35 @@
 {
   "nom": "senseurspassifs",
-  "version": "1.46.4",
+  "version": "1.46.6",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
-    "millegrilles_consignation_python_main": {
-      "image": "millegrilles_consignation_python_main",
-      "version": "1.45.0"
+    "millegrilles_senseurspassifs": {
+      "image": "millegrilles_senseurspassifs",
+      "version": "x86_64_1.46.0"
     },
     "millegrilles_web_senseurspassifs": {
       "image": "millegrilles_web_senseurspassifs",
-      "version": "1.45.0"
+      "version": "1.46.0"
     }
   },
   "dependances": [
     {
-      "image": "millegrilles_consignation_python_main",
+      "image": "millegrilles_senseurspassifs",
       "config": {
         "name": "senseurspassifs",
         "certificat_compte": "pki.senseurspassifs.cert",
-        "args": [
-          "demarrer_domaine.py",
-          "--info"
-        ],
         "env": [
           "MG_DOMAINES_JSON=/opt/millegrilles/dist/domaines_senseurspassifs.json",
           "MG_MQ_HOST=mq",
           "MG_MQ_PORT=5673",
-          "MG_MQ_SSL=on",
-          "MG_MQ_AUTH_CERT=on",
-          "MG_MQ_CERTFILE=/run/secrets/cert.pem",
-          "MG_MQ_KEYFILE=/run/secrets/key.pem",
-          "MG_MQ_CA_CERTS=/run/secrets/millegrille.cert.pem",
+          "CERTFILE=/run/secrets/cert.pem",
+          "KEYFILE=/run/secrets/key.pem",
+          "CAFILE=/run/secrets/millegrille.cert.pem",
           "MG_MONGO_HOST=mongo",
-          "MG_MONGO_SSL=x509",
-          "MG_MONGO_SSL_CA_CERTS=/run/secrets/millegrille.cert.pem",
-          "MG_PKI_CERT_MILLEGRILLE=/run/secrets/millegrille.cert.pem"
+          "RUST_LOG=info",
+          "MG_FICHIERS_URL=https://mg-dev4:3021"
         ],
         "constraints": [
           "node.labels.millegrilles.senseurspassifs == true"
