@@ -35,6 +35,7 @@
   ],
   "secrets": [
     {
+      "match_config": true,
       "name": "pki.backup.key",
       "filename": "key.pem"
     }

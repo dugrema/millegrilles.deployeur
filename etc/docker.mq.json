@@ -24,10 +24,12 @@
   ],
   "secrets": [
     {
+      "match_config": true,
       "name": "pki.mq.key",
       "filename": "key.pem"
     },
     {
+      "match_config": true,
       "name": "pki.mq.key",
       "filename": "webkey.pem"
     }

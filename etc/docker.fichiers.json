@@ -46,6 +46,7 @@
   ],
   "secrets": [
     {
+      "match_config": true,
       "name": "pki.fichiers.key",
       "filename": "key.pem"
     },

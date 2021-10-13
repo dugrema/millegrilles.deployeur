@@ -1,5 +1,5 @@
 {
-  "name": "nginx",
+  "name": "nginx_public",
   "env": [
     "ONIONSERVICE_NAME=nginx",
     "ONIONSERVICE_PORT=443"
@@ -15,27 +15,27 @@
   ],
   "configs": [
     {
-      "name": "pki.web.cert;pki.nginx.cert",
+      "name": "pki.web.cert;pki.monitor.cert",
       "filename": "/run/secrets/webcert.pem"
     },
     {
-      "name": "pki.nginx.cert",
+      "name": "pki.monitor.cert",
       "filename": "/run/secrets/nginx.cert.pem"
     },
     {
-      "name": "pki.millegrille.cert;pki.nginx.cert",
+      "name": "pki.millegrille.cert;pki.monitor.cert",
       "filename": "/usr/share/nginx/files/certs/millegrille.cert.pem"
     }
   ],
   "secrets": [
     {
       "match_config": true,
-      "name": "pki.web.key;pki.nginx.key",
+      "name": "pki.web.key;pki.monitor.key",
       "filename": "webkey.pem"
     },
     {
       "match_config": true,
-      "name": "pki.nginx.key",
+      "name": "pki.monitor.key",
       "filename": "nginx.key.pem"
     }
   ],

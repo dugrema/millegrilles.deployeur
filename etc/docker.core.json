@@ -29,6 +29,7 @@
   ],
   "secrets": [
     {
+      "match_config": true,
       "name": "pki.core.key",
       "filename": "key.pem"
     }

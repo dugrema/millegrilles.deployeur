@@ -46,10 +46,12 @@
   ],
   "secrets": [
     {
+      "match_config": true,
       "name": "pki.web_protege.key",
       "filename": "key.pem"
     },
     {
+      "match_config": true,
       "name": "pki.web.key;pki.web_protege.key",
       "filename": "webkey.pem"
     },

@@ -30,6 +30,7 @@
   ],
   "secrets": [
     {
+      "match_config": true,
       "name": "pki.web_protege.key",
       "filename": "key.pem"
     }
