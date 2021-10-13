@@ -1,8 +1,12 @@
-import React from 'react'
+import React, {useState, useEffect} from 'react'
 import './App.css'
 import path from 'path'
 import {Jumbotron, Container, Row, Col, Button, Alert} from 'react-bootstrap'
 import QRCode from 'qrcode.react'
+
+import {pki as forgePki} from 'node-forge'
+import {splitPEMCerts, extraireExtensionsMillegrille} from '@dugrema/millegrilles.common/lib/forgecommon'
+import {getIdmg} from '@dugrema/millegrilles.common/lib/idmg'
 
 import { LayoutMillegrilles } from './Layout'
 import { Installation } from './Installation'
@@ -124,14 +128,32 @@ function _setTitre(titre) {
 
 function AfficherInformationNoeud(props) {
 
+  const pemCertificat = props.rootProps.certificat
+  const [certificat, setCertificat] = useState()
+  const [certificatIntermediaire, setCertificatIntermediaire] = useState()
+  const [idmgCalcule, setIdmgCalcule] = useState()
+  const [extensions, setExtensions] = useState()
+
+  useEffect(()=>{
+    console.debug("Lecture du certificat %O", pemCertificat)
+    const pems = splitPEMCerts(pemCertificat)
+    const cert = forgePki.certificateFromPem(pems[0])
+    const interCert = forgePki.certificateFromPem(pems[1])
+    console.debug("Cert : %O, inter : %O", cert, interCert)
+    setCertificat(cert)
+    setCertificatIntermediaire(interCert)
+    getIdmg(pems[2]).then(idmg=>{setIdmgCalcule(idmg)})
+    const exts = extraireExtensionsMillegrille(cert)
+    console.debug("Extensions : %O", exts)
+    setExtensions(exts)
+  }, [pemCertificat])
+
   console.debug("Props - %O", props)
 
   const listeInfo = []
-  if(props.rootProps.idmg) {
-    listeInfo.push(
-      <Row key='idmg'><Col sm={2}>Idmg</Col><Col sm={10}>{props.rootProps.idmg}</Col></Row>
-    )
-  }
+  listeInfo.push(
+    <Row key='idmg'><Col sm={2}>Idmg</Col><Col sm={10}>{idmgCalcule}</Col></Row>
+  )
   listeInfo.push(
     <Row key='securite'><Col sm={2}>Securite</Col><Col sm={10}>{props.rootProps.securite}</Col></Row>
   )
@@ -140,9 +162,31 @@ function AfficherInformationNoeud(props) {
       <Row key='domaineWeb'><Col sm={2}>Domaine web</Col><Col sm={10}>{props.rootProps.domaine}</Col></Row>
     )
   }
-  listeInfo.push(
-    <Row key='noeudId'><Col sm={2}>Noeud Id</Col><Col sm={10}>{props.rootProps.noeudId}</Col></Row>
-  )
+  if(extensions) {
+    if(extensions.roles) {
+      listeInfo.push(
+        <Row key='roles'><Col sm={2}>Roles</Col><Col sm={10}>{extensions.roles.toString()}</Col></Row>
+      )
+    }
+    if(extensions.niveauxSecurite) {
+      listeInfo.push(
+        <Row key='securite_liste'><Col sm={2}>Exchanges</Col><Col sm={10}>{extensions.niveauxSecurite.toString()}</Col></Row>
+      )
+    }
+  }
+  if(certificat) {
+    listeInfo.push(
+      <Row key='noeudId'><Col sm={2}>Noeud Id</Col><Col sm={10}>{certificat.subject.getField('CN').value}</Col></Row>
+    )
+    listeInfo.push(
+      <Row key='validity_end'><Col sm={2}>Expiration</Col><Col sm={10}>{certificat.validity.notAfter.toString()}</Col></Row>
+    )
+    if(props.rootProps.securite === '3.protege') {
+      listeInfo.push(
+        <Row key='validity_inter_end'><Col sm={2}>Expiration intermediaire</Col><Col sm={10}>{certificatIntermediaire.validity.notAfter.toString()}</Col></Row>
+      )
+    }
+  }
   if(props.rootProps.certificat) {
     listeInfo.push(
       <Row key='certificat'>
