@@ -1,5 +1,5 @@
 {
-  "name": "nginx_public",
+  "name": "nginx",
   "env": [
     "ONIONSERVICE_NAME=nginx",
     "ONIONSERVICE_PORT=443"
