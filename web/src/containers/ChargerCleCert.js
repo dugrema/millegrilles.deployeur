@@ -51,6 +51,7 @@ export class ChargementClePrivee extends React.Component {
           this.setState({clePriveeChargee: true, motdepasse: '', cleChiffree: ''})
           this.fermerScanQr() // S'assurer que la fenetre codes QR est fermee, on a la cle
           this.props.rootProps.setInfoClecertMillegrille(infoClecertMillegrille)
+          console.debug("Root props avec info cle : %O", this.props.rootProps)
 
           // Generer nouveau certificat de noeud protege
           this.traiterCsr()
