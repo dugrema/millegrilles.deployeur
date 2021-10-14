@@ -13,7 +13,7 @@ export function LayoutMillegrilles(props) {
     <div className="flex-wrapper">
       <div>
         <Entete changerPage={props.changerPage} rootProps={props.rootProps}/>
-        <Contenu page={props.page}/>
+        <Contenu changerPage={props.changerPage} page={props.page}/>
       </div>
       <Footer rootProps={props.rootProps}/>
     </div>

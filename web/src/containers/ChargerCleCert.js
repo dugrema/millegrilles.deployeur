@@ -68,11 +68,16 @@ export class ChargementClePrivee extends React.Component {
   }
 
   async traiterCsr() {
-    const csrResponse = await axios.get('/installation/api/csr')
+    let contenuCsr = this.props.csr
+    if(!contenuCsr) {
+      const urlCsr = this.props.urlCsr || '/installation/api/csr'
+      const csrResponse = await axios.get(urlCsr)
+      contenuCsr = csrResponse.data
+    }
 
     const infoClecertMillegrille = this.props.rootProps.infoClecertMillegrille
     console.debug("Generer certificat intermediaire pour noeud protege : %O", infoClecertMillegrille)
-    const info = await signerCSRIntermediaire(csrResponse.data, this.props.rootProps.infoClecertMillegrille)
+    const info = await signerCSRIntermediaire(contenuCsr, this.props.rootProps.infoClecertMillegrille)
     console.debug("Certificat intermediaire : %O", info)
 
     this.setState({

@@ -10,8 +10,9 @@ import {getIdmg} from '@dugrema/millegrilles.common/lib/idmg'
 
 import { LayoutMillegrilles } from './Layout'
 import { Installation } from './Installation'
+import RenouvellementIntermediaire from './RenouvellementIntermediaire'
 
-const MAPPING_PAGES = { Installation }
+const MAPPING_PAGES = { Installation, RenouvellementIntermediaire }
 
 class App extends React.Component {
 
@@ -83,7 +84,7 @@ class App extends React.Component {
     }
 
     let PageMappee = this.state.page
-    let affichage = <PageMappee rootProps={rootProps} />
+    let affichage = <PageMappee rootProps={rootProps} changerPage={this.changerPage} />
     return (
       <LayoutApplication
         changerPage={this.changerPage}
@@ -202,7 +203,14 @@ function AfficherInformationNoeud(props) {
       <Alert variant="success">Le noeud est initialise et actif.</Alert>
     )
     pret = true
-    boutons = <Button href="/millegrilles">Acceder</Button>
+    boutons = (
+      <Row>
+        <Col>
+          <Button href="/millegrilles">Acceder</Button>
+          <Button variant="secondary" onClick={()=>props.changerPage('RenouvellementIntermediaire')}>Renouveller</Button>
+        </Col>
+      </Row>
+    )
   } else if(props.rootProps.idmg) {
     etat = (
       <Alert variant="warning">Le noeud est associe a une MilleGrille mais pas encore initialise.</Alert>
