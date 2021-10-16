@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs",
-  "version": "1.46.7",
+  "version": "1.46.8",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -78,6 +78,7 @@
       "image": "millegrilles_web_senseurspassifs",
       "config": {
         "name": "senseurspassifs_web",
+        "certificat_compte": "pki.senseurspassifs.cert",
         "env": [
           "MG_MQ_CERTFILE=/run/secrets/cert.pem",
           "MG_MQ_KEYFILE=/run/secrets/key.pem",
