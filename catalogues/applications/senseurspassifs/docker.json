@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs",
-  "version": "1.46.8",
+  "version": "1.46.9",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -29,7 +29,8 @@
           "CAFILE=/run/secrets/millegrille.cert.pem",
           "MG_MONGO_HOST=mongo",
           "RUST_LOG=info",
-          "MG_FICHIERS_URL=https://mg-dev4:3021"
+          "MG_FICHIERS_URL=https://fichiers:443",
+          "MG_REDIS_URL=redis://redis:6379"
         ],
         "constraints": [
           "node.labels.millegrilles.senseurspassifs == true"

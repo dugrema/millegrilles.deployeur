@@ -11,6 +11,7 @@
     "KEYFILE=/run/secrets/key.pem",
     "CAFILE=/run/secrets/millegrille.cert.pem",
     "MG_FICHIERS_URL=https://fichiers:443",
+    "MG_REDIS_URL=redis://redis:6379",
     "RUST_LOG=warn",
     "MG_MAITREDESCLES_CA=1"
   ],
