@@ -47,7 +47,8 @@
     "aliases": ["mongo"]
   }],
   "labels": {
-    "millegrille": "${IDMG}"
+    "millegrille": "${IDMG}",
+    "combiner_keycert": "true"
   },
   "resources": {
     "cpu_limit": 1000000000,
