@@ -155,7 +155,7 @@ function AfficherInformationNoeud(props) {
 
   const listeInfo = []
   listeInfo.push(
-    <Row key='idmg'><Col sm={2}>Idmg</Col><Col sm={10}>{idmgCalcule}</Col></Row>
+    <Row key='idmg'><Col sm={2}>Idmg calcule</Col><Col sm={10}>{idmgCalcule || 'N/D'}</Col></Row>
   )
   listeInfo.push(
     <Row key='securite'><Col sm={2}>Securite</Col><Col sm={10}>{props.rootProps.securite}</Col></Row>
