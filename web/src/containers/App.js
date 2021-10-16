@@ -136,17 +136,19 @@ function AfficherInformationNoeud(props) {
   const [extensions, setExtensions] = useState()
 
   useEffect(()=>{
-    console.debug("Lecture du certificat %O", pemCertificat)
-    const pems = splitPEMCerts(pemCertificat)
-    const cert = forgePki.certificateFromPem(pems[0])
-    const interCert = forgePki.certificateFromPem(pems[1])
-    console.debug("Cert : %O, inter : %O", cert, interCert)
-    setCertificat(cert)
-    setCertificatIntermediaire(interCert)
-    getIdmg(pems[2]).then(idmg=>{setIdmgCalcule(idmg)})
-    const exts = extraireExtensionsMillegrille(cert)
-    console.debug("Extensions : %O", exts)
-    setExtensions(exts)
+    if(pemCertificat) {
+      console.debug("Lecture du certificat %O", pemCertificat)
+      const pems = splitPEMCerts(pemCertificat)
+      const cert = forgePki.certificateFromPem(pems[0])
+      const interCert = forgePki.certificateFromPem(pems[1])
+      console.debug("Cert : %O, inter : %O", cert, interCert)
+      setCertificat(cert)
+      setCertificatIntermediaire(interCert)
+      getIdmg(pems[2]).then(idmg=>{setIdmgCalcule(idmg)})
+      const exts = extraireExtensionsMillegrille(cert)
+      console.debug("Extensions : %O", exts)
+      setExtensions(exts)
+    }
   }, [pemCertificat])
 
   console.debug("Props - %O", props)
