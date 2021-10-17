@@ -12,3 +12,6 @@ version.txt
 **/manifest.build.js*
 *.tar.gz
 __pycache__
+Dockerfile.x86_64
+Dockerfile.aarch64
+Dockerfile.armvl7
