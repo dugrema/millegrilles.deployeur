@@ -21,7 +21,6 @@
         "name": "senseurspassifs",
         "certificat_compte": "pki.senseurspassifs.cert",
         "env": [
-          "MG_DOMAINES_JSON=/opt/millegrilles/dist/domaines_senseurspassifs.json",
           "MG_MQ_HOST=mq",
           "MG_MQ_PORT=5673",
           "CERTFILE=/run/secrets/cert.pem",
