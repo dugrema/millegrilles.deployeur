@@ -27,7 +27,7 @@
           "KEYFILE=/run/secrets/key.pem",
           "CAFILE=/run/secrets/millegrille.cert.pem",
           "MG_MONGO_HOST=mongo",
-          "RUST_LOG=info",
+          "RUST_LOG=warn,millegrilles_senseurspassifs=info",
           "MG_FICHIERS_URL=https://fichiers:443",
           "MG_REDIS_URL=redis://redis:6379"
         ],
