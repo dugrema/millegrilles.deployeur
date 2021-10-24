@@ -9,7 +9,7 @@
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.46.0"},
         "maitrecles": {"image": "millegrilles_maitredescles", "version": "1.46.0"},
         "mg-core": {"image": "millegrilles_core", "version": "1.46.0"},
-        "fichiers": {"image": "millegrilles_fichiers", "version": "1.45.0"},
+        "fichiers": {"image": "millegrilles_fichiers", "version": "1.46.0"},
         "nginx": {"image": "millegrilles_nginx", "version": "1.45.0"},
         "web": {"image": "millegrilles_web", "version": "1.45.0"},
         "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "1.46.0"},
