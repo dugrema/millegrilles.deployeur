@@ -53,7 +53,8 @@ export default function RenouvellementIntermediaire(props) {
 async function demanderCsr() {
   console.debug("Charger csr")
 
-  const urlCsr = '/installation/api/csrIntermediaire'
+  // const urlCsr = '/installation/api/csrIntermediaire'
+  const urlCsr = '/certissuer/csr'
   const csrResponse = await axios.get(urlCsr)
   console.debug("CSR recu : %O", csrResponse)
   if(csrResponse.status !== 200) {
@@ -63,7 +64,7 @@ async function demanderCsr() {
 }
 
 async function soumettreIntermediaire(pem) {
-  const urlCsr = '/installation/api/renouvellerIntermediaire'
+  const urlCsr = '/certissuer/issuer'
   const params = {pem}
   console.debug("Soumettre vers %s : %O", urlCsr, params)
   const response = await axios.post(urlCsr, params)

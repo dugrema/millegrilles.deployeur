@@ -368,6 +368,22 @@ async function installerNoeudProtege(props, params, callback) {
 
   console.debug("Pour installation, proppys!\n%O", props)
 
+  // Set certificat intermediaire dans le certissuer
+  const paramsIssuer = {
+    idmg,
+    chainePem: [infoCertificatNoeudProtege.pem, infoClecertMillegrille.certificat],
+  }
+  await axios.post('/certissuer/issuer', paramsIssuer)
+  .then(reponse=>{
+    console.debug("Recu reponse demarrage installation noeud\n%O", reponse)
+    callback() // Aucune erreur
+  })
+  .catch(err=>{
+    console.error("Erreur demarrage installation noeud\n%O", err)
+    callback(err)
+  })
+
+
   var paramsInstallation = {
     ...params,
     // certificatMillegrillePem: this.props.certificatMillegrillePem,
@@ -381,15 +397,15 @@ async function installerNoeudProtege(props, params, callback) {
     paramsInstallation = {...props.rootProps.infoInternet, ...paramsInstallation}
   }
 
-  axios.post('/installation/api/installer', paramsInstallation)
-  .then(reponse=>{
-    console.debug("Recu reponse demarrage installation noeud\n%O", reponse)
-    callback() // Aucune erreur
-  })
-  .catch(err=>{
-    console.error("Erreur demarrage installation noeud\n%O", err)
-    callback(err)
-  })
+  // axios.post('/installation/api/installer', paramsInstallation)
+  // .then(reponse=>{
+  //   console.debug("Recu reponse demarrage installation noeud\n%O", reponse)
+  //   callback() // Aucune erreur
+  // })
+  // .catch(err=>{
+  //   console.error("Erreur demarrage installation noeud\n%O", err)
+  //   callback(err)
+  // })
 
 }
 
