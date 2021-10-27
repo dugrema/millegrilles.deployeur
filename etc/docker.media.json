@@ -1,0 +1,62 @@
+{
+  "name": "media",
+  "certificat_compte": "pki.media.cert",
+  "env": [
+    "MG_MQ_URL=amqps://mq:5673",
+    "MG_REDIS_HOST=redis",
+    "MG_REDIS_PORT=6379",
+    "MG_MQ_CERTFILE=/run/secrets/cert.pem",
+    "MG_MQ_KEYFILE=/run/secrets/key.pem",
+    "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
+    "WEB_CERT=/run/secrets/cert.pem",
+    "WEB_KEY=/run/secrets/key.pem",
+    "SERVER_TYPE=https"
+  ],
+  "constraints": [
+    "node.labels.millegrilles.media == true"
+  ],
+  "configs": [
+    {
+      "name": "pki.media.cert",
+      "filename": "/run/secrets/cert.pem"
+    },
+    {
+      "name": "pki.millegrille.cert",
+      "filename": "/run/secrets/millegrille.cert.pem"
+    }
+  ],
+  "secrets": [
+    {
+      "match_config": true,
+      "name": "pki.media.key",
+      "filename": "key.pem"
+    }
+  ],
+  "networks": [
+    {
+      "target": "millegrille_net",
+      "aliases": [
+        "media"
+      ]
+    }
+  ],
+  "hosts": {
+    "ipfs": "${HOST_IPV4}"
+  },
+  "labels": {
+    "millegrille": "${IDMG}"
+  },
+  "resources": {
+    "cpu_limit": 3000000000,
+    "mem_limit": 314572800
+  },
+  "restart_policy": {
+    "condition": "on-failure",
+    "delay": 30000000000,
+    "max_attempts": 1000
+  },
+  "mode": {
+    "mode": "replicated",
+    "replicas": 1
+  }
+}
