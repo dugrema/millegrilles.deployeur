@@ -135,6 +135,7 @@ configurer_swarm() {
 }
 
 installer_sysctl() {
+  echo
   #sudo cp $REP_ETC/mgacteur.service /etc/systemd/system
   #sudo systemctl daemon-reload
   #sudo systemctl enable mgacteur
