@@ -135,10 +135,10 @@ configurer_swarm() {
 }
 
 installer_sysctl() {
-  sudo cp $REP_ETC/mgacteur.service /etc/systemd/system
-  sudo systemctl daemon-reload
-  sudo systemctl enable mgacteur
-  sudo systemctl start mgacteur
+  #sudo cp $REP_ETC/mgacteur.service /etc/systemd/system
+  #sudo systemctl daemon-reload
+  #sudo systemctl enable mgacteur
+  #sudo systemctl start mgacteur
 }
 
 # Installer le service ServiceMonitor
