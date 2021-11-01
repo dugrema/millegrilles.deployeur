@@ -43,7 +43,7 @@ export default function RenouvellementIntermediaire(props) {
       <br/>
       <Button variant="secondary" onClick={()=>props.changerPage('Installation')}>Retour</Button>
       <Button disabled={!infoCertificatNoeudProtege}
-              onClick={()=>soumettreIntermediaire(infoCertificatNoeudProtege.pem)}>
+              onClick={()=>soumettreIntermediaire(props)}>
         Soumettre
       </Button>
     </>
@@ -63,13 +63,41 @@ async function demanderCsr() {
   return csrResponse.data
 }
 
-async function soumettreIntermediaire(pem) {
-  const urlCsr = '/certissuer/issuer'
-  const params = {pem}
-  console.debug("Soumettre vers %s : %O", urlCsr, params)
-  const response = await axios.post(urlCsr, params)
-  console.debug("Response : %O", response)
-  if(response.status !== 200) {
-    throw new Error("Erreur axios code : %s", response.status)
+async function soumettreIntermediaire(props) {
+
+  console.debug("soumettreIntermediaire proppys!\n%O", props)
+
+  const idmg = props.rootProps.idmg,
+        infoCertificatNoeudProtege = props.rootProps.infoCertificatNoeudProtege,
+        infoClecertMillegrille = props.rootProps.infoClecertMillegrille
+
+  var paramsInstallation = {
+    idmg,
+    chainePem: [infoCertificatNoeudProtege.pem, infoClecertMillegrille.certificat],
+    securite: '3.protege',
   }
+
+  if(props.rootProps.infoInternet) {
+    // Ajouter les parametres de configuration internet
+    paramsInstallation = {...props.rootProps.infoInternet, ...paramsInstallation}
+  }
+
+  await axios.post('/installation/api/installer', paramsInstallation)
+  .then(reponse=>{
+    console.debug("Recu reponse demarrage installation noeud\n%O", reponse)
+  })
+  .catch(err=>{
+    console.error("Erreur demarrage installation noeud\n%O", err)
+    throw err
+  })
+
+
+  // const urlCsr = '/certissuer/issuer'
+  // const params = {pem}
+  // console.debug("Soumettre vers %s : %O", urlCsr, params)
+  // const response = await axios.post(urlCsr, params)
+  // console.debug("Response : %O", response)
+  // if(response.status !== 200) {
+  //   throw new Error("Erreur axios code : %s", response.status)
+  // }
 }
