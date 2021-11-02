@@ -12,7 +12,8 @@
     "CAFILE=/run/secrets/millegrille.cert.pem",
     "MG_FICHIERS_URL=https://fichiers:443",
     "MG_REDIS_URL=redis://redis:6379",
-    "RUST_LOG=warn"
+    "RUST_LOG=warn",
+    "MG_CERTISSUER_URL=http://certissuer:8380"
   ],
   "constraints": [
     "node.labels.millegrilles.core == true",
