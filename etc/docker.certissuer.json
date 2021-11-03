@@ -2,7 +2,8 @@
   "name": "certissuer",
   "args": [
     "-m",
-    "millegrilles/noeuds/CertIssuer.py"
+    "millegrilles.noeuds.CertIssuer",
+    "--verbose"
   ],
   "env": [
     "MG_IDMG=${IDMG}",
@@ -14,6 +15,9 @@
   ],
   "constraints": [
     "node.labels.millegrilles.python == true"
+  ],
+  "mounts": [
+    "/var/opt/millegrilles/issuer:/var/opt/millegrilles/issuer:rw"
   ],
   "networks": [{
     "target": "millegrille_net"

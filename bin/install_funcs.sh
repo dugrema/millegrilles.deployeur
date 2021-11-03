@@ -70,7 +70,7 @@ configurer_docker() {
 configurer_repertoires() {
   echo "[INFO] Configurer les repertoires de MilleGrilles"
 
-  sudo mkdir -p $MILLEGRILLES_VAR $MILLEGRILLES_LOGS
+  sudo mkdir -p $MILLEGRILLES_VAR/issuer $MILLEGRILLES_LOGS
 
   # Repertoire pour backup/restaurer applications
   sudo mkdir -p $MILLEGRILLES_VAR/consignation/backup_app_work
@@ -85,6 +85,8 @@ configurer_repertoires() {
   sudo chmod 2770 $MILLEGRILLES_LOGS
   sudo chown mg_monitor:millegrilles $MILLEGRILLES_VAR
   sudo chmod 750 $MILLEGRILLES_VAR
+  sudo chmod 750 $MILLEGRILLES_VAR/issuer
+  sudo chown mg_monitor:millegrilles $MILLEGRILLES_VAR/issuer
   sudo chown mg_monitor:millegrilles $MILLEGRILLES_VAR/consignation/backup_app_work
   sudo chmod 2770 $MILLEGRILLES_VAR/consignation/backup_app_work
 
