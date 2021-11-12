@@ -40,7 +40,7 @@ installer_docker() {
 
 installer_autres_deps() {
   # Random number gens hardware, pip3, avahi-daemon
-  sudo apt install -y rng-tools avahi-daemon python3-pip libglib2.0-dev
+  sudo apt install -y rng-tools avahi-daemon python3-pip libglib2.0-dev 6tunnel
   sudo pip3 install -r requirements.txt
 }
 
@@ -138,10 +138,17 @@ configurer_swarm() {
 
 installer_sysctl() {
   echo
-  #sudo cp $REP_ETC/mgacteur.service /etc/systemd/system
-  #sudo systemctl daemon-reload
+  sudo cp $REP_ETC/*.service /etc/systemd/system
+  sudo systemctl daemon-reload
+
+  # mgacteur
   #sudo systemctl enable mgacteur
   #sudo systemctl start mgacteur
+
+  # 6tunnel pour IPv6
+  sudo cp bin/6tunnel_https.sh /usr/local/bin
+  sudo systemctl enable 6tunnel_https.service
+  sude systemctl start 6tunnel_https.service
 }
 
 # Installer le service ServiceMonitor
