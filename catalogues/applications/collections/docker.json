@@ -1,0 +1,85 @@
+{
+  "nom": "collections",
+  "version": "2021.1.2",
+  "registries": [
+    "docker.maceroc.com"
+  ],
+  "images": {
+    "millegrilles_collections": {
+      "image": "millegrilles_collections",
+      "version": "2021.1.0"
+    }
+  },
+  "dependances": [
+    {
+      "image": "millegrilles_collections",
+      "config": {
+        "name": "collections",
+        "certificat_compte": "pki.collections.cert",
+        "env": [
+          "MG_MQ_CERTFILE=/run/secrets/cert.pem",
+          "MG_MQ_KEYFILE=/run/secrets/key.pem",
+          "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
+          "WEB_CERT=/run/secrets/cert.pem",
+          "WEB_KEY=/run/secrets/key.pem",
+          "SERVER_TYPE=spdy",
+          "HOST=${HOSTNAME_DOMAINE}",
+          "PORT=443",
+          "MG_REDIS_HOST=redis",
+          "MG_REDIS_PORT=6379"
+        ],
+        "mounts": [
+          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw"
+        ],
+        "configs": [
+          {
+            "name": "pki.collections.cert",
+            "filename": "/run/secrets/cert.pem"
+          },
+          {
+            "name": "pki.millegrille.cert",
+            "filename": "/run/secrets/millegrille.cert.pem"
+          }
+        ],
+        "secrets": [
+          {
+            "match_config": true,
+            "name": "pki.collections.key",
+            "filename": "key.pem"
+          }
+        ],
+        "networks": [
+          {
+            "target": "millegrille_net",
+            "aliases": [
+              "collections"
+            ]
+          }
+        ],
+        "labels": {
+          "application": "collections",
+          "millegrille": "${IDMG}",
+          "url": "https://${HOSTNAME}/collections",
+          "securite": "2.prive"
+        },
+        "resources": {
+          "cpu_limit": 500000000,
+          "mem_limit": 73741824
+        },
+        "restart_policy": {
+          "condition": "on-failure",
+          "delay": 60000000000,
+          "max_attempts": 5
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ],
+  "nginx": {
+    "path_location": "/collections",
+    "proxypass": "https://collections:443"
+  }
+}

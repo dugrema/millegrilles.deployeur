@@ -8,3 +8,4 @@ docker service update -d --publish-add 6379:6379 redis
 docker service update -d --publish-add 3001:443 web_protege
 docker service update -d --publish-add 3003:443 web_coupdoeil
 docker service update -d --publish-add published=3021,target=443,mode=host fichiers
+docker service update -d --publish-add published=9200,target=9200,mode=host elasticsearch
