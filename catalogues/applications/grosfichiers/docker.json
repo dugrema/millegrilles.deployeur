@@ -1,17 +1,17 @@
 {
   "nom": "grosfichiers",
-  "version": "1.47.0",
+  "version": "1.47.2",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_grosfichiers": {
       "image": "millegrilles_grosfichiers",
-      "version": "1.46.0"
-    },
-    "millegrilles_web_grosfichiers": {
-      "image": "millegrilles_web_grosfichiers",
       "version": "1.47.0"
+    },
+    "millegrilles_collections": {
+      "image": "millegrilles_collections",
+      "version": "2021.1.0"
     }
   },
   "dependances": [
@@ -75,10 +75,10 @@
       }
     },
     {
-      "image": "millegrilles_web_grosfichiers",
-      "certificat_compte": "pki.grosfichiers.cert",
+      "image": "millegrilles_collections",
       "config": {
-        "name": "grosfichiers_web",
+        "name": "collections",
+        "certificat_compte": "pki.collections.cert",
         "env": [
           "MG_MQ_CERTFILE=/run/secrets/cert.pem",
           "MG_MQ_KEYFILE=/run/secrets/key.pem",
@@ -96,7 +96,7 @@
         ],
         "configs": [
           {
-            "name": "pki.grosfichiers.cert",
+            "name": "pki.collections.cert",
             "filename": "/run/secrets/cert.pem"
           },
           {
@@ -107,7 +107,7 @@
         "secrets": [
           {
             "match_config": true,
-            "name": "pki.grosfichiers.key",
+            "name": "pki.collections.key",
             "filename": "key.pem"
           }
         ],
@@ -115,15 +115,15 @@
           {
             "target": "millegrille_net",
             "aliases": [
-              "grosfichiers"
+              "collections"
             ]
           }
         ],
         "labels": {
-          "application": "grosfichiers",
+          "application": "collections",
           "millegrille": "${IDMG}",
-          "url": "https://${HOSTNAME}/grosfichiers",
-          "securite": "3.protege"
+          "url": "https://${HOSTNAME}/collections",
+          "securite": "2.prive"
         },
         "resources": {
           "cpu_limit": 500000000,
@@ -142,7 +142,7 @@
     }
   ],
   "nginx": {
-    "path_location": "/grosfichiers",
-    "proxypass": "https://grosfichiers:443"
+    "path_location": "/collections",
+    "proxypass": "https://collections:443"
   }
 }
