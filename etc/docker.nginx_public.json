@@ -62,8 +62,8 @@
     "aliases": ["nginx"]
   }],
   "resources": {
-    "cpu_limit": 500000000,
-    "mem_limit": 10485760
+    "cpu_limit": 1000000000,
+    "mem_limit": 15000000
   },
   "mode": {
     "mode": "replicated",

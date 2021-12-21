@@ -1,6 +1,6 @@
 {
   "nom": "grosfichiers",
-  "version": "1.47.2",
+  "version": "1.47.3",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -61,8 +61,8 @@
           "millegrille": "${IDMG}"
         },
         "resources": {
-          "cpu_limit": 500000000,
-          "mem_limit": 60000000
+          "cpu_limit": 1000000000,
+          "mem_limit": 120000000
         },
         "restart_policy": {
           "condition": "any",
@@ -126,8 +126,8 @@
           "securite": "2.prive"
         },
         "resources": {
-          "cpu_limit": 500000000,
-          "mem_limit": 73741824
+          "cpu_limit": 1000000000,
+          "mem_limit": 120000000
         },
         "restart_policy": {
           "condition": "on-failure",
