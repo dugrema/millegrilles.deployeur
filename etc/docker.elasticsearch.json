@@ -18,8 +18,8 @@
     "millegrille": "${IDMG}"
   },
   "resources": {
-    "cpu_limit": 500000000,
-    "mem_limit": 403701760
+    "cpu_limit": 1000000000,
+    "mem_limit": 500000000
   },
   "restart_policy": {
     "condition": "any",
