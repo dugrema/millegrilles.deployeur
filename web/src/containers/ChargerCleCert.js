@@ -42,6 +42,7 @@ export class ChargementClePrivee extends React.Component {
   async chargerCle() {
     if(this.state.certificat && this.state.motdepasse && this.state.cleChiffree) {
       try {
+        console.debug("State chargeCle : %O", this.state)
         const infoClecertMillegrille = await preparerCleCertMillegrille(
           this.state.certificat, this.state.cleChiffree, this.state.motdepasse)
         console.debug("Chargement cert, cles : %O", infoClecertMillegrille)

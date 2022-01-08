@@ -6,12 +6,16 @@ import { pki as forgePki } from 'node-forge'
 // import {
 //     genererCertificatMilleGrille, genererCertificatIntermediaire
 // } from '@dugrema/millegrilles.common/lib/cryptoForge'
-import { genererClePrivee, genererCertificatMilleGrille } from '@dugrema/millegrilles.utiljs'
+import { 
+  genererClePrivee, genererCertificatMilleGrille, 
+  chargerPemClePriveeEd25519, 
+  encoderIdmg,
+} from '@dugrema/millegrilles.utiljs'
 import {
     enveloppePEMPublique, enveloppePEMPrivee, chiffrerPrivateKeyPEM,
     chargerClePrivee, sauvegarderPrivateKeyToPEM,
   } from '@dugrema/millegrilles.common/lib/forgecommon'
-import { encoderIdmg } from '@dugrema/millegrilles.common/lib/idmg'
+// import { encoderIdmg } from '@dugrema/millegrilles.utiljs/lib/idmg'
 import { CryptageAsymetrique, genererAleatoireBase64 } from '@dugrema/millegrilles.common/lib/cryptoSubtle'
 
 // const cryptageAsymetriqueHelper = new CryptageAsymetrique()
@@ -30,21 +34,25 @@ export async function preparerCleCertMillegrille(certificatPem, clePriveePem, mo
   // Preparer les cles et calcule le idmg
 
   // console.debug("Conserver cle chiffree, cert\n%s", certificatPem)
-  const clePriveeForge = await chargerClePrivee(clePriveePem, {password: motdepasse})
-  // console.debug("Cle privee forge\n%O", clePriveeForge)
-  const clePriveeDechiffreePem = sauvegarderPrivateKeyToPEM(clePriveeForge)
+  // const clePriveeForge = await chargerClePrivee(clePriveePem, {password: motdepasse})
+  // // console.debug("Cle privee forge\n%O", clePriveeForge)
+  // const clePriveeDechiffreePem = sauvegarderPrivateKeyToPEM(clePriveeForge)
 
+  const clePrivee = chargerPemClePriveeEd25519(clePriveePem, {password: motdepasse})
+  // console.debug("Cle privee : %O", clePrivee)
   const idmg = await encoderIdmg(certificatPem)
-  // console.debug("IDMG calcule : %s", idmg)
+  console.debug("IDMG calcule : %s", idmg)
 
-  const helperAsymetrique = new CryptageAsymetrique()
-  const {clePriveeDecrypt, clePriveeSigner, clePriveeSignerPKCS1_5} = await helperAsymetrique.preparerClePrivee(clePriveeDechiffreePem)
+  // const helperAsymetrique = new CryptageAsymetrique()
+  // const {clePriveeDecrypt, clePriveeSigner, clePriveeSignerPKCS1_5} = await helperAsymetrique.preparerClePrivee(clePriveeDechiffreePem)
 
-  const dictCles = {signer: clePriveeSigner, signerPKCS1_5: clePriveeSignerPKCS1_5, dechiffrer: clePriveeDecrypt}
+  // const dictCles = {signer: clePriveeSigner, signerPKCS1_5: clePriveeSignerPKCS1_5, dechiffrer: clePriveeDecrypt}
 
-  // sauvegarderRacineMillegrille(idmg, certificatPem, dictCles)
+  //// sauvegarderRacineMillegrille(idmg, certificatPem, dictCles)
 
-  return {...dictCles, idmg, certificat: certificatPem}
+  //return {...dictCles, idmg, certificat: certificatPem}
+
+  return {idmg, clePrivee}
 }
 
 export async function signerCSRIntermediaire(csrPem, infoClecertMillegrille) {

@@ -72,7 +72,7 @@ export class GenererNouvelleCle extends React.Component {
         {...this.props}
         setConfigurationEnCours={this.setConfigurationEnCours}
         imprimer={this.imprimer}
-        setPage={this.props.rootProps.setPage}
+        setPage={this.props.setPage}
         certPem={this.state.certPem}
         clePriveePem={this.state.clePriveePem}
         motdepasseCle={this.state.motdepasseCle}
