@@ -1,10 +1,7 @@
 import React from 'react'
-import axios from 'axios'
-import { Form, Container, Row, Col, Button, Alert, FormControl, InputGroup } from 'react-bootstrap'
-import { Trans } from 'react-i18next'
-import Dropzone from 'react-dropzone'
+import { Container, Row, Col, Button, Alert } from 'react-bootstrap'
 
-import { genererNouvelleCleMillegrille, signerCSRIntermediaire } from '../components/pkiHelper'
+import { genererNouveauCertificatMilleGrille } from '../components/pkiHelper'
 import { PageBackupCles } from './PemUtils'
 import { genererUrlDataDownload } from '../components/pemDownloads'
 
@@ -21,23 +18,27 @@ export class GenererNouvelleCle extends React.Component {
 
     idmg: '',
     backupComplete: false,
-    certificatMillegrillePem: '',
-    certificatIntermediairePem: '',
+    certPem: '',
+    clePriveePem: '',
+    motdepasseCle: '',
+
     url: '',
   }
 
   componentDidMount() {
     if( ! this.state.certificatRacinePret ) {
       // Generer un nouveau certificat racine
-      genererNouvelleCleMillegrille()
+      genererNouveauCertificatMilleGrille()
       .then( credentialsRacine => {
 
         console.debug("Credentials racine : %O", credentialsRacine)
 
         this.setState({
           certificatRacinePret: true,
-          credentialsRacine,
           idmg: credentialsRacine.idmg,
+          certPem: credentialsRacine.certPem,
+          clePriveePem: credentialsRacine.clePriveePem,
+          motdepasseCle: credentialsRacine.motdepasseCle,
         })
       })
       .catch(err=>{
@@ -68,14 +69,17 @@ export class GenererNouvelleCle extends React.Component {
 
     return (
       <GenererCle
+        {...this.props}
         setConfigurationEnCours={this.setConfigurationEnCours}
         imprimer={this.imprimer}
         setPage={this.props.rootProps.setPage}
-        credentialsRacine={this.state.credentialsRacine}
+        certPem={this.state.certPem}
+        clePriveePem={this.state.clePriveePem}
+        motdepasseCle={this.state.motdepasseCle}
+        idmg={this.state.idmg}
         setBackupFait={this.setBackupFait}
         backupComplete={this.state.backupComplete}
-        idmg={this.state.idmg}
-        {...this.props} />
+        />
     )
 
   }
@@ -86,14 +90,14 @@ function GenererCle(props) {
 
   var boutonDownload = null
 
-  if(props.credentialsRacine) {
+  if(props.idmg) {
     const {dataUrl} = genererUrlDataDownload(
-      props.credentialsRacine.idmg,
-      props.credentialsRacine.certPEM,
-      props.credentialsRacine.clePriveeChiffree
+      props.idmg,
+      props.certPem,
+      props.clePriveePem
     )
 
-    var fichierDownload = 'backupCle_' + props.credentialsRacine.idmg + ".json";
+    var fichierDownload = 'backupCle_' + props.idmg + ".json";
     boutonDownload = (
       <Button href={dataUrl} download={fichierDownload} onClick={props.setBackupFait} variant="outline-secondary">Telecharger cle</Button>
     );
@@ -115,24 +119,16 @@ function GenererCle(props) {
         </p>
 
         <p>Il ne faut pas perdre ni se faire voler la cle de MilleGrille.</p>
-
-        <p>
-          Idealement, il faut conserver le mot de passe et la cle separement.
-          Par exemple, conserver le mot de passe dans un gestionnaire de mots
-          de passe (password manager) et le fichier de cle sur une cle USB. Il
-          est aussi possible d'imprimer la cle et le mot de passe et de les
-          conserver separement.
-        </p>
       </Alert>
 
-      <div>IDMG : {props.credentialsRacine.idmg}</div>
+      <div>IDMG : {props.idmg}</div>
 
       <PageBackupCles
         rootProps={props.rootProps}
-        certificatRacine={props.credentialsRacine.certPEM}
-        motdepasse={props.credentialsRacine.motdepasseCle}
-        cleChiffreeRacine={props.credentialsRacine.clePriveeChiffree}
-        idmg={props.credentialsRacine.idmg}
+        certificatRacine={props.certPem}
+        motdepasse={props.motdepasseCle}
+        cleChiffreeRacine={props.clePriveePem}
+        idmg={props.idmg}
         />
 
       <div className="bouton">

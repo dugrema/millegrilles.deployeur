@@ -1,25 +1,25 @@
 import axios from 'axios'
-import { openDB, deleteDB, wrap, unwrap } from 'idb'
-import stringify from 'json-stable-stringify'
-import { util, pki as forgePki } from 'node-forge'
+// import { openDB } from 'idb'
+// import stringify from 'json-stable-stringify'
+import { pki as forgePki } from 'node-forge'
 
-import {
-    genererCsrNavigateur, genererCertificatMilleGrille, genererCertificatIntermediaire
-  } from '@dugrema/millegrilles.common/lib/cryptoForge'
+// import {
+//     genererCertificatMilleGrille, genererCertificatIntermediaire
+// } from '@dugrema/millegrilles.common/lib/cryptoForge'
+import { genererClePrivee, genererCertificatMilleGrille } from '@dugrema/millegrilles.utiljs'
 import {
     enveloppePEMPublique, enveloppePEMPrivee, chiffrerPrivateKeyPEM,
-    CertificateStore, matchCertificatKey, signerContenuString, chargerClePrivee,
-    chargerClePubliquePEM, sauvegarderPrivateKeyToPEM,
+    chargerClePrivee, sauvegarderPrivateKeyToPEM,
   } from '@dugrema/millegrilles.common/lib/forgecommon'
 import { encoderIdmg } from '@dugrema/millegrilles.common/lib/idmg'
 import { CryptageAsymetrique, genererAleatoireBase64 } from '@dugrema/millegrilles.common/lib/cryptoSubtle'
 
-const cryptageAsymetriqueHelper = new CryptageAsymetrique()
+// const cryptageAsymetriqueHelper = new CryptageAsymetrique()
 
-export async function genererNouvelleCleMillegrille() {
-  // console.debug("Params genererNouvelleCleMillegrille")
-  return await genererNouveauCertificatMilleGrille()
-}
+// export async function genererNouvelleCleMillegrille() {
+//   // console.debug("Params genererNouvelleCleMillegrille")
+//   return await genererNouveauCertificatMilleGrille()
+// }
 
 export async function chargerClePriveeForge(clePriveePem, motdepasse) {
   const clePriveeForge = await chargerClePrivee(clePriveePem, {password: motdepasse})
@@ -52,36 +52,59 @@ export async function signerCSRIntermediaire(csrPem, infoClecertMillegrille) {
 
   const certMillegrille = forgePki.certificateFromPem(certificat)
 
-  const {cert, pem: certPem} = await genererCertificatIntermediaire(idmg, certMillegrille, signerPKCS1_5, {csrPEM: csrPem})
+  throw new Error("Fix me")
+  // const {cert, pem: certPem} = await genererCertificatIntermediaire(idmg, certMillegrille, signerPKCS1_5, {csrPEM: csrPem})
 
-  return {cert, pem: certPem}
+  // return {cert, pem: certPem}
 }
 
 // Genere un nouveau certificat de MilleGrille racine
 export async function genererNouveauCertificatMilleGrille() {
 
-  // Generer nouvelles cle privee, cle publique
-  const {clePriveePkcs8, clePubliqueSpki, clePriveeSigner} =
-    await cryptageAsymetriqueHelper.genererKeysNavigateur({modulusLength: 3072})
-  const clePriveePEM = enveloppePEMPrivee(clePriveePkcs8, true),
-        clePubliquePEM = enveloppePEMPublique(clePubliqueSpki)
-
-  // console.debug("Cle privee PEM\n%O \nCle publique PEM\n%O", clePriveePEM, clePubliquePEM)
-
   // Preparer secret pour mot de passe partiel navigateur
   const motdepasseCle = genererAleatoireBase64(32).replace(/=/g, '')
 
-  const clePriveeChiffree = await chiffrerPrivateKeyPEM(clePriveePEM, motdepasseCle)
+  const {
+    // pemPublic, 
+    pem, 
+    pemChiffre, 
+    publicKey: publicKeyCrypto, 
+    privateKey: privateKeyCrypto
+  } = await genererClePrivee({password: motdepasseCle, dechiffre: true})
+  console.debug("Public Key : %O", publicKeyCrypto)
+  console.debug("Private Key : %O", privateKeyCrypto)
 
-  // console.debug("Cle Privee Chiffree")
-  // console.debug(clePriveeChiffree)
+  // Afficher PEMS
+  // debug("PEM Public: %s", '\n'+pemPublic)
+  console.debug("PEM prive : %s", '\n'+pem)
+  console.debug("PEM chiffre : %s", '\n'+pemChiffre)
 
-  // Importer dans forge, creer certificat de MilleGrille
-  const {cert, pem: certPEM, idmg} = await genererCertificatMilleGrille(clePriveePEM, clePubliquePEM)
+  const {idmg, pem: certPem} = await genererCertificatMilleGrille(pem)
 
-  return {
-    clePriveePEM, clePubliquePEM, cert, certPEM, idmg, clePriveeChiffree, motdepasseCle, clePriveeSigner
-  }
+  console.debug("Nouveau certificat CA\n%s", certPem)
+  return {idmg, certPem, clePriveePem: pemChiffre, motdepasseCle}
+
+  // const {clePriveePkcs8, clePubliqueSpki, clePriveeSigner} =
+  //   await cryptageAsymetriqueHelper.genererKeysNavigateur({modulusLength: 3072})
+
+  // const infoCles = await genererClePrivee({password: motdepasseCle})
+  // console.debug("Info Cles : %O", infoCles)
+  // const clePriveePEM = enveloppePEMPrivee(clePriveePkcs8, true),
+  //       clePubliquePEM = enveloppePEMPublique(clePubliqueSpki)
+
+  // // console.debug("Cle privee PEM\n%O \nCle publique PEM\n%O", clePriveePEM, clePubliquePEM)
+
+  // const clePriveeChiffree = await chiffrerPrivateKeyPEM(clePriveePEM, motdepasseCle)
+
+  // // console.debug("Cle Privee Chiffree")
+  // // console.debug(clePriveeChiffree)
+
+  // // Importer dans forge, creer certificat de MilleGrille
+  // const {cert, pem: certPEM, idmg} = await genererCertificatMilleGrille(clePriveePEM, clePubliquePEM)
+
+  // return {
+  //   clePriveePEM, clePubliquePEM, cert, certPEM, idmg, clePriveeChiffree, motdepasseCle, clePriveeSigner
+  // }
 }
 
 // Recupere un CSR a signer avec la cle de MilleGrille
@@ -109,141 +132,143 @@ export async function preparerInscription(url, pkiMilleGrille) {
 
   // Creer le certificat intermediaire
   const { csrPem: csrPEM, u2fRegistrationRequest, challengeCertificat } = reponsePreparation.data
-  const {cert, pem: certPem} = await genererCertificatIntermediaire(idmg, certMillegrille, clePriveeMillegrille, {csrPEM})
+  
+  throw new Error("Fix me")
+  // const {cert, pem: certPem} = await genererCertificatIntermediaire(idmg, certMillegrille, clePriveeMillegrille, {csrPEM})
 
-  return {
-    certPem,
-    u2fRegistrationRequest,
-    challengeCertificat,
-  }
+  // return {
+  //   certPem,
+  //   u2fRegistrationRequest,
+  //   challengeCertificat,
+  // }
 }
 
-export async function sauvegarderCertificatPem(usager, certificatPem, chainePem) {
-  const nomDB = 'millegrilles.' + usager
+// export async function sauvegarderCertificatPem(usager, certificatPem, chainePem) {
+//   const nomDB = 'millegrilles.' + usager
 
-  const db = await openDB(nomDB)
+//   const db = await openDB(nomDB)
 
-  console.debug("Sauvegarde du nouveau cerfificat de navigateur usager (%s) :\n%O", usager, certificatPem)
+//   console.debug("Sauvegarde du nouveau cerfificat de navigateur usager (%s) :\n%O", usager, certificatPem)
 
-  const txUpdate = db.transaction('cles', 'readwrite');
-  const storeUpdate = txUpdate.objectStore('cles');
-  await Promise.all([
-    storeUpdate.put(certificatPem, 'certificat'),
-    storeUpdate.put(chainePem, 'fullchain'),
-    storeUpdate.delete('csr'),
-    txUpdate.done,
-  ])
-}
+//   const txUpdate = db.transaction('cles', 'readwrite');
+//   const storeUpdate = txUpdate.objectStore('cles');
+//   await Promise.all([
+//     storeUpdate.put(certificatPem, 'certificat'),
+//     storeUpdate.put(chainePem, 'fullchain'),
+//     storeUpdate.delete('csr'),
+//     txUpdate.done,
+//   ])
+// }
 
-export async function sauvegarderRacineMillegrille(idmg, certificatPem, clesPriveesSubtle) {
-  const nomDB = 'millegrille.' + idmg
-  // console.debug("Conserver cles %s\n%O", nomDB, clesPriveesSubtle)
+// export async function sauvegarderRacineMillegrille(idmg, certificatPem, clesPriveesSubtle) {
+//   const nomDB = 'millegrille.' + idmg
+//   // console.debug("Conserver cles %s\n%O", nomDB, clesPriveesSubtle)
 
-  const db = await openDB(nomDB, 1, {
-    upgrade(db) {
-      db.createObjectStore('cles')
-    },
-  })
+//   const db = await openDB(nomDB, 1, {
+//     upgrade(db) {
+//       db.createObjectStore('cles')
+//     },
+//   })
 
-  const {signer: cleSigner, dechiffrer: cleDechiffrer, signerPKCS1_5} = clesPriveesSubtle
+//   const {signer: cleSigner, dechiffrer: cleDechiffrer, signerPKCS1_5} = clesPriveesSubtle
 
-  // console.debug("Sauvegarde du nouveau cerfificat et cle de MilleGrille (idmg: %s) :\n%O", idmg, certificatPem)
+//   // console.debug("Sauvegarde du nouveau cerfificat et cle de MilleGrille (idmg: %s) :\n%O", idmg, certificatPem)
 
-  const txUpdate = db.transaction('cles', 'readwrite');
-  const storeUpdate = txUpdate.objectStore('cles');
+//   const txUpdate = db.transaction('cles', 'readwrite');
+//   const storeUpdate = txUpdate.objectStore('cles');
 
-  const listeTransactions = [storeUpdate.put(certificatPem, 'millegrille.certificat'), txUpdate.done]
+//   const listeTransactions = [storeUpdate.put(certificatPem, 'millegrille.certificat'), txUpdate.done]
 
-  // Cles optionnelles
-  if(cleSigner) listeTransactions.push(storeUpdate.put(cleSigner, 'millegrille.signer'))
-  if(cleDechiffrer) listeTransactions.push(storeUpdate.put(cleDechiffrer, 'millegrille.dechiffrer'))
-  if(signerPKCS1_5) listeTransactions.push(storeUpdate.put(signerPKCS1_5, 'millegrille.signerPKCS1_5'))
+//   // Cles optionnelles
+//   if(cleSigner) listeTransactions.push(storeUpdate.put(cleSigner, 'millegrille.signer'))
+//   if(cleDechiffrer) listeTransactions.push(storeUpdate.put(cleDechiffrer, 'millegrille.dechiffrer'))
+//   if(signerPKCS1_5) listeTransactions.push(storeUpdate.put(signerPKCS1_5, 'millegrille.signerPKCS1_5'))
 
-  // Attendre fin de traitement des transactions
-  await Promise.all(listeTransactions)
-}
+//   // Attendre fin de traitement des transactions
+//   await Promise.all(listeTransactions)
+// }
 
-export async function signerChallenge(usager, challengeJson) {
+// export async function signerChallenge(usager, challengeJson) {
 
-  const contenuString = stringify(challengeJson)
+//   const contenuString = stringify(challengeJson)
 
-  const nomDB = 'millegrilles.' + usager
-  const db = await openDB(nomDB)
-  const tx = await db.transaction('cles', 'readonly')
-  const store = tx.objectStore('cles')
-  const cleSignature = (await store.get('signer'))
-  await tx.done
+//   const nomDB = 'millegrilles.' + usager
+//   const db = await openDB(nomDB)
+//   const tx = await db.transaction('cles', 'readonly')
+//   const store = tx.objectStore('cles')
+//   const cleSignature = (await store.get('signer'))
+//   await tx.done
 
-  const challengeStr = stringify(challengeJson)
-  const signature = await new CryptageAsymetrique().signerContenuString(cleSignature, contenuString)
+//   const challengeStr = stringify(challengeJson)
+//   const signature = await new CryptageAsymetrique().signerContenuString(cleSignature, contenuString)
 
-  return signature
-}
+//   return signature
+// }
 
-async function chargerClecertMillegrilleSignature(idmg) {
+// async function chargerClecertMillegrilleSignature(idmg) {
 
-  const nomDB = 'millegrille.' + idmg
-  const db = await openDB(nomDB)
-  const tx = await db.transaction('cles', 'readonly')
-  const store = tx.objectStore('cles')
-  const cleSignature = (await store.get('millegrille.signer'))
-  const cleSignaturePKCS1_5 = (await store.get('millegrille.signerPKCS1_5'))
-  const certificat = (await store.get('millegrille.certificat'))
-  await tx.done
+//   const nomDB = 'millegrille.' + idmg
+//   const db = await openDB(nomDB)
+//   const tx = await db.transaction('cles', 'readonly')
+//   const store = tx.objectStore('cles')
+//   const cleSignature = (await store.get('millegrille.signer'))
+//   const cleSignaturePKCS1_5 = (await store.get('millegrille.signerPKCS1_5'))
+//   const certificat = (await store.get('millegrille.certificat'))
+//   await tx.done
 
-  return {certificat, signer: cleSignature, signerPKCS1_5: cleSignaturePKCS1_5}
-}
+//   return {certificat, signer: cleSignature, signerPKCS1_5: cleSignaturePKCS1_5}
+// }
 
-// Initialiser le contenu du navigateur
-export async function initialiserNavigateur(usager, opts) {
-  if(!opts) opts = {}
+// // Initialiser le contenu du navigateur
+// export async function initialiserNavigateur(usager, opts) {
+//   if(!opts) opts = {}
 
-  const nomDB = 'millegrilles.' + usager
-  const db = await openDB(nomDB, 1, {
-    upgrade(db) {
-      db.createObjectStore('cles')
-    },
-  })
+//   const nomDB = 'millegrilles.' + usager
+//   const db = await openDB(nomDB, 1, {
+//     upgrade(db) {
+//       db.createObjectStore('cles')
+//     },
+//   })
 
-  // console.debug("Database %O", db)
-  const tx = await db.transaction('cles', 'readonly')
-  const store = tx.objectStore('cles')
-  const certificat = (await store.get('certificat'))
-  const fullchain = (await store.get('fullchain'))
-  const csr = (await store.get('csr'))
-  await tx.done
+//   // console.debug("Database %O", db)
+//   const tx = await db.transaction('cles', 'readonly')
+//   const store = tx.objectStore('cles')
+//   const certificat = (await store.get('certificat'))
+//   const fullchain = (await store.get('fullchain'))
+//   const csr = (await store.get('csr'))
+//   await tx.done
 
-  if( opts.regenerer || ( !certificat && !csr ) ) {
-    console.debug("Generer nouveau CSR")
-    // Generer nouveau keypair et stocker
-    const keypair = await new CryptageAsymetrique().genererKeysNavigateur()
-    console.debug("Key pair : %O", keypair)
+//   if( opts.regenerer || ( !certificat && !csr ) ) {
+//     console.debug("Generer nouveau CSR")
+//     // Generer nouveau keypair et stocker
+//     const keypair = await new CryptageAsymetrique().genererKeysNavigateur()
+//     console.debug("Key pair : %O", keypair)
 
-    const clePriveePem = enveloppePEMPrivee(keypair.clePriveePkcs8),
-          clePubliquePem = enveloppePEMPublique(keypair.clePubliqueSpki)
-    console.debug("Cles :\n%s\n%s", clePriveePem, clePubliquePem)
+//     const clePriveePem = enveloppePEMPrivee(keypair.clePriveePkcs8),
+//           clePubliquePem = enveloppePEMPublique(keypair.clePubliqueSpki)
+//     console.debug("Cles :\n%s\n%s", clePriveePem, clePubliquePem)
 
-    const clePriveeForge = chargerClePrivee(clePriveePem),
-          clePubliqueForge = chargerClePubliquePEM(clePubliquePem)
+//     const clePriveeForge = chargerClePrivee(clePriveePem),
+//           clePubliqueForge = chargerClePubliquePEM(clePubliquePem)
 
-    // console.debug("CSR Genere : %O", resultat)
-    const csrNavigateur = await genererCsrNavigateur('idmg', 'nomUsager', clePubliqueForge, clePriveeForge)
+//     // console.debug("CSR Genere : %O", resultat)
+//     const csrNavigateur = await genererCsrNavigateur('idmg', 'nomUsager', clePubliqueForge, clePriveeForge)
 
-    console.debug("CSR Navigateur :\n%s", csrNavigateur)
+//     console.debug("CSR Navigateur :\n%s", csrNavigateur)
 
-    const txPut = db.transaction('cles', 'readwrite');
-    const storePut = txPut.objectStore('cles');
-    await Promise.all([
-      storePut.put(keypair.clePriveeDecrypt, 'dechiffrer'),
-      storePut.put(keypair.clePriveeSigner, 'signer'),
-      storePut.put(keypair.clePublique, 'public'),
-      storePut.put(csrNavigateur, 'csr'),
-      txPut.done,
-    ])
+//     const txPut = db.transaction('cles', 'readwrite');
+//     const storePut = txPut.objectStore('cles');
+//     await Promise.all([
+//       storePut.put(keypair.clePriveeDecrypt, 'dechiffrer'),
+//       storePut.put(keypair.clePriveeSigner, 'signer'),
+//       storePut.put(keypair.clePublique, 'public'),
+//       storePut.put(csrNavigateur, 'csr'),
+//       txPut.done,
+//     ])
 
-    return { csr: csrNavigateur }
-  } else {
-    return { certificat, fullchain, csr }
-  }
+//     return { csr: csrNavigateur }
+//   } else {
+//     return { certificat, fullchain, csr }
+//   }
 
-}
+// }

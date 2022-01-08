@@ -41,7 +41,7 @@ export class RenderPEM extends React.Component {
         pemData = this.props.nom + ';' + (idx+1) + ';' + nbCodes + '\n' + pemData;
         qrCodes.push(
           <Col xs={6} key={idx} className='qr-code'>
-            <QRCode className="qrcode" value={pemData} size={425} />
+            <QRCode className="qrcode" value={pemData} size={300} />
           </Col>
         );
       }
@@ -62,11 +62,7 @@ function RenderPair(props) {
   if(props.certificat) {
     certificat = (
       <div className="pem">
-        <Row>
-          <Col>
-            <h3>Certificat {props.idmg}</h3>
-          </Col>
-        </Row>
+        <p>Certificat</p>
         <RenderPEM pem={props.certificat} nom={props.nom + '.cert'}/>
       </div>
     );
@@ -75,17 +71,16 @@ function RenderPair(props) {
   if(props.clePrivee) {
     clePrivee = (
       <div className="cle-pem">
-        <Row>
-          <Col>
-            <h3>Cle {props.idmg}</h3>
-          </Col>
-        </Row>
+        <p>{props.idmg}</p>
 
         <Alert variant="warning">
           Conserver cette page separement de celle avec le mot de passe.
         </Alert>
 
+        <p>Cle chiffree de la MilleGrille</p>
+
         <RenderPEM pem={props.clePrivee} nom={props.nom + '.cle'}/>
+
       </div>
     );
   }
@@ -106,7 +101,8 @@ export function PageBackupCles(props) {
       <div>
         <Row className="motdepasse">
           <Col lg={8}>
-            <Trans>backup.cles.motDePasse</Trans> {props.motdepasse}
+            <Trans>backup.cles.motDePasse</Trans>
+            <p>{props.motdepasse}</p>
           </Col>
           <Col lg={4}>
             <QRCode value={props.motdepasse} size={75} />

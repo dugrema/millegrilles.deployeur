@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import './App.css'
 import path from 'path'
-import {Jumbotron, Container, Row, Col, Button, Alert} from 'react-bootstrap'
+import {Container, Row, Col, Button, Alert} from 'react-bootstrap'
 import QRCode from 'qrcode.react'
 
 import {pki as forgePki} from 'node-forge'
@@ -104,15 +104,13 @@ function LayoutApplication(props) {
 
   const pageAffichee = (
     <div>
-      <Jumbotron className="screen-only">
-        <h1>Installation MilleGrille</h1>
-        <Row>
-          <Col sm={10}>
-            <p className='idmg'>{props.rootProps.idmg}</p>
-          </Col>
-          <Col sm={2} className="footer-right">{qrCode}</Col>
-        </Row>
-      </Jumbotron>
+      <h1>Installation MilleGrille</h1>
+      <Row>
+        <Col sm={10}>
+          <p className='idmg'>{props.rootProps.idmg}</p>
+        </Col>
+        <Col sm={2} className="footer-right">{qrCode}</Col>
+      </Row>
 
       {props.affichage}
     </div>
