@@ -2,7 +2,6 @@ import React from 'react'
 import {Container, Row, Col, Button, Alert} from 'react-bootstrap'
 import axios from 'axios'
 import https from 'https'
-import { signerCSRIntermediaire } from '../components/pkiHelper'
 
 import { InformationCertificat } from './ChargerCleCert'
 
@@ -115,14 +114,14 @@ function InstallerNoeudProtege(props) {
     })
   }
 
-  const infoCertificatNoeudProtege = props.rootProps.infoCertificatNoeudProtege
+  const intermediaireCert = props.rootProps.intermediaireCert
 
   return (
     <Container>
       <h2>Finaliser la configuration</h2>
 
       <h3>Certificat du noeud</h3>
-      <InformationCertificat certificat={infoCertificatNoeudProtege.cert} />
+      <InformationCertificat certificat={intermediaireCert} />
 
       <Row>
         <Col className="bouton">
@@ -362,11 +361,13 @@ function AfficherErreurConnexion(props) {
 }
 
 async function installerNoeudProtege(props, params, callback) {
-  const idmg = props.rootProps.idmg,
-        infoCertificatNoeudProtege = props.rootProps.infoCertificatNoeudProtege,
-        infoClecertMillegrille = props.rootProps.infoClecertMillegrille
-
   console.debug("Pour installation, proppys!\n%O", props)
+
+  const idmg = props.rootProps.idmg,
+        intermediairePem = props.rootProps.intermediairePem,
+        certificatMillegrillePem = props.rootProps.infoClecertMillegrille.certificat
+
+//throw new Error("fix me")
 
   // Set certificat intermediaire dans le certissuer
   // const paramsIssuer = {
@@ -388,7 +389,7 @@ async function installerNoeudProtege(props, params, callback) {
     // certificatMillegrillePem: this.props.certificatMillegrillePem,
     // certificatPem: infoCertificatNoeudProtege.pem,
     idmg,
-    chainePem: [infoCertificatNoeudProtege.pem, infoClecertMillegrille.certificat],
+    chainePem: [intermediairePem, certificatMillegrillePem],
     securite: '3.protege',
   }
 
@@ -420,7 +421,7 @@ async function configurerNoeudPrive(props, params, callback) {
   }
   console.debug("Transmettre parametres installation noeud prive : %O", paramsInstallation)
 
-  if(props.rootProps.infoInternet) {
+  if(infoInternet) {
     // Ajouter les parametres de configuration internet
     paramsInstallation = {...props.rootProps.infoInternet, ...paramsInstallation}
   }

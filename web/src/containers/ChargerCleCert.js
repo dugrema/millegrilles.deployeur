@@ -8,7 +8,7 @@ import axios from 'axios'
 import {detecterAppareilsDisponibles} from '@dugrema/millegrilles.common/lib/detecterAppareils'
 import { preparerCleCertMillegrille } from '../components/pkiHelper'
 
-import { signerCSRIntermediaire } from '../components/pkiHelper'
+import { signerCSRIntermediaire, chargerCertificatPem } from '../components/pkiHelper'
 
 export class ChargementClePrivee extends React.Component {
 
@@ -50,7 +50,7 @@ export class ChargementClePrivee extends React.Component {
         if(infoClecertMillegrille) {
           this.setState({clePriveeChargee: true, motdepasse: '', cleChiffree: ''})
           this.fermerScanQr() // S'assurer que la fenetre codes QR est fermee, on a la cle
-          this.props.rootProps.setInfoClecertMillegrille(infoClecertMillegrille)
+          this.props.rootProps.setInfoClecertMillegrille({...infoClecertMillegrille, certificat: this.state.certificat})
           console.debug("Root props avec info cle : %O", this.props.rootProps)
 
           // Generer nouveau certificat de noeud protege
@@ -76,17 +76,15 @@ export class ChargementClePrivee extends React.Component {
       contenuCsr = csrResponse.data
     }
 
-    const infoClecertMillegrille = this.props.rootProps.infoClecertMillegrille
-    console.debug("Generer certificat intermediaire pour noeud protege : %O", infoClecertMillegrille)
-    const info = await signerCSRIntermediaire(contenuCsr, this.props.rootProps.infoClecertMillegrille)
-    console.debug("Certificat intermediaire : %O", info)
+    // const infoClecertMillegrille = this.props.rootProps.infoClecertMillegrille
+    // console.debug("Generer certificat intermediaire pour noeud protege : %O", infoClecertMillegrille)
+    const certificatintermediairePem = await signerCSRIntermediaire(contenuCsr, this.props.rootProps.infoClecertMillegrille)
+    const certificatintermediaireCert = await chargerCertificatPem(certificatintermediairePem)
+    // console.debug("Certificat intermediaire\n%s", certificatintermediairePem)
 
-    this.setState({
-      certificatintermediairePem: info.pem,
-      certificatintermediaire: info.cert,
-    })
+    this.setState({certificatintermediairePem, certificatintermediaireCert})
 
-    this.props.rootProps.setInfoCertificatNoeudProtege(info)
+    this.props.rootProps.setInfoCertificatNoeudProtege(certificatintermediairePem, certificatintermediaireCert)
   }
 
   changerChamp = event => {
@@ -196,19 +194,20 @@ export class ChargementClePrivee extends React.Component {
                            motdepasse={this.state.motdepasse} />
     }
 
-
-
     var contenu = ''
-    var infoCertificatNoeudProtege = this.props.rootProps.infoCertificatNoeudProtege
-    if(this.state.clePriveeChargee && this.props.rootProps.infoCertificatNoeudProtege) {
+    // const intermediairePem = this.props.rootProps.intermediairePem
+    const intermediaireCert = this.props.rootProps.intermediaireCert
+    console.debug("!!! render() intermediairePem: %O\nprops : %O", intermediaireCert, this.props)
+
+    if(this.state.clePriveeChargee && intermediaireCert) {
       contenu = (
         <Alert variant="success">
           <Alert.Heading>Cle prete</Alert.Heading>
           <p>Certificat et cle de MilleGrille charges correctement.</p>
           <p>IDMG charge : {this.props.rootProps.idmg}</p>
           <p>
-            Certificat intermediaire genere pour le noeud protege :
-            {infoCertificatNoeudProtege.cert.subject.getField('CN').value}
+            Certificat intermediaire genere pour le noeud protege :{' '}
+            {intermediaireCert.subject.getField('CN').value}
           </p>
         </Alert>
       )

@@ -26,7 +26,7 @@ class App extends React.Component {
     page: Installation,
 
     infoClecertMillegrille: '',
-    infoCertificatNoeudProtege: '',
+    intermediairePem: '',
 
     manifest: {
       version: 'DUMMY',
@@ -54,9 +54,9 @@ class App extends React.Component {
     this.setState({infoClecertMillegrille, idmg: infoClecertMillegrille.idmg})
   }
 
-  setInfoCertificatNoeudProtege = infoCertificatNoeudProtege => {
-    console.debug("Information certificat noeud protege generee : %O", infoCertificatNoeudProtege)
-    this.setState({infoCertificatNoeudProtege})
+  setInfoCertificatNoeudProtege = (pem, cert) => {
+    console.debug("Certificat intermediaire PEM\n%s", pem)
+    this.setState({intermediairePem: pem, intermediaireCert: cert})
   }
 
   setInfoInternet = infoInternet => {

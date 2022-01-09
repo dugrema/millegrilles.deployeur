@@ -1,13 +1,13 @@
 import axios from 'axios'
 // import { openDB } from 'idb'
 // import stringify from 'json-stable-stringify'
-import { pki as forgePki } from 'node-forge'
+import { pki as forgePki } from '@dugrema/node-forge'
 
 // import {
 //     genererCertificatMilleGrille, genererCertificatIntermediaire
 // } from '@dugrema/millegrilles.common/lib/cryptoForge'
 import { 
-  genererClePrivee, genererCertificatMilleGrille, 
+  genererClePrivee, genererCertificatMilleGrille, genererCertificatIntermediaire,
   chargerPemClePriveeEd25519, 
   encoderIdmg,
 } from '@dugrema/millegrilles.utiljs'
@@ -56,14 +56,13 @@ export async function preparerCleCertMillegrille(certificatPem, clePriveePem, mo
 }
 
 export async function signerCSRIntermediaire(csrPem, infoClecertMillegrille) {
-  const {idmg, certificat, signer, signerPKCS1_5} = infoClecertMillegrille  //await chargerClecertMillegrilleSignature(idmg)
+  const { idmg, certificat, clePrivee } = infoClecertMillegrille  //await chargerClecertMillegrilleSignature(idmg)
+  const certPem = await genererCertificatIntermediaire(csrPem, certificat, clePrivee)
+  return certPem
+}
 
-  const certMillegrille = forgePki.certificateFromPem(certificat)
-
-  throw new Error("Fix me")
-  // const {cert, pem: certPem} = await genererCertificatIntermediaire(idmg, certMillegrille, signerPKCS1_5, {csrPEM: csrPem})
-
-  // return {cert, pem: certPem}
+export async function chargerCertificatPem(pem) {
+  return forgePki.certificateFromPem(pem)
 }
 
 // Genere un nouveau certificat de MilleGrille racine
