@@ -95,7 +95,11 @@ export class Installation extends React.Component {
     })
   }
 
-  setPage = event => { this.setState({page: event.currentTarget.value}) }
+  setPage = event => { 
+    const page = event.currentTarget.value
+    console.debug("Page : %s", page)
+    this.setState({page}) 
+  }
 
   setTypeNoeud = event => {
     const value = event.currentTarget.value
@@ -118,6 +122,7 @@ export class Installation extends React.Component {
   }
 
   render() {
+    console.debug("!!! Info monitor state : %O", this.state)
     if(this.state.infoMonitorChargee) {
       // Domaine est configure, on procede a l'installation
       var Page = SelectionnerTypeNoeud
