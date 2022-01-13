@@ -3,10 +3,9 @@
   "hostname": "mongo",
   "args": [
     "mongod",
-    "--replSet", "rs0",
-    "--sslMode", "requireSSL",
-    "--sslPEMKeyFile", "/run/secrets/mongo.key_cert.pem",
-    "--sslCAFile", "/run/secrets/millegrille.cert.pem"
+    "--tlsMode", "requireTLS",
+    "--tlsCertificateKeyFile", "/run/secrets/mongo.key_cert.pem",
+    "--tlsCAFile", "/run/secrets/millegrille.cert.pem"
   ],
   "env": [
     "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}",

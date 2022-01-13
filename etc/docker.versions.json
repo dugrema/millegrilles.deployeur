@@ -4,7 +4,7 @@
     ],
     "images": {
         "acme": {"image": "mg_acme", "version": "3095_3"},
-        "mongo": {"registries": [""], "image": "mongo", "version": "4.0"},
+        "mongo": {"registries": [""], "image": "mongo", "version": "4.4"},
         "mq": {"image": "mg_rabbitmq", "version": "3.8-management_8"},
         "mg-python": {"image": "millegrilles_consignation_python_main", "version": "1.47.0"},
         "maitrecles": {"image": "millegrilles_maitredescles", "version": "1.47.0"},
