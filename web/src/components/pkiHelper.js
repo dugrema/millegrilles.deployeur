@@ -11,6 +11,10 @@ import {
   chargerPemClePriveeEd25519, 
   encoderIdmg,
 } from '@dugrema/millegrilles.utiljs'
+
+// Importer pour wiring des fonctions de hachage react
+import reactjs from '@dugrema/millegrilles.reactjs'
+
 import {
     enveloppePEMPublique, enveloppePEMPrivee, chiffrerPrivateKeyPEM,
     chargerClePrivee, sauvegarderPrivateKeyToPEM,
