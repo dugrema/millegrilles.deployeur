@@ -15,7 +15,7 @@
   ],
   "configs": [
     {
-      "name": "pki.web.cert;pki.nginx.cert",
+      "name": "pki.web.cert",
       "filename": "/run/secrets/webcert.pem"
     },
     {
@@ -30,7 +30,7 @@
   "secrets": [
     {
       "match_config": true,
-      "name": "pki.web.key;pki.nginx.key",
+      "name": "pki.web.key",
       "filename": "webkey.pem"
     },
     {
