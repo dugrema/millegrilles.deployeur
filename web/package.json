@@ -3,7 +3,7 @@
   "version": "2022.0.0",
   "private": true,
   "dependencies": {
-    "@dugrema/millegrilles.common": "git+ssh://git.maceroc.com/git/millegrilles.common.nodejs#2022.0.0",
+    "@blackbox-vision/react-qr-reader": "^5.0.0",
     "@dugrema/millegrilles.utiljs": "git+ssh://git.maceroc.com/git/millegrilles.utiljs#2022.0.0",
     "@dugrema/millegrilles.reactjs": "git+ssh://git.maceroc.com/git/millegrilles.reactjs#2022.0.0",
     "@testing-library/jest-dom": "^5.16.1",

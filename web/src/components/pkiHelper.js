@@ -10,17 +10,17 @@ import {
   genererClePrivee, genererCertificatMilleGrille, genererCertificatIntermediaire,
   chargerPemClePriveeEd25519, 
   encoderIdmg,
+  forgecommon,
+  genererPassword,
 } from '@dugrema/millegrilles.utiljs'
 
 // Importer pour wiring des fonctions de hachage react
 import reactjs from '@dugrema/millegrilles.reactjs'
 
-import {
-    enveloppePEMPublique, enveloppePEMPrivee, chiffrerPrivateKeyPEM,
-    chargerClePrivee, sauvegarderPrivateKeyToPEM,
-  } from '@dugrema/millegrilles.common/lib/forgecommon'
+const { chargerClePrivee } = forgecommon  // from '@dugrema/millegrilles.common/lib/forgecommon'
+
 // import { encoderIdmg } from '@dugrema/millegrilles.utiljs/lib/idmg'
-import { CryptageAsymetrique, genererAleatoireBase64 } from '@dugrema/millegrilles.common/lib/cryptoSubtle'
+// import { CryptageAsymetrique, genererAleatoireBase64 } from '@dugrema/millegrilles.common/lib/cryptoSubtle'
 
 // const cryptageAsymetriqueHelper = new CryptageAsymetrique()
 
@@ -73,7 +73,7 @@ export async function chargerCertificatPem(pem) {
 export async function genererNouveauCertificatMilleGrille() {
 
   // Preparer secret pour mot de passe partiel navigateur
-  const motdepasseCle = genererAleatoireBase64(32).replace(/=/g, '')
+  const motdepasseCle = genererPassword()
 
   const {
     // pemPublic, 

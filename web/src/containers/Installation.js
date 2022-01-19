@@ -42,7 +42,7 @@ export class Installation extends React.Component {
     // Lire etat de l'installation de la MilleGrille
     axios.get('/installation/api/infoMonitor')
     .then(reponse=>{
-      // console.debug("Reponse recue\n%O", reponse)
+      console.debug("Reponse recue\n%O", reponse)
       const dataReponse = reponse.data
 
       const info = {
@@ -51,6 +51,7 @@ export class Installation extends React.Component {
         securite: dataReponse.securite,
         noeudId: dataReponse.noeud_id,
         certificat: dataReponse.certificat,
+        ca: dataReponse.ca,
       }
 
       var typeNoeud = this.state.typeNoeud

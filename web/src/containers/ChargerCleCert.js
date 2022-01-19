@@ -5,7 +5,8 @@ import Dropzone from 'react-dropzone'
 
 import axios from 'axios'
 
-import {detecterAppareilsDisponibles} from '@dugrema/millegrilles.common/lib/detecterAppareils'
+// import {detecterAppareilsDisponibles} from '@dugrema/millegrilles.common/lib/detecterAppareils'
+import { detecterAppareilsDisponibles } from '@dugrema/millegrilles.reactjs'
 import { preparerCleCertMillegrille } from '../components/pkiHelper'
 
 import { signerCSRIntermediaire, chargerCertificatPem } from '../components/pkiHelper'

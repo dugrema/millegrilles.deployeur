@@ -1,16 +1,18 @@
 import React, {useState, useEffect} from 'react'
 import './App.css'
-import path from 'path'
 import {Container, Row, Col, Button, Alert} from 'react-bootstrap'
 import QRCode from 'qrcode.react'
 
-import {pki as forgePki} from 'node-forge'
-import {splitPEMCerts, extraireExtensionsMillegrille} from '@dugrema/millegrilles.common/lib/forgecommon'
-import {getIdmg} from '@dugrema/millegrilles.common/lib/idmg'
+import {pki as forgePki} from '@dugrema/node-forge'
+// import {splitPEMCerts, extraireExtensionsMillegrille} from '@dugrema/millegrilles.common/lib/forgecommon'
+//import {getIdmg} from '@dugrema/millegrilles.common/lib/idmg'
+import { forgecommon, getIdmg } from '@dugrema/millegrilles.utiljs'
 
 import { LayoutMillegrilles } from './Layout'
 import { Installation } from './Installation'
 import RenouvellementIntermediaire from './RenouvellementIntermediaire'
+
+const { splitPEMCerts, extraireExtensionsMillegrille } = forgecommon
 
 const MAPPING_PAGES = { Installation, RenouvellementIntermediaire }
 
@@ -42,7 +44,6 @@ class App extends React.Component {
   }
 
   setInfo = info => {
-    const infoUpdate = {...info}
     if(info.securite && info.idmg) {  // Securite indique que le noeud est deja configure
       console.debug("Configuration MilleGrille completee : %O", info)
       info.page = AfficherInformationNoeud
@@ -128,6 +129,7 @@ function _setTitre(titre) {
 function AfficherInformationNoeud(props) {
 
   const pemCertificat = props.rootProps.certificat
+  const pemCa = props.rootProps.ca
   const [certificat, setCertificat] = useState()
   const [certificatIntermediaire, setCertificatIntermediaire] = useState()
   const [idmgCalcule, setIdmgCalcule] = useState()
@@ -142,12 +144,18 @@ function AfficherInformationNoeud(props) {
       console.debug("Cert : %O, inter : %O", cert, interCert)
       setCertificat(cert)
       setCertificatIntermediaire(interCert)
-      getIdmg(pems[2]).then(idmg=>{setIdmgCalcule(idmg)})
       const exts = extraireExtensionsMillegrille(cert)
       console.debug("Extensions : %O", exts)
       setExtensions(exts)
     }
   }, [pemCertificat])
+  useEffect(()=>{
+    if(pemCa) {
+      getIdmg(pemCa).then(idmg=>{
+        setIdmgCalcule(idmg)
+      })
+    }
+  }, [pemCa])
 
   console.debug("Props - %O", props)
 
