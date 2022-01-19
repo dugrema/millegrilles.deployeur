@@ -1,13 +1,13 @@
 {
   "nom": "mongoexpress",
-  "version": "1.42.2",
+  "version": "2022.0.0",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "mongoexpress": {
       "image": "mg_mongo_express",
-      "version": "0.49_6"
+      "version": "0.54_0"
     }
   },
   "dependances": [
