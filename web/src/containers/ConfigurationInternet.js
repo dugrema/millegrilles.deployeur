@@ -1,7 +1,5 @@
 import React from 'react'
 import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } from 'react-bootstrap'
-import axios from 'axios'
-import https from 'https'
 
 const RE_DOMAINE = /^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,6}$/
 
@@ -28,8 +26,10 @@ export class PageConfigurationInternet extends React.Component {
   }
 
   setInternetDisponible = event => {
+    console.debug("Set internet disponible : %O", event)
     const eventInfo = event.currentTarget
-    this.setState({internetDisponible: event.currentTarget.checked})
+    console.debug("Set internet disponible eventInfo: %O", eventInfo)
+    this.setState({internetDisponible: eventInfo.value === 'true'})
   }
 
   changerDomaine = event => {
@@ -165,11 +165,9 @@ function AfficherFormInternet(props) {
         <div>
           <label htmlFor="cloudns-subid">Configuration ClouDNS</label>
           <InputGroup>
-            <InputGroup.Prepend>
-              <InputGroup.Text id="cloudns-subid">
-                SubID (numero)
-              </InputGroup.Text>
-            </InputGroup.Prepend>
+            <InputGroup.Text id="cloudns-subid">
+              SubID (numero)
+            </InputGroup.Text>
             <FormControl id="cloudns-subid"
                          aria-describedby="cloudns-subid"
                          name="cloudnsSubid"
@@ -177,11 +175,9 @@ function AfficherFormInternet(props) {
                          onChange={props.changerTextfield} />
           </InputGroup>
           <InputGroup>
-            <InputGroup.Prepend>
-              <InputGroup.Text id="cloudns-password">
-                Mot de passe
-              </InputGroup.Text>
-            </InputGroup.Prepend>
+            <InputGroup.Text id="cloudns-password">
+              Mot de passe
+            </InputGroup.Text>
             <FormControl id="cloudns-password"
                          aria-describedby="cloudns-password"
                          type="password"
@@ -191,11 +187,9 @@ function AfficherFormInternet(props) {
           </InputGroup>
 
           <InputGroup>
-            <InputGroup.Prepend>
-              <InputGroup.Text id="dns-sleep">
-                DNS sleep
-              </InputGroup.Text>
-            </InputGroup.Prepend>
+            <InputGroup.Text id="dns-sleep">
+              DNS sleep
+            </InputGroup.Text>
             <FormControl id="dns-sleep"
                          aria-describedby="dns-sleep"
                          name="dnssleep"
@@ -253,11 +247,9 @@ function AfficherFormInternet(props) {
       <Form>
         <label htmlFor="noeud-url">URL d'acces au noeud {props.flagDomaineInvalide}</label>
         <InputGroup className="mb-3">
-          <InputGroup.Prepend>
-            <InputGroup.Text id="noeud-addon3">
-              https://
-            </InputGroup.Text>
-          </InputGroup.Prepend>
+          <InputGroup.Text id="noeud-addon3">
+            https://
+          </InputGroup.Text>
           <FormControl id="noeud-url" aria-describedby="noeud-addon3" value={props.domaine} onChange={props.changerDomaine}/>
         </InputGroup>
 

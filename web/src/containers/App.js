@@ -4,8 +4,6 @@ import {Container, Row, Col, Button, Alert} from 'react-bootstrap'
 import QRCode from 'qrcode.react'
 
 import {pki as forgePki} from '@dugrema/node-forge'
-// import {splitPEMCerts, extraireExtensionsMillegrille} from '@dugrema/millegrilles.common/lib/forgecommon'
-//import {getIdmg} from '@dugrema/millegrilles.common/lib/idmg'
 import { forgecommon } from '@dugrema/millegrilles.reactjs'
 import { getIdmg } from '@dugrema/millegrilles.utiljs/src/idmg'
 
