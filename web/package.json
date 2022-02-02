@@ -4,8 +4,8 @@
   "private": true,
   "dependencies": {
     "@blackbox-vision/react-qr-reader": "^5.0.0",
-    "@dugrema/millegrilles.utiljs": "git+ssh://git.maceroc.com/git/millegrilles.utiljs#2022.0.0",
     "@dugrema/millegrilles.reactjs": "git+ssh://git.maceroc.com/git/millegrilles.reactjs#2022.0.0",
+    "@dugrema/millegrilles.utiljs": "git+ssh://git.maceroc.com/git/millegrilles.utiljs#2022.0.0",
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
@@ -21,12 +21,12 @@
     "react-dom": "^17.0.2",
     "react-dropzone": "^11.4.2",
     "react-i18next": "^11.15.3",
-    "react-scripts": "^4.0.3"
+    "react-scripts": "^4.0.3",
+    "wasm-loader": "^1.3.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "export WDS_SOCKET_PATH=/installation/sockjs-node && rescripts start",
+    "build": "BABEL_ENV=production rescripts build",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -45,5 +45,10 @@
     ]
   },
   "proxy": "https://mg-dev5.maple.maceroc.com",
-  "homepage": "/installation"
+  "homepage": "/installation",
+  "devDependencies": {
+    "@rescripts/cli": "^0.0.16",
+    "rescript-worker-loader": "^1.0.4",
+    "worker-loader": "^3.0.8"
+  }
 }

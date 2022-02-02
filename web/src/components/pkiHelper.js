@@ -6,16 +6,16 @@ import { pki as forgePki } from '@dugrema/node-forge'
 // import {
 //     genererCertificatMilleGrille, genererCertificatIntermediaire
 // } from '@dugrema/millegrilles.common/lib/cryptoForge'
+import {  encoderIdmg } from '@dugrema/millegrilles.utiljs/src/idmg'
+
 import { 
   genererClePrivee, genererCertificatMilleGrille, genererCertificatIntermediaire,
   chargerPemClePriveeEd25519, 
-  encoderIdmg,
-  forgecommon,
   genererPassword,
-} from '@dugrema/millegrilles.utiljs'
+} from '@dugrema/millegrilles.utiljs/src/certificats'
 
 // Importer pour wiring des fonctions de hachage react
-import reactjs from '@dugrema/millegrilles.reactjs'
+import { forgecommon } from '@dugrema/millegrilles.reactjs'
 
 const { chargerClePrivee } = forgecommon  // from '@dugrema/millegrilles.common/lib/forgecommon'
 
