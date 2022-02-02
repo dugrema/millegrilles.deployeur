@@ -26,6 +26,8 @@ class Generateur:
         self._signateur = SignateurTransaction(self._contexte)
         self._signateur.initialiser()
 
+        self.cert_millegrille_pem = self._contexte.configuration.certificat_millegrille.public_bytes.decode('utf-8')
+
         self._formatteur = FormatteurMessageMilleGrilles(self._contexte.idmg, self._signateur)
 
         self.__logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
@@ -116,6 +118,10 @@ class Generateur:
     def signer(self, contenu: dict, domaine_action: str, action: str = None):
         message_signe, uuid_enveloppe = self._formatteur.signer_message(
             contenu, domaine_action, ajouter_chaine_certs=True, action=action)
+
+        # Ajouter certificat _millegrille
+        message_signe['_millegrille'] = self.cert_millegrille_pem
+
         return message_signe
 
     def generer(self):
