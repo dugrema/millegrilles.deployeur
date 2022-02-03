@@ -56,11 +56,9 @@ export class ConfigurerNoeudIdmg extends React.Component {
 function FormIdmg(props) {
   return (
     <InputGroup className="mb-3">
-      <InputGroup.Prepend>
-        <InputGroup.Text id="idmg">
-          IDMG du noeud
-        </InputGroup.Text>
-      </InputGroup.Prepend>
+      <InputGroup.Text id="idmg">
+        IDMG du noeud
+      </InputGroup.Text>
       <FormControl id="idmg"
                    aria-describedby="idmg"
                    name="idmg"
