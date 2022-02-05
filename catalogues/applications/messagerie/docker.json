@@ -1,0 +1,148 @@
+{
+  "nom": "messagerie",
+  "version": "2022.1.1",
+  "registries": [
+    "docker.maceroc.com"
+  ],
+  "images": {
+    "millegrilles_messagerie": {
+      "image": "millegrilles_messagerie",
+      "version": "x86_64_2022.1.0"
+    },
+    "millegrilles_messagerie_web": {
+      "image": "millegrilles_messagerie_web",
+      "version": "x86_64_2022.1.0"
+    }
+  },
+  "dependances": [
+    {
+      "image": "millegrilles_messagerie",
+      "config": {
+        "name": "messagerie",
+        "certificat_compte": "pki.messagerie.cert",
+        "env": [
+          "MG_MQ_HOST=mq",
+          "MG_MQ_PORT=5673",
+          "CERTFILE=/run/secrets/cert.pem",
+          "KEYFILE=/run/secrets/key.pem",
+          "CAFILE=/run/secrets/millegrille.cert.pem",
+          "MG_MONGO_HOST=mongo",
+          "RUST_LOG=warn,millegrilles_messagerie=info",
+          "MG_FICHIERS_URL=https://fichiers:443",
+          "MG_REDIS_URL=redis://redis:6379"
+        ],
+        "constraints": [
+          "node.labels.millegrilles.messagerie == true"
+        ],
+        "configs": [
+          {
+            "name": "pki.messagerie.cert",
+            "filename": "/run/secrets/cert.pem"
+          },
+          {
+            "name": "pki.millegrille.cert",
+            "filename": "/run/secrets/millegrille.cert.pem"
+          }
+        ],
+        "secrets": [
+          {
+            "match_config": true,
+            "name": "pki.messagerie.key",
+            "filename": "key.pem"
+          }
+        ],
+        "networks": [
+          {
+            "target": "millegrille_net"
+          }
+        ],
+        "labels": {
+          "application": "messagerie",
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 1000000000,
+          "mem_limit": 120000000
+        },
+        "restart_policy": {
+          "condition": "any",
+          "delay": 30000000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    },
+    {
+      "image": "millegrilles_messagerie_web",
+      "config": {
+        "name": "messagerie_web",
+        "certificat_compte": "pki.messagerie_web.cert",
+        "env": [
+          "MG_MQ_CERTFILE=/run/secrets/cert.pem",
+          "MG_MQ_KEYFILE=/run/secrets/key.pem",
+          "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
+          "WEB_CERT=/run/secrets/cert.pem",
+          "WEB_KEY=/run/secrets/key.pem",
+          "SERVER_TYPE=spdy",
+          "HOST=${HOSTNAME_DOMAINE}",
+          "PORT=443",
+          "MG_REDIS_HOST=redis",
+          "MG_REDIS_PORT=6379"
+        ],
+        "mounts": [
+          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw"
+        ],
+        "configs": [
+          {
+            "name": "pki.messagerie_web.cert",
+            "filename": "/run/secrets/cert.pem"
+          },
+          {
+            "name": "pki.millegrille.cert",
+            "filename": "/run/secrets/millegrille.cert.pem"
+          }
+        ],
+        "secrets": [
+          {
+            "match_config": true,
+            "name": "pki.messagerie_web.key",
+            "filename": "key.pem"
+          }
+        ],
+        "networks": [
+          {
+            "target": "millegrille_net",
+            "aliases": [
+              "messagerie"
+            ]
+          }
+        ],
+        "labels": {
+          "application": "messagerie_web",
+          "millegrille": "${IDMG}",
+          "url": "https://${HOSTNAME}/messagerie",
+          "securite": "2.prive"
+        },
+        "resources": {
+          "cpu_limit": 1000000000,
+          "mem_limit": 120000000
+        },
+        "restart_policy": {
+          "condition": "on-failure",
+          "delay": 60000000000,
+          "max_attempts": 5
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ],
+  "nginx": {
+    "path_location": "/messagerie",
+    "proxypass": "https://messagerie:443"
+  }
+}
