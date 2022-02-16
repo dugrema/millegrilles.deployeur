@@ -7,11 +7,11 @@
   "images": {
     "millegrilles_messagerie": {
       "image": "millegrilles_messagerie",
-      "version": "x86_64_2022.1.0"
+      "version": "2022.1.0"
     },
     "millegrilles_messagerie_web": {
       "image": "millegrilles_messagerie_web",
-      "version": "x86_64_2022.1.0"
+      "version": "2022.1.0"
     }
   },
   "dependances": [
