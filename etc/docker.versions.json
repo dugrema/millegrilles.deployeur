@@ -14,7 +14,7 @@
         "nginx": {"image": "millegrilles_nginx", "version": "1.45.0"},
         "web": {"image": "millegrilles_web", "version": "2022.0.0"},
         "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "2022.0.0"},
-        "redis": {"image": "redis", "version": "6-alpine"},
+        "redis": {"registries": [""], "image": "redis", "version": "6-alpine"},
         "elasticsearch": {"registries": [""], "image": "elasticsearch", "version": "7.16.1"}
     }
 }
