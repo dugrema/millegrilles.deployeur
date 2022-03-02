@@ -1,6 +1,6 @@
 {
   "nom": "messagerie",
-  "version": "2022.1.1",
+  "version": "2022.1.4",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -143,6 +143,8 @@
   ],
   "nginx": {
     "path_location": "/messagerie",
-    "proxypass": "https://messagerie:443"
+    "proxypass": "https://messagerie:443",
+    "conf_location": "nginx.messagerie.conf"
   }
+
 }
