@@ -11,3 +11,4 @@ docker service update -d --publish-add published=3021,target=443,mode=host fichi
 docker service update -d --publish-add published=9200,target=9200,mode=host elasticsearch
 docker service update -d --publish-add published=3037,target=443,mode=host collections
 docker service update -d --publish-add published=3013,target=443,mode=host senseurspassifs_web
+docker service update -d --publish-add published=3039,target=443,mode=host messagerie_web
