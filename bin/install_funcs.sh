@@ -172,6 +172,7 @@ demarrer_servicemonitor() {
     --mount type=bind,source=/run/docker.sock,destination=/run/docker.sock \
     --mount type=bind,source=$MILLEGRILLES_VAR,destination=/var/opt/millegrilles \
     --mount type=volume,source=millegrille-secrets,destination=/var/opt/millegrilles_secrets \
+    --mount type=volume,source=nginx-html,destination=/var/opt/millegrilles/nginx/html/ \
     --user root:115 \
     ${SERVICEMONITOR_IMAGE} \
     -m millegrilles.monitor.ServiceMonitor --info \
