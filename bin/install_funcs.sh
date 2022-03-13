@@ -148,7 +148,7 @@ installer_sysctl() {
   # 6tunnel pour IPv6
   sudo cp bin/6tunnel_https.sh /usr/local/bin
   sudo systemctl enable 6tunnel_https.service
-  sude systemctl start 6tunnel_https.service
+  sudo systemctl start 6tunnel_https.service
 }
 
 # Installer le service ServiceMonitor
