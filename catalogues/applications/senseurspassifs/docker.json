@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs",
-  "version": "2022.1.0",
+  "version": "2022.2.0",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -11,7 +11,7 @@
     },
     "millegrilles_web_senseurspassifs": {
       "image": "millegrilles_web_senseurspassifs",
-      "version": "2022.0.0"
+      "version": "2022.2.0"
     }
   },
   "dependances": [
