@@ -1,13 +1,13 @@
 {
   "nom": "onionize",
-  "version": "1.42.1",
+  "version": "2022.2.0",
   "registries": [
     "torservers"
   ],
   "images": {
     "onionize": {
       "image": "onionize",
-      "version": "latest"
+      "version": "release-0.3"
     }
   },
   "dependances": [
