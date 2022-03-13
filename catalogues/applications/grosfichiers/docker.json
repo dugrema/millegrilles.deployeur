@@ -1,6 +1,6 @@
 {
   "nom": "grosfichiers",
-  "version": "2022.1.1",
+  "version": "2022.2.0",
   "registries": [
     "docker.maceroc.com"
   ],

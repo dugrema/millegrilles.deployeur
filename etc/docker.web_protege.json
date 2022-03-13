@@ -25,7 +25,8 @@
     "DATA_FOLDER=${MOUNTS}/nginx/data"
   ],
   "mounts": [
-    "${NGINX_DATA_VOLUME}:${MOUNTS}/nginx/data:rw"
+    "${NGINX_DATA_VOLUME}:${MOUNTS}/nginx/data:rw",
+    "${NGINX_HTML_VOLUME}:/var/opt/millegrilles/nginx/html:ro"
   ],
   "constraints": [
     "node.labels.millegrilles.web == true"
