@@ -1,0 +1,73 @@
+{
+  "nom": "postmaster",
+  "version": "2022.2.0",
+  "registries": [
+    "docker.maceroc.com"
+  ],
+  "images": {
+    "millegrilles_postmaster": {
+      "image": "millegrilles_postmaster",
+      "version": "2022.1.0"
+    }
+  },
+  "dependances": [
+    {
+      "image": "millegrilles_postmaster",
+      "config": {
+        "name": "postmaster",
+        "certificat_compte": "pki.postmaster.cert",
+        "env": [
+          "MG_MQ_HOST=mq",
+          "MG_MQ_PORT=5673",
+          "CERTFILE=/run/secrets/cert.pem",
+          "KEYFILE=/run/secrets/key.pem",
+          "CAFILE=/run/secrets/millegrille.cert.pem",
+          "RUST_LOG=warn,millegrilles_postmaster=info",
+          "MG_FICHIERS_URL=https://fichiers:443",
+          "MG_REDIS_URL=redis://redis:6379"
+        ],
+        "constraints": [
+          "node.labels.millegrilles.postmaster == true"
+        ],
+        "configs": [
+          {
+            "name": "pki.postmaster.cert",
+            "filename": "/run/secrets/cert.pem"
+          },
+          {
+            "name": "pki.millegrille.cert",
+            "filename": "/run/secrets/millegrille.cert.pem"
+          }
+        ],
+        "secrets": [
+          {
+            "match_config": true,
+            "name": "pki.postmaster.key",
+            "filename": "key.pem"
+          }
+        ],
+        "networks": [
+          {
+            "target": "millegrille_net"
+          }
+        ],
+        "labels": {
+          "application": "postmaster",
+          "millegrille": "${IDMG}"
+        },
+        "resources": {
+          "cpu_limit": 500000000,
+          "mem_limit": 120000000
+        },
+        "restart_policy": {
+          "condition": "any",
+          "delay": 30000000000
+        },
+        "mode": {
+          "mode": "replicated",
+          "replicas": 1
+        }
+      }
+    }
+  ]
+}
