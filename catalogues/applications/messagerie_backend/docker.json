@@ -1,6 +1,7 @@
 {
   "nom": "messagerie_backend",
   "version": "2022.2.0",
+  "securite": "3.protege",
   "registries": [
     "docker.maceroc.com"
   ],

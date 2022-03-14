@@ -1,6 +1,7 @@
 {
   "nom": "messagerie_web",
   "version": "2022.2.0",
+  "securite": "2.prive",
   "registries": [
     "docker.maceroc.com"
   ],

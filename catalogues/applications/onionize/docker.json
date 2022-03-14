@@ -1,6 +1,7 @@
 {
   "nom": "onionize",
-  "version": "2022.2.2",
+  "version": "2022.2.3",
+  "securite": "1.public",
   "registries": [
     "torservers"
   ],
