@@ -1,7 +1,7 @@
 {
   "nom": "maitredescomptes",
   "version": "2022.2.0",
-  "securite": "1.public",
+  "securite": "2.prive",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -17,6 +17,7 @@
       "config": {
         "name": "web_protege",
         "env": [
+          "MG_MQ_URL=amqps://mq:5673",
           "MG_MQ_CERTFILE=/run/secrets/cert.pem",
           "MG_MQ_KEYFILE=/run/secrets/key.pem",
           "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
@@ -28,7 +29,8 @@
           "PORT=443",
           "MG_REDIS_HOST=redis",
           "MG_REDIS_PORT=6379",
-          "DATA_FOLDER=${MOUNTS}/nginx/data"
+          "DATA_FOLDER=${MOUNTS}/nginx/data",
+          "MG_SESSION_PASSWORD=/run/secrets/passwd.maitrecomptessession.txt"
         ],
         "mounts": [
           "${NGINX_DATA_VOLUME}:${MOUNTS}/nginx/data:rw"
@@ -48,15 +50,16 @@
             "match_config": true,
             "name": "pki.web_protege.key;pki.monitor.key",
             "filename": "key.pem"
+          },
+          {
+            "name": "passwd.maitrecomptessession",
+            "filename": "passwd.maitrecomptessession.txt"
           }
         ],
         "networks": [
           {
             "target": "millegrille_net",
-            "aliases": [
-              "web",
-              "web_protege"
-            ]
+            "aliases": ["web"]
           }
         ],
         "labels": {
