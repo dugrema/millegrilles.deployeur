@@ -1,6 +1,6 @@
 {
   "nom": "messagerie",
-  "version": "2022.2.1",
+  "version": "2022.2.2",
   "securite": "3.protege",
   "registries": [
     "docker.maceroc.com"

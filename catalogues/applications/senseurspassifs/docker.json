@@ -1,6 +1,7 @@
 {
   "nom": "senseurspassifs",
-  "version": "2022.2.0",
+  "version": "2022.2.1",
+  "securite": "2.prive",
   "registries": [
     "docker.maceroc.com"
   ],

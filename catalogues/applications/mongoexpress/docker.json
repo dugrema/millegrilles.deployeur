@@ -1,6 +1,7 @@
 {
   "nom": "mongoexpress",
-  "version": "2022.0.0",
+  "version": "2022.2.1",
+  "securite": "3.protege",
   "registries": [
     "docker.maceroc.com"
   ],
