@@ -6,22 +6,25 @@
     "docker.maceroc.com"
   ],
   "images": {
-    "web_protege": {
+    "millegrilles_web": {
       "image": "millegrilles_web",
       "version": "2022.2.0"
     }
   },
   "dependances": [
     {
-      "image": "web_protege",
+      "image": "millegrilles_web",
+      "generer": {
+        "motsdepasse": [{"name": "passwd.maitrecomptessession"}]
+      },
       "config": {
-        "name": "web_protege",
+        "name": "maitrecomptes",
+        "certificat_compte": "pki.maitrecomptes.cert",
         "env": [
           "MG_MQ_URL=amqps://mq:5673",
           "MG_MQ_CERTFILE=/run/secrets/cert.pem",
           "MG_MQ_KEYFILE=/run/secrets/key.pem",
           "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
-          "MG_EXCHANGE_DEFAUT=2.prive",
           "WEB_CERT=/run/secrets/cert.pem",
           "WEB_KEY=/run/secrets/key.pem",
           "SERVER_TYPE=spdy",
@@ -37,7 +40,7 @@
         ],
         "configs": [
           {
-            "name": "pki.web_protege.cert;pki.monitor.cert",
+            "name": "pki.maitrecomptes.cert",
             "filename": "/run/secrets/cert.pem"
           },
           {
@@ -48,18 +51,22 @@
         "secrets": [
           {
             "match_config": true,
-            "name": "pki.web_protege.key;pki.monitor.key",
+            "name": "pki.maitrecomptes.key",
             "filename": "key.pem"
           },
           {
             "name": "passwd.maitrecomptessession",
             "filename": "passwd.maitrecomptessession.txt"
+          },
+          {
+            "name": "passwd.redis",
+            "filename": "passwd.redis.txt"
           }
         ],
         "networks": [
           {
             "target": "millegrille_net",
-            "aliases": ["web"]
+            "aliases": ["maitrecomptes"]
           }
         ],
         "labels": {
@@ -78,7 +85,7 @@
   ],
   "nginx": {
     "path_location": "/millegrilles",
-    "proxypass": "https://millegrilles:443",
+    "proxypass": "https://maitrecomptes:443",
     "conf_location": "nginx.maitredescomptes.conf"
   }
 }
