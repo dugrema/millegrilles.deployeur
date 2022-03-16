@@ -1,6 +1,5 @@
 {
   "name": "nginx",
-  "certificat_compte": "pki.nginx.cert",
   "env": [
     "ONIONSERVICE_NAME=nginx",
     "ONIONSERVICE_PORT=443"

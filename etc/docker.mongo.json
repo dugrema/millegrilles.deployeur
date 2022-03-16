@@ -1,6 +1,7 @@
 {
   "name": "mongo",
   "hostname": "mongo",
+  "certificat_compte": "pki.mongo.cert",
   "args": [
     "mongod",
     "--tlsMode", "requireTLS",
