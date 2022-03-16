@@ -1,6 +1,6 @@
 {
-  "name": "web_protege",
-  "certificat_compte": "pki.web_protege.cert",
+  "name": "maitrecomptes_web",
+  "certificat_compte": "pki.maitrecomptes.cert",
   "generer": [
     {
       "generateur": "motdepasse",
@@ -21,7 +21,6 @@
     "SERVER_TYPE=spdy",
     "HOST=${HOSTNAME_DOMAINE}",
     "PORT=443",
-    "MG_CONSIGNATION_HTTP=https://fichiers",
     "DATA_FOLDER=${MOUNTS}/nginx/data"
   ],
   "mounts": [
@@ -33,11 +32,11 @@
   ],
   "configs": [
     {
-      "name": "pki.web_protege.cert",
+      "name": "pki.maitrecomptes.cert",
       "filename": "/run/secrets/cert.pem"
     },
     {
-      "name": "pki.web.cert;pki.web_protege.cert",
+      "name": "pki.web.cert",
       "filename": "/run/secrets/webcert.pem"
     },
     {
@@ -48,12 +47,12 @@
   "secrets": [
     {
       "match_config": true,
-      "name": "pki.web_protege.key",
+      "name": "pki.maitrecomptes.key",
       "filename": "key.pem"
     },
     {
       "match_config": true,
-      "name": "pki.web.key;pki.web_protege.key",
+      "name": "pki.web.key",
       "filename": "webkey.pem"
     },
     {
@@ -66,7 +65,7 @@
   },
   "networks": [{
     "target": "millegrille_net",
-    "aliases": ["web", "web_protege"]
+    "aliases": ["maitrecomptes"]
   }],
   "labels": {
     "millegrille": "${IDMG}"

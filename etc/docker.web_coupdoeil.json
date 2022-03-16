@@ -1,6 +1,6 @@
 {
   "name": "web_coupdoeil",
-  "certificat_compte": "pki.web_protege.cert",
+  "certificat_compte": "pki.coupdoeil.cert",
   "env": [
     "MG_MQ_URL=amqps://mq:5673",
     "MG_REDIS_HOST=redis",
