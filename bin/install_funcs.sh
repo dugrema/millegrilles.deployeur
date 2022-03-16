@@ -40,7 +40,12 @@ installer_docker() {
 
 installer_autres_deps() {
   # Random number gens hardware, pip3, avahi-daemon
-  sudo apt install -y rng-tools avahi-daemon python3-pip libglib2.0-dev 6tunnel
+  sudo apt install -y rng-tools avahi-daemon 6tunnel
+}
+
+installer_dev() {
+  # Random number gens hardware, pip3, avahi-daemon
+  sudo apt install -y python3-pip libglib2.0-dev
   sudo pip3 install -r requirements.txt
 }
 

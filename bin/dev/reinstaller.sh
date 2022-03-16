@@ -23,4 +23,4 @@ sudo rm -f /var/log/millegrilles/*
 # docker swarm init --advertise-addr 127.0.0.1
 
 echo Reinstaller
-./install.sh
+./install.sh swarm
