@@ -20,7 +20,7 @@
   ],
   "configs": [
     {
-      "name": "pki.web_protege.cert",
+      "name": "pki.coupdoeil.cert",
       "filename": "/run/secrets/cert.pem"
     },
     {
@@ -31,7 +31,7 @@
   "secrets": [
     {
       "match_config": true,
-      "name": "pki.web_protege.key",
+      "name": "pki.coupdoeil.key",
       "filename": "key.pem"
     }
   ],
