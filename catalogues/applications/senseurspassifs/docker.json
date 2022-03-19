@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs",
-  "version": "2022.2.1",
+  "version": "2022.2.2",
   "securite": "2.prive",
   "registries": [
     "docker.maceroc.com"
@@ -8,7 +8,7 @@
   "images": {
     "millegrilles_senseurspassifs": {
       "image": "millegrilles_senseurspassifs",
-      "version": "2022.1.0"
+      "version": "2022.2.0"
     },
     "millegrilles_web_senseurspassifs": {
       "image": "millegrilles_web_senseurspassifs",
@@ -79,7 +79,7 @@
       "image": "millegrilles_web_senseurspassifs",
       "config": {
         "name": "senseurspassifs_web",
-        "certificat_compte": "pki.senseurspassifs.cert",
+        "certificat_compte": "pki.senseurspassifs_web.cert",
         "env": [
           "MG_MQ_CERTFILE=/run/secrets/cert.pem",
           "MG_MQ_KEYFILE=/run/secrets/key.pem",
