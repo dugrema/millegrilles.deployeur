@@ -1,6 +1,6 @@
 {
   "nom": "messagerie",
-  "version": "2022.2.2",
+  "version": "2022.2.3",
   "securite": "3.protege",
   "registries": [
     "docker.maceroc.com"
@@ -8,7 +8,7 @@
   "images": {
     "millegrilles_messagerie": {
       "image": "millegrilles_messagerie",
-      "version": "2022.1.0"
+      "version": "2022.2.0"
     },
     "millegrilles_messagerie_web": {
       "image": "millegrilles_messagerie_web",
@@ -16,7 +16,7 @@
     },
     "millegrilles_postmaster": {
       "image": "millegrilles_postmaster",
-      "version": "2022.1.0"
+      "version": "2022.2.0"
     }
   },
   "dependances": [
