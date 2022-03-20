@@ -18,6 +18,7 @@
     "MG_SESSION_PASSWORD=/run/secrets/passwd.maitrecomptessession.txt",
     "MG_REDIS_HOST=redis",
     "MG_REDIS_PORT=6379",
+    "MG_MQ_REDIS_PASSWD=/run/secrets/passwd.redis.txt",
     "SERVER_TYPE=spdy",
     "HOST=${HOSTNAME_DOMAINE}",
     "PORT=443",
@@ -58,6 +59,10 @@
     {
       "name": "passwd.maitrecomptessession",
       "filename": "passwd.maitrecomptessession.txt"
+    },
+    {
+      "name": "passwd.redis",
+      "filename": "passwd.redis.txt"
     }
   ],
   "container_labels": {
