@@ -12,6 +12,8 @@
     "CAFILE=/run/secrets/millegrille.cert.pem",
     "MG_FICHIERS_URL=https://fichiers:443",
     "MG_REDIS_URL=redis://redis:6379",
+    "MG_REDIS_URL=rediss://client_rust@redis:6379#insecure",
+    "MG_REDIS_PASSWORD_FILE=/run/secrets/passwd.redis.txt",
     "RUST_LOG=warn",
     "MG_MAITREDESCLES_CA=1"
   ],
@@ -39,6 +41,10 @@
       "regex": true,
       "name": "pki.maitrecles.key.([0-9]+)",
       "filename": "key.pem.$1"
+    },
+    {
+      "name": "passwd.redis",
+      "filename": "passwd.redis.txt"
     }
   ],
   "networks": [{

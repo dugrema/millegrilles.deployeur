@@ -40,7 +40,6 @@
       "name": "passwd.redis",
       "filename": "passwd.redis.txt"
     }
-
   ],
   "networks": [{
     "target": "millegrille_net"
