@@ -9,10 +9,6 @@
       "secret": "passwd.redis"
     }
   ],
-  "args": [
-    "redis-server",
-    "--appendonly yes"
-  ],
   "mounts": [
     "mg-redis:/data:rw"
   ],
