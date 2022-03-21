@@ -1,6 +1,6 @@
 {
   "nom": "grosfichiers",
-  "version": "2022.2.2",
+  "version": "2022.2.3",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -29,7 +29,7 @@
           "MG_MONGO_HOST=mongo",
           "RUST_LOG=warn,millegrilles_grosfichiers=info",
           "MG_FICHIERS_URL=https://fichiers:443",
-          "MG_REDIS_URL=redis://redis:6379"
+          "MG_REDIS_URL=rediss://client_rust@redis:6379#insecure"
         ],
         "constraints": [
           "node.labels.millegrilles.grosfichiers == true"
