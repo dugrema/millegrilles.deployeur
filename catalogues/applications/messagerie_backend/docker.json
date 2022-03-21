@@ -1,6 +1,6 @@
 {
   "nom": "messagerie_backend",
-  "version": "2022.2.2",
+  "version": "2022.2.3",
   "securite": "3.protege",
   "registries": [
     "docker.maceroc.com"
@@ -25,7 +25,8 @@
           "CAFILE=/run/secrets/millegrille.cert.pem",
           "MG_MONGO_HOST=mongo",
           "MG_FICHIERS_URL=https://fichiers:443",
-          "MG_REDIS_URL=redis://redis:6379",
+          "MG_REDIS_URL=rediss://client_rust@redis:6379#insecure",
+          "MG_REDIS_PASSWORD_FILE=/run/secrets/passwd.redis.txt",
           "RUST_LOG=warn,millegrilles_messagerie=info"
         ],
         "constraints": [
