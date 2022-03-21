@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs",
-  "version": "2022.2.2",
+  "version": "2022.2.4",
   "securite": "2.prive",
   "registries": [
     "docker.maceroc.com"
@@ -29,8 +29,7 @@
           "CAFILE=/run/secrets/millegrille.cert.pem",
           "MG_MONGO_HOST=mongo",
           "RUST_LOG=warn,millegrilles_senseurspassifs=info",
-          "MG_FICHIERS_URL=https://fichiers:443",
-          "MG_REDIS_URL=redis://redis:6379"
+          "MG_FICHIERS_URL=https://fichiers:443"
         ],
         "constraints": [
           "node.labels.millegrilles.senseurspassifs == true"
@@ -50,6 +49,10 @@
             "match_config": true,
             "name": "pki.senseurspassifs.key",
             "filename": "key.pem"
+          },
+          {
+            "name": "passwd.redis",
+            "filename": "passwd.redis.txt"
           }
         ],
         "networks": [
@@ -110,6 +113,10 @@
             "match_config": true,
             "name": "pki.senseurspassifs.key",
             "filename": "key.pem"
+          },
+          {
+            "name": "passwd.redis",
+            "filename": "passwd.redis.txt"
           }
         ],
         "networks": [
