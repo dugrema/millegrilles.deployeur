@@ -33,6 +33,10 @@
       "match_config": true,
       "name": "pki.coupdoeil.key",
       "filename": "key.pem"
+    },
+    {
+      "name": "passwd.redis",
+      "filename": "passwd.redis.txt"
     }
   ],
   "container_labels": {
