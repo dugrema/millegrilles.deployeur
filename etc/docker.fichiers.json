@@ -57,6 +57,10 @@
     {
       "name": "pki.fichiers.sftp.rsa",
       "filename": "sftp.rsa.key.pem"
+    },
+    {
+      "name": "passwd.redis",
+      "filename": "passwd.redis.txt"
     }
   ],
   "networks": [

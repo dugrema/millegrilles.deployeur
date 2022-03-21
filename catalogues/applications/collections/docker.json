@@ -1,6 +1,6 @@
 {
   "nom": "collections",
-  "version": "2022.2.0",
+  "version": "2022.2.1",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -46,6 +46,10 @@
             "match_config": true,
             "name": "pki.collections.key",
             "filename": "key.pem"
+          },
+          {
+            "name": "passwd.redis",
+            "filename": "passwd.redis.txt"
           }
         ],
         "networks": [
