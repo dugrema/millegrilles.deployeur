@@ -1,6 +1,6 @@
 {
   "nom": "messagerie",
-  "version": "2022.2.3",
+  "version": "2022.2.4",
   "securite": "3.protege",
   "registries": [
     "docker.maceroc.com"
@@ -54,6 +54,10 @@
             "match_config": true,
             "name": "pki.messagerie.key",
             "filename": "key.pem"
+          },
+          {
+            "name": "passwd.redis",
+            "filename": "passwd.redis.txt"
           }
         ],
         "networks": [
@@ -115,6 +119,10 @@
             "match_config": true,
             "name": "pki.messagerie_web.key",
             "filename": "key.pem"
+          },
+          {
+            "name": "passwd.redis",
+            "filename": "passwd.redis.txt"
           }
         ],
         "networks": [
@@ -179,6 +187,10 @@
             "match_config": true,
             "name": "pki.postmaster.key",
             "filename": "key.pem"
+          },
+          {
+            "name": "passwd.redis",
+            "filename": "passwd.redis.txt"
           }
         ],
         "networks": [

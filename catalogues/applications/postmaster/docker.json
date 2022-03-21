@@ -1,6 +1,6 @@
 {
   "nom": "postmaster",
-  "version": "2022.2.1",
+  "version": "2022.2.2",
   "securite": "1.public",
   "registries": [
     "docker.maceroc.com"
@@ -45,6 +45,10 @@
             "match_config": true,
             "name": "pki.postmaster.key",
             "filename": "key.pem"
+          },
+          {
+            "name": "passwd.redis",
+            "filename": "passwd.redis.txt"
           }
         ],
         "networks": [

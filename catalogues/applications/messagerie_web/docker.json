@@ -1,6 +1,6 @@
 {
   "nom": "messagerie_web",
-  "version": "2022.2.1",
+  "version": "2022.2.2",
   "securite": "2.prive",
   "registries": [
     "docker.maceroc.com"
@@ -48,6 +48,10 @@
             "match_config": true,
             "name": "pki.messagerie_web.key",
             "filename": "key.pem"
+          },
+          {
+            "name": "passwd.redis",
+            "filename": "passwd.redis.txt"
           }
         ],
         "networks": [
