@@ -86,6 +86,7 @@
   "nginx": {
     "path_location": "/millegrilles",
     "proxypass": "https://maitrecomptes:443",
-    "conf_location": "nginx.maitredescomptes.conf"
+    "conf_location": "nginx.maitredescomptes.conf",
+    "set_default": true
   }
 }
