@@ -1,6 +1,6 @@
 {
   "nom": "maitredescomptes",
-  "version": "2022.2.6",
+  "version": "2022.2.7",
   "securite": "2.prive",
   "registries": [
     "docker.maceroc.com"
