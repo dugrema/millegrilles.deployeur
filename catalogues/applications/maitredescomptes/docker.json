@@ -1,6 +1,6 @@
 {
   "nom": "maitredescomptes",
-  "version": "2022.2.2",
+  "version": "2022.2.6",
   "securite": "2.prive",
   "registries": [
     "docker.maceroc.com"
@@ -33,7 +33,8 @@
           "MG_REDIS_HOST=redis",
           "MG_REDIS_PORT=6379",
           "DATA_FOLDER=${MOUNTS}/nginx/data",
-          "MG_SESSION_PASSWORD=/run/secrets/passwd.maitrecomptessession.txt"
+          "MG_SESSION_PASSWORD=/run/secrets/passwd.maitrecomptessession.txt",
+          "MG_MQ_REDIS_PASSWD=/run/secrets/passwd.redis.txt"
         ],
         "mounts": [
           "${NGINX_DATA_VOLUME}:${MOUNTS}/nginx/data:rw"
