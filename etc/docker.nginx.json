@@ -48,6 +48,11 @@
         "protocol": "tcp"
       },
       {
+        "published_port": 444,
+        "target_port": 444,
+        "protocol": "tcp"
+      },
+      {
         "published_port": 80,
         "target_port": 80,
         "protocol": "tcp"
