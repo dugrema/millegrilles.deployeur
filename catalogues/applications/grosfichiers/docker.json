@@ -1,6 +1,6 @@
 {
   "nom": "grosfichiers",
-  "version": "2022.2.3",
+  "version": "2022.2.8",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -28,7 +28,6 @@
           "CAFILE=/run/secrets/millegrille.cert.pem",
           "MG_MONGO_HOST=mongo",
           "RUST_LOG=warn,millegrilles_grosfichiers=info",
-          "MG_FICHIERS_URL=https://fichiers:443",
           "MG_REDIS_URL=rediss://client_rust@redis:6379#insecure"
         ],
         "constraints": [
@@ -93,10 +92,12 @@
           "HOST=${HOSTNAME_DOMAINE}",
           "PORT=443",
           "MG_REDIS_HOST=redis",
-          "MG_REDIS_PORT=6379"
+          "MG_REDIS_PORT=6379",
+          "MG_CONSIGNATION_URL=https://fichiers/fichiers_transfert"
         ],
         "mounts": [
-          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw"
+          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw",
+          "millegrilles-staging:/var/opt/millegrilles/consignation/transfertStaging:rw"
         ],
         "configs": [
           {
@@ -151,6 +152,8 @@
   ],
   "nginx": {
     "path_location": "/collections",
-    "proxypass": "https://collections:443"
+    "proxypass": "https://collections:443",
+    "conf_location": "nginx.collections.conf",
+    "set_default": true
   }
 }
