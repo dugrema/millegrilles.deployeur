@@ -47,6 +47,10 @@ installer_dev() {
   # Random number gens hardware, pip3, avahi-daemon
   sudo apt install -y python3-pip libglib2.0-dev
   sudo pip3 install -r requirements.txt
+
+  # Fix pour: cannot import name 'abc' from 'bson.py3compat'
+  sudo pip3 uninstall -y bson pymongo
+  sudo pip3 install pymongo
 }
 
 configurer_docker() {
