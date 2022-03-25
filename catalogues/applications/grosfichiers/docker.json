@@ -1,6 +1,6 @@
 {
   "nom": "grosfichiers",
-  "version": "2022.2.8",
+  "version": "2022.2.9",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -97,7 +97,7 @@
         ],
         "mounts": [
           "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw",
-          "millegrilles-staging:/var/opt/millegrilles/consignation/transfertStaging:rw"
+          "millegrilles-staging:/var/opt/millegrilles/consignation:rw"
         ],
         "configs": [
           {

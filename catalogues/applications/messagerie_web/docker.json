@@ -1,6 +1,6 @@
 {
   "nom": "messagerie_web",
-  "version": "2022.2.5",
+  "version": "2022.2.6",
   "securite": "2.prive",
   "registries": [
     "docker.maceroc.com"
@@ -31,7 +31,8 @@
           "MG_CONSIGNATION_URL=https://${MQ_HOST}:444/fichiers_transfert"
         ],
         "mounts": [
-          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw"
+          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw",
+          "millegrilles-staging:/var/opt/millegrilles/consignation:rw"
         ],
         "configs": [
           {

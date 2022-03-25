@@ -1,6 +1,6 @@
 {
   "nom": "messagerie",
-  "version": "2022.2.9",
+  "version": "2022.2.10",
   "securite": "3.protege",
   "registries": [
     "docker.maceroc.com"
@@ -32,7 +32,6 @@
           "KEYFILE=/run/secrets/key.pem",
           "CAFILE=/run/secrets/millegrille.cert.pem",
           "MG_MONGO_HOST=mongo",
-          "MG_CONSIGNATION_URL=https://fichiers/fichiers_transfert",
           "RUST_LOG=warn,millegrilles_messagerie=info"
         ],
         "constraints": [
@@ -101,7 +100,8 @@
           "MG_CONSIGNATION_URL=https://fichiers/fichiers_transfert"
         ],
         "mounts": [
-          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw"
+          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw",
+          "millegrilles-staging:/var/opt/millegrilles/consignation:rw"
         ],
         "configs": [
           {
