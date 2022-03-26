@@ -184,9 +184,10 @@ demarrer_servicemonitor() {
     --mount type=volume,source=nginx-html,destination=/var/opt/millegrilles/nginx/html/ \
     --mount type=volume,source=onionize-config,destination=/var/opt/millegrilles/nginx/onionize/ \
     --user root:115 \
-    ${SERVICEMONITOR_IMAGE} \
-    -m millegrilles.monitor.ServiceMonitorRunner --info \
-    --webroot /opt/millegrilles/dist/installation
+    ${SERVICEMONITOR_IMAGE}
+#    \
+#    -m millegrilles.monitor.ServiceMonitorRunner --info \
+#    --webroot /opt/millegrilles/dist/installation
 }
 
 # Set les params fourni par env (IDMG, MG_SECURITE)
