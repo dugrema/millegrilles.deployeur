@@ -1,6 +1,10 @@
 {
   "nom": "messagerie_web",
-  "version": "2022.2.6",
+  "version": "2022.2.7",
+  "description": {
+    "en": "Messaging web",
+    "fr": "Messagerie web"
+  },
   "securite": "2.prive",
   "registries": [
     "docker.maceroc.com"
@@ -65,6 +69,8 @@
         ],
         "labels": {
           "application": "messagerie_web",
+          "description_en": "Messaging",
+          "description_fr": "Messagerie",
           "millegrille": "${IDMG}",
           "url": "https://${HOSTNAME}/messagerie",
           "securite": "2.prive"

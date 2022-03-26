@@ -1,7 +1,11 @@
 {
   "nom": "messagerie_backend",
-  "version": "2022.2.3",
-  "securite": "3.protege",
+  "version": "2022.2.5",
+  "description": {
+    "en": "Messaging (middleware)",
+    "fr": "Messagerie (middleware)"
+  },
+  "securite": "4.secure",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -15,7 +19,7 @@
     {
       "image": "millegrilles_messagerie",
       "config": {
-        "name": "messagerie",
+        "name": "messagerie_backend",
         "certificat_compte": "pki.messagerie.cert",
         "env": [
           "MG_MQ_HOST=mq",
@@ -59,7 +63,9 @@
           }
         ],
         "labels": {
-          "application": "messagerie",
+          "application": "messagerie_backend",
+          "description_en": "Messaging back-end",
+          "description_fr": "Messagerie back-end",
           "millegrille": "${IDMG}"
         },
         "resources": {
