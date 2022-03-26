@@ -185,7 +185,7 @@ demarrer_servicemonitor() {
     --mount type=volume,source=onionize-config,destination=/var/opt/millegrilles/nginx/onionize/ \
     --user root:115 \
     ${SERVICEMONITOR_IMAGE} \
-    -m millegrilles.monitor.ServiceMonitor --info \
+    -m millegrilles.monitor.ServiceMonitorRunner --info \
     --webroot /opt/millegrilles/dist/installation
 }
 
