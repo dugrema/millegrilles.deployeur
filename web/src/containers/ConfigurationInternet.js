@@ -9,13 +9,14 @@ export class PageConfigurationInternet extends React.Component {
 
     domaine: this.props.fqdnDetecte,
     domaineValide: RE_DOMAINE.test(this.props.fqdnDetecte),
+    domainesAdditionnels: '',
 
     configurationAvancee: false,
     modeTest: false,
     modeCreation: 'webroot',
 
-    cloudnsSubid: '',
-    cloudnsPassword: '',
+    cloudns_subauthid: '',
+    cloudns_password: '',
     dnssleep: '240',
 
     attenteServeur: false,
@@ -55,7 +56,9 @@ export class PageConfigurationInternet extends React.Component {
 
   configurerDomaine = event => {
     // Transmettre la commande de configuration du domaine
-    this.props.rootProps.setInfoInternet({...this.state})
+    const config = {...this.state}
+    if(config.domainesAdditionnels) config.domainesAdditionnels = config.domainesAdditionnels.split(',').map(item=>item.trim())
+    this.props.rootProps.setInfoInternet(config)
     this.props.setPage({currentTarget: {value:'ConfigurerNoeud'}})
   }
 
@@ -77,8 +80,8 @@ export class PageConfigurationInternet extends React.Component {
         setCheckbox={this.setCheckbox}
         configurationAvancee={this.state.configurationAvancee}
         modeTest={this.state.modeTest}
-        cloudnsSubid={this.state.cloudnsSubid}
-        cloudnsPassword={this.state.cloudnsPassword}
+        cloudns_subauthid={this.state.cloudns_subauthid}
+        cloudns_password={this.state.cloudns_password}
         dnssleep={this.state.dnssleep}
         setModeCreation={this.setModeCreation}
         modeCreation={this.state.modeCreation}
@@ -170,8 +173,8 @@ function AfficherFormInternet(props) {
             </InputGroup.Text>
             <FormControl id="cloudns-subid"
                          aria-describedby="cloudns-subid"
-                         name="cloudnsSubid"
-                         value={props.cloudnsSubid}
+                         name="cloudns_subauthid"
+                         value={props.cloudns_subauthid}
                          onChange={props.changerTextfield} />
           </InputGroup>
           <InputGroup>
@@ -181,8 +184,8 @@ function AfficherFormInternet(props) {
             <FormControl id="cloudns-password"
                          aria-describedby="cloudns-password"
                          type="password"
-                         name="cloudnsPassword"
-                         value={props.cloudnsPassword}
+                         name="cloudns_password"
+                         value={props.cloudns_password}
                          onChange={props.changerTextfield} />
           </InputGroup>
 
@@ -203,8 +206,21 @@ function AfficherFormInternet(props) {
 
     configurationAvancee = (
       <div>
+
+        <InputGroup>
+          <InputGroup.Text id="domaines-additionnels">
+            Domaines additionnels
+          </InputGroup.Text>
+          <FormControl 
+            id="domaines-additionnels"
+            aria-describedby="domaines-additionnels"
+            name="domainesAdditionnels"
+            value={props.domainesAdditionnels}
+            onChange={props.changerTextfield} />
+        </InputGroup>
+
         <Form.Check id="certificat-test">
-          <Form.Check.Input type='checkbox' name="modeTest" value='true' onChange={props.setCheckbox} value={props.modeTest}/>
+          <Form.Check.Input type='checkbox' name="modeTest" value='true' onChange={props.setCheckbox} checked={props.modeTest}/>
           <Form.Check.Label>Certificat de test</Form.Check.Label>
         </Form.Check>
 
@@ -254,7 +270,7 @@ function AfficherFormInternet(props) {
         </InputGroup>
 
         <Form.Check id="configuration-avancee">
-          <Form.Check.Input type='checkbox' name="configurationAvancee" value='true' onChange={props.setCheckbox} value={props.configurationAvancee}/>
+          <Form.Check.Input type='checkbox' name="configurationAvancee" value='true' onChange={props.setCheckbox} checked={props.configurationAvancee}/>
           <Form.Check.Label>Configuration avancee</Form.Check.Label>
         </Form.Check>
 
