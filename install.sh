@@ -51,6 +51,7 @@ elif [ "$1" == 'swarm' ]; then
   configurer_docker
   initialiser_swarm
   configurer_swarm
+  set_params
   debug
 else
 
