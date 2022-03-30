@@ -46,6 +46,7 @@ elif [ "$1" == 'demarrer' ]; then
   demarrer
 elif [ "$1" == 'dev' ]; then
   installer_dev
+  set_params
 elif [ "$1" == 'swarm' ]; then
   configurer_repertoires
   configurer_docker

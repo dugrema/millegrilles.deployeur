@@ -198,9 +198,9 @@ set_params() {
     echo -n "$IDMG" | docker config create millegrille.idmg -
   fi
 
-  if [ -n "$MG_SECURITE" ]; then
-    echo "Set type de noeud/securite $MG_SECURITE"
-    echo -n "$MG_SECURITE" | docker config create millegrille.securite -
+  if [ -n "$SECURITE" ]; then
+    echo "Set type de noeud/securite $SECURITE"
+    echo -n "$SECURITE" | docker config create millegrille.securite -
   fi
 
 }
