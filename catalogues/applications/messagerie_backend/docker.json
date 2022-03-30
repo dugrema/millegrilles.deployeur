@@ -1,6 +1,6 @@
 {
   "nom": "messagerie_backend",
-  "version": "2022.2.5",
+  "version": "2022.2.6",
   "description": {
     "en": "Messaging (middleware)",
     "fr": "Messagerie (middleware)"
@@ -20,7 +20,7 @@
       "image": "millegrilles_messagerie",
       "config": {
         "name": "messagerie_backend",
-        "certificat_compte": "pki.messagerie.cert",
+        "certificat_compte": "pki.messagerie_backend.cert",
         "env": [
           "MG_MQ_HOST=mq",
           "MG_MQ_PORT=5673",
@@ -38,7 +38,7 @@
         ],
         "configs": [
           {
-            "name": "pki.messagerie.cert",
+            "name": "pki.messagerie_backend.cert",
             "filename": "/run/secrets/cert.pem"
           },
           {
@@ -49,7 +49,7 @@
         "secrets": [
           {
             "match_config": true,
-            "name": "pki.messagerie.key",
+            "name": "pki.messagerie_backend.key",
             "filename": "key.pem"
           },
           {
