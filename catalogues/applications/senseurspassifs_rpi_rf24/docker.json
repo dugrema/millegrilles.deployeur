@@ -14,6 +14,8 @@
     {
       "image": "millegrilles_senseurspassifs_rpi",
       "container_mode": true,
+      "certificat_compte": "pki.senseurspassifs_hub.cert",
+      "certificat_volume": "/run/secrets",
       "config": {
         "command": [
           "-m",
