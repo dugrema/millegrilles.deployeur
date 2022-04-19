@@ -1,20 +1,21 @@
 {
   "nom": "senseurspassifs_rpi_dummy",
-  "version": "1.46.0",
+  "version": "2022.3.2",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_consignation_python_main": {
       "image": "millegrilles_consignation_python_main",
-      "version": "1.46.0"
+      "version": "2022.2.0"
     }
   },
   "dependances": [
     {
       "image": "millegrilles_consignation_python_main",
       "container_mode": true,
-      "injecter_clecert": "/run/secrets",
+      "certificat_compte": "pki.senseurspassifs_hub.cert",
+      "certificat_volume": "/run/secrets",
       "config": {
         "command": [
           "-m",

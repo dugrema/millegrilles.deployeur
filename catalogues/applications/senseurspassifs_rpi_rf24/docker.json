@@ -1,6 +1,6 @@
 {
   "nom": "senseurspassifs_rpi_rf24",
-  "version": "2022.0.1",
+  "version": "2022.3.0",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -14,7 +14,6 @@
     {
       "image": "millegrilles_senseurspassifs_rpi",
       "container_mode": true,
-      "injecter_clecert": "/run/secrets",
       "config": {
         "command": [
           "-m",
@@ -23,6 +22,8 @@
           "nofork"
         ],
         "name": "senseurspassifs_rpi",
+        "certificat_compte": "pki.collections.cert",
+        "certificat_volume": "/run/secrets",
         "environment": [
           "MG_IDMG=${IDMG}",
           "MG_MQ_HOST=${MQ_HOST}",
