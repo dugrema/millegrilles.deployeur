@@ -15,7 +15,7 @@
     "MG_REDIS_URL=rediss://client_rust@redis:6379#insecure",
     "MG_REDIS_PASSWORD_FILE=/run/secrets/passwd.redis.txt",
     "RUST_LOG=warn",
-    "MG_MAITREDESCLES_CA=1"
+    "MG_MAITREDESCLES_MODE=on"
   ],
   "constraints": [
     "node.labels.millegrilles.maitredescles == true",
