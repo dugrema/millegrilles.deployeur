@@ -1,13 +1,13 @@
 {
   "nom": "senseurspassifs_rpi_dummy",
-  "version": "2022.3.2",
+  "version": "2022.3.3",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_consignation_python_main": {
       "image": "millegrilles_consignation_python_main",
-      "version": "2022.2.0"
+      "version": "2022.3.0"
     }
   },
   "dependances": [
