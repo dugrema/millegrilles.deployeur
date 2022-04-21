@@ -1,17 +1,17 @@
 {
   "nom": "grosfichiers",
-  "version": "2022.2.9",
+  "version": "2022.3.2",
   "registries": [
     "docker.maceroc.com"
   ],
   "images": {
     "millegrilles_grosfichiers": {
       "image": "millegrilles_grosfichiers",
-      "version": "2022.2.0"
+      "version": "2022.3.0"
     },
     "millegrilles_collections": {
       "image": "millegrilles_collections",
-      "version": "2022.2.0"
+      "version": "2022.3.0"
     }
   },
   "dependances": [
