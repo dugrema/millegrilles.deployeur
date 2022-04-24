@@ -11,7 +11,11 @@
     "MG_MQ_CAFILE=/run/secrets/millegrille.cert.pem",
     "WEB_CERT=/run/secrets/cert.pem",
     "WEB_KEY=/run/secrets/key.pem",
-    "SERVER_TYPE=https"
+    "SERVER_TYPE=https",
+    "PATH_STAGING=/var/opt/millegrilles/consignation/staging/media"
+  ],
+  "mounts": [
+    "millegrilles-staging:/var/opt/millegrilles/consignation/staging:rw"
   ],
   "constraints": [
     "node.labels.millegrilles.media == true"

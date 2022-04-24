@@ -1,6 +1,6 @@
 {
   "nom": "grosfichiers",
-  "version": "2022.3.2",
+  "version": "2022.3.3",
   "registries": [
     "docker.maceroc.com"
   ],
@@ -93,11 +93,11 @@
           "PORT=443",
           "MG_REDIS_HOST=redis",
           "MG_REDIS_PORT=6379",
-          "MG_CONSIGNATION_URL=https://fichiers/fichiers_transfert"
+          "MG_CONSIGNATION_URL=https://fichiers/fichiers_transfert",
+          "PATH_STAGING=/var/opt/millegrilles/consignation/staging/collections"
         ],
         "mounts": [
-          "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw",
-          "millegrilles-staging:/var/opt/millegrilles/consignation:rw"
+          "millegrilles-staging:/var/opt/millegrilles/consignation/staging:rw"
         ],
         "configs": [
           {
