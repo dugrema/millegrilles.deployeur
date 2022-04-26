@@ -13,7 +13,7 @@
         "media": {"image": "millegrilles_media", "version": "2022.3.0"},
         "nginx": {"image": "millegrilles_nginx", "version": "2022.2.0"},
         "web": {"image": "millegrilles_web", "version": "2022.3.0"},
-        "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "2022.2.0"},
+        "web_coupdoeil": {"image": "millegrilles_web_coupdoeil", "version": "2022.3.0"},
         "redis": {"image": "mg_redis", "version": "6.2_0"},
         "elasticsearch": {"registries": [""], "image": "elasticsearch", "version": "7.16.1"}
     }
