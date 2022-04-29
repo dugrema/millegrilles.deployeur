@@ -1,5 +1,8 @@
 import React, {useState, useEffect} from 'react'
-import {Row, Col, Button, Alert} from 'react-bootstrap'
+import Row from 'react-bootstrap/Row'
+import Col from 'react-bootstrap/Col'
+import Button from 'react-bootstrap/Button'
+import Alert from 'react-bootstrap/Alert'
 import axios from 'axios'
 
 import {ChargementClePrivee} from './ChargerCleCert'
@@ -9,7 +12,9 @@ export default function RenouvellementIntermediaire(props) {
   const [csr, setCsr] = useState('')
   const [err, setErr] = useState('')
 
-  const infoCertificatNoeudProtege = props.rootProps.infoCertificatNoeudProtege
+  const { intermediaireCert, intermediairePem } = props.rootProps
+  const infoClecertMillegrille = props.rootProps.infoClecertMillegrille
+  const certificatPem = infoClecertMillegrille.certificat
 
   useEffect(()=>{
     demanderCsr().then(csr=>{
@@ -32,17 +37,24 @@ export default function RenouvellementIntermediaire(props) {
         :<p>Preparation du CSR en cours ...</p>
       }
 
-      {infoCertificatNoeudProtege?
+      {intermediairePem?
         <>
           <p>Nouveau certificat intermediaire</p>
-          <pre>{infoCertificatNoeudProtege.pem}</pre>
+          <pre>{intermediairePem}</pre>
         </>
         :''
       }
 
+      {certificatPem?
+        <>
+          <p>Nouveau certificat instance</p>
+          <pre>{certificatPem}</pre>
+        </>
+      :''}
+
       <br/>
       <Button variant="secondary" onClick={()=>props.changerPage('Installation')}>Retour</Button>
-      <Button disabled={!infoCertificatNoeudProtege}
+      <Button disabled={!(intermediairePem && certificatPem)}
               onClick={()=>soumettreIntermediaire(props)}>
         Soumettre
       </Button>
@@ -68,12 +80,12 @@ async function soumettreIntermediaire(props) {
   console.debug("soumettreIntermediaire proppys!\n%O", props)
 
   const idmg = props.rootProps.idmg,
-        infoCertificatNoeudProtege = props.rootProps.infoCertificatNoeudProtege,
+        intermediairePem = props.rootProps.intermediairePem,
         infoClecertMillegrille = props.rootProps.infoClecertMillegrille
 
   var paramsInstallation = {
     idmg,
-    chainePem: [infoCertificatNoeudProtege.pem, infoClecertMillegrille.certificat],
+    chainePem: [intermediairePem, infoClecertMillegrille.certificat],
     securite: '3.protege',
   }
 

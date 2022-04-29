@@ -1,6 +1,9 @@
 import React, {useState, useEffect, useCallback, useMemo} from 'react'
 import './App.css'
-import {Container, Row, Col, Button, Alert} from 'react-bootstrap'
+import Row from 'react-bootstrap/Row'
+import Col from 'react-bootstrap/Col'
+import Button from 'react-bootstrap/Button'
+import Alert from 'react-bootstrap/Alert'
 import QRCode from 'qrcode.react'
 
 import {pki as forgePki} from '@dugrema/node-forge'
@@ -237,7 +240,8 @@ function AfficherInformationNoeud(props) {
   if(certificat) {
     const tempsExpiration = certificat.validity.notAfter.getTime()
     certificatExpire = tempsExpiration < maintenant
-    certificatJoursExpiration = Math.min((maintenant - tempsExpiration) / msJour)
+    certificatJoursExpiration = Math.min((tempsExpiration - maintenant) / msJour)
+    console.debug("Jours expiration : %O", certificatJoursExpiration)
     if(certificatJoursExpiration < 1) certificatJoursExpiration = null
   }
   if(certificatIntermediaire) {
@@ -278,7 +282,7 @@ function AfficherInformationNoeud(props) {
         <Col className={certificatExpire?'expire':''}>
           {certificat.validity.notAfter.toString()}
           {' '}
-          {certificatJoursExpiration?'(' + certificatJoursExpiration + ' jours)':''}
+          {certificatJoursExpiration?'(' + certificatJoursExpiration + ' jours)':<strong>Expire aujourd'hui</strong>}
         </Col>
       </Row>
     )
