@@ -241,7 +241,7 @@ function AfficherInformationNoeud(props) {
   if(certificat) {
     const tempsExpiration = certificat.validity.notAfter.getTime()
     certificatExpire = tempsExpiration < maintenant
-    certificatJoursExpiration = Math.min((tempsExpiration - maintenant) / msJour)
+    certificatJoursExpiration = Math.floor(Math.min((tempsExpiration - maintenant) / msJour))
     console.debug("Jours expiration : %O", certificatJoursExpiration)
     if(certificatJoursExpiration < 1) certificatJoursExpiration = null
   }
