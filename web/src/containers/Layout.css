@@ -68,3 +68,8 @@
 i.protege {
   color: green;
 }
+
+.expire {
+  color: red;
+  font-weight: bolder;
+}

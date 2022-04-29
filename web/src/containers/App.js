@@ -18,13 +18,12 @@ const { splitPEMCerts, extraireExtensionsMillegrille } = forgecommon
 function App(props) {
 
   const [idmg, setIdmg] = useState('')
-  const [domaine, setDomaine] = useState('')
   const [info, setInfo] = useState('')
   const [infoInternet, setInfoInternet] = useState('')
   const [page, setPage] = useState('Installation')
   const [infoClecertMillegrille, setInfoClecertMillegrille] = useState('')
-  const [intermediairePem, setIntermediairePem] = useState({version: 'DUMMY', date: 'DUMMY'})
-  const [intermediaireCert, setIntermediaireCert] = useState({version: 'DUMMY', date: 'DUMMY'})
+  const [intermediairePem, setIntermediairePem] = useState('')
+  const [intermediaireCert, setIntermediaireCert] = useState('')
   const [manifest, setManifest] = useState({})
 
   const PageMappee = useMemo(()=>{
@@ -232,6 +231,19 @@ function AfficherInformationNoeud(props) {
 
   console.debug("Props - %O", props)
 
+  let certificatExpire, certificatJoursExpiration, intermediaireExpire
+  const maintenant = new Date().getTime()
+  const msJour = 24 * 60 * 60000
+  if(certificat) {
+    const tempsExpiration = certificat.validity.notAfter.getTime()
+    certificatExpire = tempsExpiration < maintenant
+    certificatJoursExpiration = Math.min((maintenant - tempsExpiration) / msJour)
+    if(certificatJoursExpiration < 1) certificatJoursExpiration = null
+  }
+  if(certificatIntermediaire) {
+    intermediaireExpire = certificatIntermediaire.validity.notAfter.getTime() < maintenant
+  }
+
   const listeInfo = []
   listeInfo.push(
     <Row key='idmg'><Col sm={3}>Idmg calcule</Col><Col className="idmg">{idmgCalcule || 'N/D'}</Col></Row>
@@ -258,14 +270,24 @@ function AfficherInformationNoeud(props) {
   }
   if(certificat) {
     listeInfo.push(
-      <Row key='noeudId'><Col sm={3}>Noeud Id</Col><Col>{certificat.subject.getField('CN').value}</Col></Row>
+      <Row key='noeudId'><Col sm={3}>Instance Id</Col><Col>{certificat.subject.getField('CN').value}</Col></Row>
     )
     listeInfo.push(
-      <Row key='validity_end'><Col sm={3}>Expiration</Col><Col>{certificat.validity.notAfter.toString()}</Col></Row>
+      <Row key='validity_end'>
+        <Col sm={3}>Expiration</Col>
+        <Col className={certificatExpire?'expire':''}>
+          {certificat.validity.notAfter.toString()}
+          {' '}
+          {certificatJoursExpiration?'(' + certificatJoursExpiration + ' jours)':''}
+        </Col>
+      </Row>
     )
     if(securite === '3.protege') {
       listeInfo.push(
-        <Row key='validity_inter_end'><Col sm={3}>Expiration intermediaire</Col><Col>{certificatIntermediaire.validity.notAfter.toString()}</Col></Row>
+        <Row key='validity_inter_end'>
+          <Col sm={3}>Expiration intermediaire</Col>
+          <Col className={intermediaireExpire?'expire':''}>{certificatIntermediaire.validity.notAfter.toString()}</Col>
+        </Row>
       )
     }
   }
@@ -279,10 +301,24 @@ function AfficherInformationNoeud(props) {
   }
 
   var etat = null, pret = false, boutons = ''
-  if(pemCertificat) {
-    etat = (
-      <Alert variant="success">Le noeud est initialise et actif.</Alert>
-    )
+  if(certificat) {
+    if(intermediaireExpire) {
+      etat = (
+        <Alert variant="danger">
+          <Alert.Heading>Certificat intermediaire expire</Alert.Heading>
+          <p>Le certificat intermediaire est expire. <strong>Action avec cle de MilleGrille requise des que possible.</strong></p>
+        </Alert>
+      )
+    } else if(certificatExpire) {
+      etat = (
+        <Alert variant="danger">
+          <Alert.Heading>Certificat expire</Alert.Heading>
+          <p>Le certificat de l'instance est expire. <strong>Action requise</strong>.</p>
+        </Alert>
+      )
+    } else {
+      etat = <Alert variant="success">L'instance est initialisee et active.</Alert>
+    }
     pret = true
     boutons = (
       <Row>
@@ -294,16 +330,16 @@ function AfficherInformationNoeud(props) {
     )
   } else if(props.rootProps.idmg) {
     etat = (
-      <Alert variant="warning">Le noeud est associe a une MilleGrille mais pas encore initialise.</Alert>
+      <Alert variant="warning">L'instance est associee a une MilleGrille mais pas encore initialisee.</Alert>
     )
   } else {
     etat = (
-      <Alert variant="warning">Le noeud n'est pas associe a une MilleGrille</Alert>
+      <Alert variant="warning">L'instance n'est pas associe a une MilleGrille</Alert>
     )
   }
 
   return (
-    <Container>
+    <div>
       <h2>Information</h2>
 
       {etat}
@@ -312,7 +348,7 @@ function AfficherInformationNoeud(props) {
 
       {boutons}
 
-    </Container>
+    </div>
   )
 }
 
