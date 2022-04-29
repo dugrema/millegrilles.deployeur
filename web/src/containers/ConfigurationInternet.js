@@ -1,5 +1,5 @@
 import React from 'react'
-import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } from 'react-bootstrap'
+import { Form, Container, Row, Col, Button, InputGroup, FormControl } from 'react-bootstrap'
 
 const RE_DOMAINE = /^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,6}$/
 
@@ -155,10 +155,10 @@ function AfficherFormInternet(props) {
 
   if(!props.internetDisponible) return ''
 
-  var flagDomaineInvalide = null;
-  if( ! props.domaineValide ) {
-    flagDomaineInvalide = <i className="fa fa-close btn-outline-danger"/>
-  }
+  // var flagDomaineInvalide = null;
+  // if( ! props.domaineValide ) {
+  //   flagDomaineInvalide = <i className="fa fa-close btn-outline-danger"/>
+  // }
 
   var configurationAvancee = ''
   if(props.configurationAvancee) {

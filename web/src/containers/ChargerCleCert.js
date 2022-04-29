@@ -1,5 +1,5 @@
 import React from 'react'
-import {Row, Col, Form, Button, ProgressBar, Alert} from 'react-bootstrap'
+import {Row, Col, Form, Button, Alert} from 'react-bootstrap'
 import Dropzone from 'react-dropzone'
 // import QrReader from 'react-qr-reader'
 
@@ -183,6 +183,8 @@ export class ChargementClePrivee extends React.Component {
 
   render() {
 
+    const { cacherBoutons } = this.props
+    
     if(this.state.modeScanQR) {
       return <QRCodeReader fermer={this.fermerScanQr}
                            resultatScan={this.state.resultatScan}
@@ -238,12 +240,15 @@ export class ChargementClePrivee extends React.Component {
 
         {contenu}
 
-        <Row className="boutons-installer">
-          <Col>
-            <Button onClick={this.props.setPage} value='SelectionnerTypeNoeud'>Retour</Button>
-            <Button onClick={this.props.setPage} value='PageConfigurationInternet' disabled={!this.state.clePriveeChargee}>Suivant</Button>
-          </Col>
-        </Row>
+        {cacherBoutons!==true?
+          <Row className="boutons-installer">
+            <Col>
+              <Button onClick={this.props.setPage} value='SelectionnerTypeNoeud'>Retour</Button>
+              <Button onClick={this.props.setPage} value='PageConfigurationInternet' disabled={!this.state.clePriveeChargee}>Suivant</Button>
+            </Col>
+          </Row>
+          :''
+        }
       </>
     )
   }
@@ -363,21 +368,21 @@ async function traiterUploads(acceptedFiles) {
 
 function QRCodeReader(props) {
 
-  var progresMotdepasse = 0, labelMotdepasse = 'Non charge'
-  if(props.motdepasse) {
-    progresMotdepasse = 100
-    labelMotdepasse = 'Charge'
-  }
+  // var progresMotdepasse = 0, labelMotdepasse = 'Non charge'
+  //if(props.motdepasse) {
+    // progresMotdepasse = 100
+    // labelMotdepasse = 'Charge'
+  //}
 
-  var progresCleMillegrille = 0
-  if(props.nombrePartiesDeCleTotal) {
-    progresCleMillegrille = Math.round(props.nombrePartiesDeCleScannees / props.nombrePartiesDeCleTotal * 100)
-  }
+  // var progresCleMillegrille = 0
+  // if(props.nombrePartiesDeCleTotal) {
+  //   progresCleMillegrille = Math.round(props.nombrePartiesDeCleScannees / props.nombrePartiesDeCleTotal * 100)
+  // }
 
-  var progresCertificat = 0
-  if(props.nombrePartiesDeCertificatTotal) {
-    progresCertificat = Math.round(props.nombrePartiesDeCertificatScannes / props.nombrePartiesDeCertificatTotal * 100)
-  }
+  // var progresCertificat = 0
+  // if(props.nombrePartiesDeCertificatTotal) {
+  //   progresCertificat = Math.round(props.nombrePartiesDeCertificatScannes / props.nombrePartiesDeCertificatTotal * 100)
+  // }
 
   return <p>Fix me</p>
 

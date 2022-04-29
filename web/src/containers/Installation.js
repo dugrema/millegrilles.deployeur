@@ -1,7 +1,7 @@
 import React from 'react'
 import axios from 'axios'
-import https from 'https'
-import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } from 'react-bootstrap';
+// import https from 'https'
+// import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } from 'react-bootstrap';
 
 // import { InstallationNouvelle } from './InstallationNouvelle'
 import { SelectionnerTypeNoeud } from './SelectionTypeNoeud'
@@ -103,7 +103,7 @@ export class Installation extends React.Component {
   }
 
   setTypeNoeud = event => {
-    const value = event.currentTarget.value
+    // const value = event.currentTarget.value
 
     // // Forcer le mode internet si le noeud public est selectionne
     // var internetDisponible = this.state.internetDisponible || value === 'public'

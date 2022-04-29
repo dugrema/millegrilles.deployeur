@@ -1,17 +1,17 @@
 import React from 'react'
-import { Nav, Navbar, NavLink, NavItem, Dropdown} from 'react-bootstrap';
+import { Nav, Navbar } from 'react-bootstrap';
 import { Trans } from 'react-i18next';
 
 export default function Menu(props) {
 
-  let boutonProtege
-  if(props.rootProps.modeProtege) {
-    boutonProtege = <i className="fa fa-lg fa-lock protege"/>
-  } else {
-    boutonProtege = <i className="fa fa-lg fa-unlock"/>
-  }
+  // let boutonProtege
+  // if(props.rootProps.modeProtege) {
+  //   boutonProtege = <i className="fa fa-lg fa-lock protege"/>
+  // } else {
+  //   boutonProtege = <i className="fa fa-lg fa-unlock"/>
+  // }
 
-  const iconeHome = <span><i className="fa fa-home"/> {props.rootProps.nomMilleGrille}</span>
+  // const iconeHome = <span><i className="fa fa-home"/> {props.rootProps.nomMilleGrille}</span>
 
   return (
     <Navbar collapseOnSelect expand="md" bg="info" variant="dark" fixed="top">

@@ -2,7 +2,7 @@ export function genererUrlDataDownload(idmg, certificatRacine, cleChiffreeRacine
   const jsonContent = {
     idmg
   }
-  var urlCleRacine = null, urlCertRacine = null;
+  // var urlCleRacine = null, urlCertRacine = null;
 
   const racine = {
     certificat: certificatRacine,

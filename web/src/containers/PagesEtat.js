@@ -1,5 +1,5 @@
 import React from 'react'
-import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } from 'react-bootstrap'
+import { Row, Col, Button, Alert } from 'react-bootstrap'
 import axios from 'axios'
 
 export class ConfigurationCompletee extends React.Component {
@@ -79,112 +79,112 @@ export class ConfigurationCompletee extends React.Component {
 
 }
 
-class EtatInstallation extends React.Component {
+// class EtatInstallation extends React.Component {
 
-  SERVICES_ATTENDUS = [
-    'acme', 'nginx',
-    'mq', 'mongo', 'maitrecles', 'transaction',
-    'fichiers', 'principal', 'domaines_dynamiques', 'web_protege'
-  ]
+//   SERVICES_ATTENDUS = [
+//     'acme', 'nginx',
+//     'mq', 'mongo', 'maitrecles', 'transaction',
+//     'fichiers', 'principal', 'domaines_dynamiques', 'web_protege'
+//   ]
 
-  // Liste des services qui, s'ils sont actifs, on peut considerer que
-  // l'installation a reussie
-  SERVICES_CLES = ['nginx', 'principal', 'web_protege']
+//   // Liste des services qui, s'ils sont actifs, on peut considerer que
+//   // l'installation a reussie
+//   SERVICES_CLES = ['nginx', 'principal', 'web_protege']
 
-  state = {
-    erreur: false,
-    erreurArret: false,
-    servicesPrets: false,
-    installationComplete: false,
-  }
+//   state = {
+//     erreur: false,
+//     erreurArret: false,
+//     servicesPrets: false,
+//     installationComplete: false,
+//   }
 
-  componentDidMount() {
-    this.surveillerProgres()
-  }
+//   componentDidMount() {
+//     this.surveillerProgres()
+//   }
 
-  terminer = event => {
-    window.location = '/millegrilles'
-  }
+//   terminer = event => {
+//     window.location = '/millegrilles'
+//   }
 
-  surveillerProgres = async () => {
-    try {
-      const reponse = await axios('/installation/api/services')
-      const dictServices = reponse.data
+//   surveillerProgres = async () => {
+//     try {
+//       const reponse = await axios('/installation/api/services')
+//       const dictServices = reponse.data
 
-      // Comparer liste des services demarres a la liste des services cles
-      const listeServicesDemarres = Object.keys(dictServices).filter(nomService=>{
-        var infoService = dictServices[nomService]
-        return infoService.message_tache === 'started'
-      })
-      const listeServicesClesDemarres = listeServicesDemarres.filter(nomService=>{
-        return this.SERVICES_CLES.includes(nomService)
-      })
-      const servicesPrets = listeServicesClesDemarres.length === this.SERVICES_CLES.length
-      const installationComplete = listeServicesDemarres.length === this.SERVICES_ATTENDUS.length
+//       // Comparer liste des services demarres a la liste des services cles
+//       const listeServicesDemarres = Object.keys(dictServices).filter(nomService=>{
+//         var infoService = dictServices[nomService]
+//         return infoService.message_tache === 'started'
+//       })
+//       const listeServicesClesDemarres = listeServicesDemarres.filter(nomService=>{
+//         return this.SERVICES_CLES.includes(nomService)
+//       })
+//       const servicesPrets = listeServicesClesDemarres.length === this.SERVICES_CLES.length
+//       const installationComplete = listeServicesDemarres.length === this.SERVICES_ATTENDUS.length
 
-      // Conserver information
-      this.setState({...dictServices, installationComplete, servicesPrets, erreur: false}, ()=>{
-        if(!installationComplete) {
-          setTimeout(this.surveillerProgres, 5000)
-        } else {
-          console.debug("Installation complete")
-        }
-      })
+//       // Conserver information
+//       this.setState({...dictServices, installationComplete, servicesPrets, erreur: false}, ()=>{
+//         if(!installationComplete) {
+//           setTimeout(this.surveillerProgres, 5000)
+//         } else {
+//           console.debug("Installation complete")
+//         }
+//       })
 
-    } catch(err) {
-      console.error("Erreur verification etat des services\n%O", err)
+//     } catch(err) {
+//       console.error("Erreur verification etat des services\n%O", err)
 
-      if(!this.state.erreur) {
-        this.setState({erreur: true, erreurMessage: err.message})
-        setTimeout(this.surveillerProgres, 20000)  // 20 secondes avant de reessayer
-      } else {
-        console.error("2e erreur de rafraichissement, on arrete. Echec installation.")
-        this.setState({erreurArret: true, erreurMessage: err.message})
-      }
-    } finally {
+//       if(!this.state.erreur) {
+//         this.setState({erreur: true, erreurMessage: err.message})
+//         setTimeout(this.surveillerProgres, 20000)  // 20 secondes avant de reessayer
+//       } else {
+//         console.error("2e erreur de rafraichissement, on arrete. Echec installation.")
+//         this.setState({erreurArret: true, erreurMessage: err.message})
+//       }
+//     } finally {
 
-    }
-  }
+//     }
+//   }
 
-  render() {
+//   render() {
 
-    const complet = <i key="spinner" className="fa fa-check-square fa-2x fa-fw btn-outline-success"/>
+//     const complet = <i key="spinner" className="fa fa-check-square fa-2x fa-fw btn-outline-success"/>
 
-    var compteServicesDemarres = 0
+//     var compteServicesDemarres = 0
 
-    const listeServices = this.SERVICES_ATTENDUS.map( nomService => {
+//     const listeServices = this.SERVICES_ATTENDUS.map( nomService => {
 
-      var infoService = this.state[nomService]
-      var etat = ''
-      if(infoService && infoService.message_tache === 'started') {
-        etat = complet
-        compteServicesDemarres++
-      }
+//       var infoService = this.state[nomService]
+//       var etat = ''
+//       if(infoService && infoService.message_tache === 'started') {
+//         etat = complet
+//         compteServicesDemarres++
+//       }
 
-      return (
-        <Row key={nomService}>
-          <Col xs={10}>
-            {nomService}
-          </Col>
-          <Col xs={2}>
-            {etat}
-          </Col>
-        </Row>
-      )
-    })
+//       return (
+//         <Row key={nomService}>
+//           <Col xs={10}>
+//             {nomService}
+//           </Col>
+//           <Col xs={2}>
+//             {etat}
+//           </Col>
+//         </Row>
+//       )
+//     })
 
-    const pctProgres = Math.abs(compteServicesDemarres * 100 / this.SERVICES_ATTENDUS.length)
+//     const pctProgres = Math.abs(compteServicesDemarres * 100 / this.SERVICES_ATTENDUS.length)
 
-    return (
-      <Container>
-        <h2>Installation en cours</h2>
-        <p>Progres : {pctProgres}%</p>
+//     return (
+//       <Container>
+//         <h2>Installation en cours</h2>
+//         <p>Progres : {pctProgres}%</p>
 
-        <h3>Services</h3>
-        {listeServices}
+//         <h3>Services</h3>
+//         {listeServices}
 
-        <Button onClick={this.terminer} disabled={!this.state.servicesPrets}>Terminer</Button>
-      </Container>
-    )
-  }
-}
+//         <Button onClick={this.terminer} disabled={!this.state.servicesPrets}>Terminer</Button>
+//       </Container>
+//     )
+//   }
+// }

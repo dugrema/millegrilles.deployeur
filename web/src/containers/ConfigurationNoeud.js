@@ -276,7 +276,7 @@ class PageConfigurationDomaineAttente extends React.Component {
 
     console.debug("Attente redemarrage web")
     try {
-      const reponse = await axios.get('/installation/api/etatCertificatWeb')
+      await axios.get('/installation/api/etatCertificatWeb')
       console.debug("Certificat pret")
       this.setState({serveurWebRedemarre: true}, ()=>{
         // Declencher attente du certificat

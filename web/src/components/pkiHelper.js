@@ -60,7 +60,7 @@ export async function preparerCleCertMillegrille(certificatPem, clePriveePem, mo
 }
 
 export async function signerCSRIntermediaire(csrPem, infoClecertMillegrille) {
-  const { idmg, certificat, clePrivee } = infoClecertMillegrille  //await chargerClecertMillegrilleSignature(idmg)
+  const { certificat, clePrivee } = infoClecertMillegrille  //await chargerClecertMillegrilleSignature(idmg)
   const certPem = await genererCertificatIntermediaire(csrPem, certificat, clePrivee)
   return certPem
 }
@@ -123,14 +123,14 @@ export async function preparerInscription(url, pkiMilleGrille) {
   console.debug("PKI Millegrille params")
   console.debug(pkiMilleGrille)
 
-  const {certMillegrillePEM, clePriveeMillegrilleChiffree, motdepasseCleMillegrille} = pkiMilleGrille
+  // const {certMillegrillePEM, clePriveeMillegrilleChiffree, motdepasseCleMillegrille} = pkiMilleGrille
 
   // Extraire PEM vers objets nodeforge
-  const certMillegrille = forgePki.certificateFromPem(certMillegrillePEM)
-  const clePriveeMillegrille = chargerClePrivee(clePriveeMillegrilleChiffree, {password: motdepasseCleMillegrille})
+  // const certMillegrille = forgePki.certificateFromPem(certMillegrillePEM)
+  // const clePriveeMillegrille = chargerClePrivee(clePriveeMillegrilleChiffree, {password: motdepasseCleMillegrille})
 
   // Calculer IDMG a partir du certificat de millegrille
-  const idmg = await encoderIdmg(certMillegrillePEM)
+  // const idmg = await encoderIdmg(certMillegrillePEM)
 
   const parametresRequete = {nomUsager: pkiMilleGrille.nomUsager}
   if(pkiMilleGrille.u2f) {
@@ -142,7 +142,7 @@ export async function preparerInscription(url, pkiMilleGrille) {
   console.debug("Reponse preparation inscription compte :\n%O", reponsePreparation.data)
 
   // Creer le certificat intermediaire
-  const { csrPem: csrPEM, u2fRegistrationRequest, challengeCertificat } = reponsePreparation.data
+  // const { csrPem: csrPEM, u2fRegistrationRequest, challengeCertificat } = reponsePreparation.data
   
   throw new Error("Fix me")
   // const {cert, pem: certPem} = await genererCertificatIntermediaire(idmg, certMillegrille, clePriveeMillegrille, {csrPEM})

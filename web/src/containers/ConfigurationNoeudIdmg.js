@@ -1,5 +1,5 @@
 import React from 'react'
-import { Form, Container, Row, Col, Button, InputGroup, FormControl, Alert } from 'react-bootstrap'
+import { Row, Col, Button, InputGroup, FormControl } from 'react-bootstrap'
 
 export class ConfigurerNoeudIdmg extends React.Component {
 

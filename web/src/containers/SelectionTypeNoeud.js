@@ -1,5 +1,5 @@
 import React from 'react'
-import {Container, Row, Col, Form, InputGroup, FormControl, Button, Alert} from 'react-bootstrap'
+import {Container, Row, Col, Form, Button, Alert} from 'react-bootstrap'
 
 export class SelectionnerTypeNoeud extends React.Component {
 

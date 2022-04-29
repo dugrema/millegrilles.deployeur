@@ -1,5 +1,5 @@
 import React from 'react'
-import { Container, Row, Col, Button, Form, Alert } from 'react-bootstrap'
+import { Row, Col, Alert } from 'react-bootstrap'
 import QRCode from 'qrcode.react'
 import { Trans } from 'react-i18next';
 
@@ -8,16 +8,6 @@ export class RenderPEM extends React.Component {
   render() {
     const tailleMaxQR = 800;
     const qrCodes = [];
-
-    var afficherPEM = (
-      <Row>
-        <Col>
-          <pre>
-            {this.props.pem}
-          </pre>
-        </Col>
-      </Row>
-    )
 
     if(this.props.pem) {
       var lignesPEM = this.props.pem.trim().split('\n')

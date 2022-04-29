@@ -66,12 +66,13 @@ function App(props) {
   const rootProps = {
     idmg, info, infoInternet, infoClecertMillegrille, 
     intermediairePem, intermediaireCert,
+    manifest,
 
     setInfo: conserverInfo,
     setInfoClecertMillegrille: changerInfoClecertMillegrille,
     setInfoCertificatNoeudProtege,
     setInfoInternet,
-    manifest,
+    setManifest,
     // setIdmg,
   }
 
@@ -191,9 +192,9 @@ function LayoutApplication(props) {
   )
 }
 
-function _setTitre(titre) {
-  document.title = titre
-}
+// function _setTitre(titre) {
+//   document.title = titre
+// }
 
 function AfficherInformationNoeud(props) {
 
@@ -304,7 +305,9 @@ function AfficherInformationNoeud(props) {
     )
   }
 
-  var etat = null, pret = false, boutons = ''
+  var etat = null, 
+      // pret = false, 
+      boutons = ''
   if(certificat) {
     if(intermediaireExpire) {
       etat = (
@@ -323,12 +326,12 @@ function AfficherInformationNoeud(props) {
     } else {
       etat = <Alert variant="success">L'instance est initialisee et active.</Alert>
     }
-    pret = true
+    // pret = true
     boutons = (
       <Row>
         <Col>
           <Button href="/millegrilles">Acceder</Button>
-          <Button variant="secondary" onClick={()=>props.changerPage('RenouvellementIntermediaire')}>Renouveller</Button>
+          <Button disabled={securite!=='3.protege'} variant="secondary" onClick={()=>props.changerPage('RenouvellementIntermediaire')}>Renouveller</Button>
         </Col>
       </Row>
     )

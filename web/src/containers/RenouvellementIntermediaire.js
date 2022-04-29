@@ -1,6 +1,4 @@
-import React, {useState, useEffect} from 'react'
-import Row from 'react-bootstrap/Row'
-import Col from 'react-bootstrap/Col'
+import React, {useState, useCallback, useEffect} from 'react'
 import Button from 'react-bootstrap/Button'
 import Alert from 'react-bootstrap/Alert'
 import axios from 'axios'
@@ -10,30 +8,33 @@ import {ChargementClePrivee} from './ChargerCleCert'
 export default function RenouvellementIntermediaire(props) {
 
   const [csr, setCsr] = useState('')
-  const [err, setErr] = useState('')
 
-  const { intermediaireCert, intermediairePem } = props.rootProps
+  const { intermediairePem } = props.rootProps
   const infoClecertMillegrille = props.rootProps.infoClecertMillegrille
   const certificatPem = infoClecertMillegrille.certificat
+
+  const [confirmation, setConfirmation] = useState('')
+  const [erreur, setErreur] = useState('')
+
+  const erreurCb = useCallback((err, message)=>setErreur({err, message}), [setErreur])
 
   useEffect(()=>{
     demanderCsr().then(csr=>{
       setCsr(csr)
     }).catch(e=>{
       console.error("Erreur preparation CSR : %O", e)
-      setErr(''+e)
+      erreurCb(''+e)
     })
-  }, [])
+  }, [setCsr, erreurCb])
 
   return (
     <>
       <h2>Renouveller certificat intermediaire</h2>
 
-      <Alert show={err!==''} variant="danger"><Alert.Heading>Erreur</Alert.Heading><pre>{err}</pre></Alert>
       <br/>
 
       {csr!==''?
-        <ChargementClePrivee rootProps={props.rootProps} csr={csr} />
+        <ChargementClePrivee rootProps={props.rootProps} csr={csr} cacherBoutons={true} />
         :<p>Preparation du CSR en cours ...</p>
       }
 
@@ -55,9 +56,23 @@ export default function RenouvellementIntermediaire(props) {
       <br/>
       <Button variant="secondary" onClick={()=>props.changerPage('Installation')}>Retour</Button>
       <Button disabled={!(intermediairePem && certificatPem)}
-              onClick={()=>soumettreIntermediaire(props)}>
+              onClick={()=>soumettreIntermediaire({...props, erreurCb, confirmationCb: setConfirmation})}>
         Soumettre
       </Button>
+
+      <br/>
+
+      <Alert show={confirmation!==''} variant="success">
+          <Alert.Heading>Succes</Alert.Heading>
+          <p>{confirmation}</p>
+      </Alert>
+
+      <Alert show={erreur?true:false} variant="danger">
+          <Alert.Heading>Erreur</Alert.Heading>
+          <p>{erreur?erreur.message:''}</p>
+          <pre>{erreur.err?erreur.err.stack:''}</pre>
+      </Alert>
+
     </>
   )
 }
@@ -79,6 +94,8 @@ async function soumettreIntermediaire(props) {
 
   console.debug("soumettreIntermediaire proppys!\n%O", props)
 
+  const { confirmationCb, erreurCb } = props
+
   const idmg = props.rootProps.idmg,
         intermediairePem = props.rootProps.intermediairePem,
         infoClecertMillegrille = props.rootProps.infoClecertMillegrille
@@ -96,10 +113,12 @@ async function soumettreIntermediaire(props) {
 
   await axios.post('/installation/api/installer', paramsInstallation)
   .then(reponse=>{
-    console.debug("Recu reponse demarrage installation noeud\n%O", reponse)
+    console.debug("Configuration appliquee avec succes\n%O", reponse)
+    confirmationCb('Configuration appliquee avec succes')
   })
   .catch(err=>{
-    console.error("Erreur demarrage installation noeud\n%O", err)
+    console.error("Erreur application du certificat/configuration \n%O", err)
+    erreurCb(err, 'Erreur application du certificat/configuration')
     throw err
   })
 
