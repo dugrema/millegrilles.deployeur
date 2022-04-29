@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useCallback, useMemo} from 'react'
 import './App.css'
 import {Container, Row, Col, Button, Alert} from 'react-bootstrap'
 import QRCode from 'qrcode.react'
@@ -13,86 +13,154 @@ import RenouvellementIntermediaire from './RenouvellementIntermediaire'
 
 const { splitPEMCerts, extraireExtensionsMillegrille } = forgecommon
 
-const MAPPING_PAGES = { Installation, RenouvellementIntermediaire }
+// const MAPPING_PAGES = { Installation, RenouvellementIntermediaire }
 
-class App extends React.Component {
+function App(props) {
 
-  state = {
+  const [idmg, setIdmg] = useState('')
+  const [domaine, setDomaine] = useState('')
+  const [info, setInfo] = useState('')
+  const [infoInternet, setInfoInternet] = useState('')
+  const [page, setPage] = useState('Installation')
+  const [infoClecertMillegrille, setInfoClecertMillegrille] = useState('')
+  const [intermediairePem, setIntermediairePem] = useState({version: 'DUMMY', date: 'DUMMY'})
+  const [intermediaireCert, setIntermediaireCert] = useState({version: 'DUMMY', date: 'DUMMY'})
+  const [manifest, setManifest] = useState({})
 
-    idmg: '',
-    domaine: '',
+  const PageMappee = useMemo(()=>{
+    let pageMappee = Installation
+    switch(page) {
+      case 'AfficherInformationNoeud': pageMappee = AfficherInformationNoeud; break
+      case 'RenouvellementIntermediaire': pageMappee = RenouvellementIntermediaire; break
+      default:
+    }
+    return pageMappee
+  }, [page])
 
-    info: '',
-
-    page: Installation,
-
-    infoClecertMillegrille: '',
-    intermediairePem: '',
-
-    manifest: {
-      version: 'DUMMY',
-      date: 'DUMMY'
-    },
-
-  }
-
-  changerPage = page => {
-    console.debug("Changer page")
-    const pageMappee = MAPPING_PAGES[page]
-    this.setState({page: pageMappee?pageMappee:page})
-  }
-
-  setInfo = info => {
+  const conserverInfo = useCallback(info => {
     if(info.securite && info.idmg) {  // Securite indique que le noeud est deja configure
       console.debug("Configuration MilleGrille completee : %O", info)
-      info.page = AfficherInformationNoeud
+      setPage('AfficherInformationNoeud')
     }
-    this.setState(info)
-  }
+    // this.setState(info)
+    setInfo(info)
+  }, [setPage, setInfo])
 
-  setInfoClecertMillegrille = infoClecertMillegrille => {
-    this.setState({infoClecertMillegrille, idmg: infoClecertMillegrille.idmg})
-  }
+  const changerInfoClecertMillegrille = useCallback(infoClecertMillegrille => {
+    // this.setState({infoClecertMillegrille, idmg: infoClecertMillegrille.idmg})
+    setInfoClecertMillegrille(infoClecertMillegrille)
+    setIdmg(infoClecertMillegrille.idmg)
+  }, [setInfoClecertMillegrille, setIdmg])
 
-  setInfoCertificatNoeudProtege = (pem, cert) => {
+  const setInfoCertificatNoeudProtege = useCallback((pem, cert) => {
     console.debug("Certificat intermediaire PEM\n%s", pem)
-    this.setState({intermediairePem: pem, intermediaireCert: cert})
+    setIntermediairePem(pem)
+    setIntermediaireCert(cert)
+    // this.setState({intermediairePem: pem, intermediaireCert: cert})
+  }, [setIntermediairePem, setIntermediaireCert])
+
+  // console.debug("Nom usager : %s, estProprietaire : %s", this.state.nomUsager, this.state.estProprietaire)
+
+  const rootProps = {
+    idmg, info, infoInternet, infoClecertMillegrille, 
+    intermediairePem, intermediaireCert,
+
+    setInfo: conserverInfo,
+    setInfoClecertMillegrille: changerInfoClecertMillegrille,
+    setInfoCertificatNoeudProtege,
+    setInfoInternet,
+    manifest,
+    // setIdmg,
   }
 
-  setInfoInternet = infoInternet => {
-    this.setState({infoInternet})
-  }
+  let affichage = <PageMappee rootProps={rootProps} changerPage={setPage} />
+  return (
+    <LayoutApplication
+      changerPage={setPage}
+      affichage={affichage}
+      rootProps={rootProps} />
+  )
 
-  setIdmg = idmg => {
-    this.setState({idmg})
-  }
-
-  componentDidMount() {
-  }
-
-  render() {
-
-    // console.debug("Nom usager : %s, estProprietaire : %s", this.state.nomUsager, this.state.estProprietaire)
-
-    const rootProps = {
-      ...this.state,
-      setInfo: this.setInfo,
-      setInfoClecertMillegrille: this.setInfoClecertMillegrille,
-      setInfoCertificatNoeudProtege: this.setInfoCertificatNoeudProtege,
-      setInfoInternet: this.setInfoInternet,
-      setIdmg: this.setIdmg,
-    }
-
-    let PageMappee = this.state.page
-    let affichage = <PageMappee rootProps={rootProps} changerPage={this.changerPage} />
-    return (
-      <LayoutApplication
-        changerPage={this.changerPage}
-        affichage={affichage}
-        rootProps={rootProps} />
-    )
-  }
 }
+
+// class App extends React.Component {
+
+//   state = {
+
+//     idmg: '',
+//     domaine: '',
+
+//     info: '',
+
+//     page: Installation,
+
+//     infoClecertMillegrille: '',
+//     intermediairePem: '',
+
+//     manifest: {
+//       version: 'DUMMY',
+//       date: 'DUMMY'
+//     },
+
+//   }
+
+//   changerPage = page => {
+//     console.debug("Changer page")
+//     const pageMappee = MAPPING_PAGES[page]
+//     this.setState({page: pageMappee?pageMappee:page})
+//   }
+
+//   setInfo = info => {
+//     if(info.securite && info.idmg) {  // Securite indique que le noeud est deja configure
+//       console.debug("Configuration MilleGrille completee : %O", info)
+//       info.page = AfficherInformationNoeud
+//     }
+//     this.setState(info)
+//   }
+
+//   setInfoClecertMillegrille = infoClecertMillegrille => {
+//     this.setState({infoClecertMillegrille, idmg: infoClecertMillegrille.idmg})
+//   }
+
+//   setInfoCertificatNoeudProtege = (pem, cert) => {
+//     console.debug("Certificat intermediaire PEM\n%s", pem)
+//     this.setState({intermediairePem: pem, intermediaireCert: cert})
+//   }
+
+//   setInfoInternet = infoInternet => {
+//     this.setState({infoInternet})
+//   }
+
+//   setIdmg = idmg => {
+//     this.setState({idmg})
+//   }
+
+//   componentDidMount() {
+//   }
+
+//   render() {
+
+//     // console.debug("Nom usager : %s, estProprietaire : %s", this.state.nomUsager, this.state.estProprietaire)
+
+//     const rootProps = {
+//       ...this.state,
+//       setInfo: this.setInfo,
+//       setInfoClecertMillegrille: this.setInfoClecertMillegrille,
+//       setInfoCertificatNoeudProtege: this.setInfoCertificatNoeudProtege,
+//       setInfoInternet: this.setInfoInternet,
+//       setIdmg: this.setIdmg,
+//     }
+
+//     let PageMappee = this.state.page
+//     let affichage = <PageMappee rootProps={rootProps} changerPage={this.changerPage} />
+//     return (
+//       <LayoutApplication
+//         changerPage={this.changerPage}
+//         affichage={affichage}
+//         rootProps={rootProps} />
+//     )
+//   }
+// }
 
 // Layout general de l'application
 function LayoutApplication(props) {
@@ -127,8 +195,14 @@ function _setTitre(titre) {
 
 function AfficherInformationNoeud(props) {
 
-  const pemCertificat = props.rootProps.certificat
-  const pemCa = props.rootProps.ca
+  const info = props.rootProps.info || {}
+  const { securite, domaine } = info
+  const pemCertificat = info.certificat
+  const pemCa = info.ca
+
+  // const pemCertificat = props.rootProps.certificat
+  // const pemCa = props.rootProps.ca
+
   const [certificat, setCertificat] = useState()
   const [certificatIntermediaire, setCertificatIntermediaire] = useState()
   const [idmgCalcule, setIdmgCalcule] = useState()
@@ -160,52 +234,52 @@ function AfficherInformationNoeud(props) {
 
   const listeInfo = []
   listeInfo.push(
-    <Row key='idmg'><Col sm={2}>Idmg calcule</Col><Col sm={10}>{idmgCalcule || 'N/D'}</Col></Row>
+    <Row key='idmg'><Col sm={3}>Idmg calcule</Col><Col className="idmg">{idmgCalcule || 'N/D'}</Col></Row>
   )
   listeInfo.push(
-    <Row key='securite'><Col sm={2}>Securite</Col><Col sm={10}>{props.rootProps.securite}</Col></Row>
+    <Row key='securite'><Col sm={3}>Securite</Col><Col>{securite}</Col></Row>
   )
-  if(props.rootProps.domaine) {
+  if(domaine) {
     listeInfo.push(
-      <Row key='domaineWeb'><Col sm={2}>Domaine web</Col><Col sm={10}>{props.rootProps.domaine}</Col></Row>
+      <Row key='domaineWeb'><Col sm={3}>Domaine web</Col><Col>{domaine}</Col></Row>
     )
   }
   if(extensions) {
     if(extensions.roles) {
       listeInfo.push(
-        <Row key='roles'><Col sm={2}>Roles</Col><Col sm={10}>{extensions.roles.toString()}</Col></Row>
+        <Row key='roles'><Col sm={3}>Roles</Col><Col>{extensions.roles.toString()}</Col></Row>
       )
     }
     if(extensions.niveauxSecurite) {
       listeInfo.push(
-        <Row key='securite_liste'><Col sm={2}>Exchanges</Col><Col sm={10}>{extensions.niveauxSecurite.toString()}</Col></Row>
+        <Row key='securite_liste'><Col sm={3}>Exchanges</Col><Col>{extensions.niveauxSecurite.toString()}</Col></Row>
       )
     }
   }
   if(certificat) {
     listeInfo.push(
-      <Row key='noeudId'><Col sm={2}>Noeud Id</Col><Col sm={10}>{certificat.subject.getField('CN').value}</Col></Row>
+      <Row key='noeudId'><Col sm={3}>Noeud Id</Col><Col>{certificat.subject.getField('CN').value}</Col></Row>
     )
     listeInfo.push(
-      <Row key='validity_end'><Col sm={2}>Expiration</Col><Col sm={10}>{certificat.validity.notAfter.toString()}</Col></Row>
+      <Row key='validity_end'><Col sm={3}>Expiration</Col><Col>{certificat.validity.notAfter.toString()}</Col></Row>
     )
-    if(props.rootProps.securite === '3.protege') {
+    if(securite === '3.protege') {
       listeInfo.push(
-        <Row key='validity_inter_end'><Col sm={2}>Expiration intermediaire</Col><Col sm={10}>{certificatIntermediaire.validity.notAfter.toString()}</Col></Row>
+        <Row key='validity_inter_end'><Col sm={3}>Expiration intermediaire</Col><Col>{certificatIntermediaire.validity.notAfter.toString()}</Col></Row>
       )
     }
   }
-  if(props.rootProps.certificat) {
+  if(pemCertificat) {
     listeInfo.push(
       <Row key='certificat'>
-        <Col sm={2}>Certificat</Col>
-        <Col sm={10}><pre>{props.rootProps.certificat}</pre></Col>
+        <Col sm={3}>Certificat</Col>
+        <Col><pre>{pemCertificat}</pre></Col>
       </Row>
     )
   }
 
   var etat = null, pret = false, boutons = ''
-  if(props.rootProps.certificat) {
+  if(pemCertificat) {
     etat = (
       <Alert variant="success">Le noeud est initialise et actif.</Alert>
     )
