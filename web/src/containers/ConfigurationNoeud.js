@@ -49,7 +49,7 @@ function ConfigurerNoeudPrive(props) {
     })
   }
 
-  const idmg = props.rootProps.idmg
+  const idmg = props.idmg
 
   return (
     <>
@@ -81,7 +81,7 @@ function ConfigurerNoeudPublic(props) {
     })
   }
 
-  const idmg = props.rootProps.idmg
+  const idmg = props.idmg
 
   return (
     <>
@@ -363,7 +363,7 @@ function AfficherErreurConnexion(props) {
 async function installerNoeudProtege(props, params, callback) {
   console.debug("Pour installation, proppys!\n%O", props)
 
-  const idmg = props.rootProps.idmg,
+  const idmg = props.idmg,
         intermediairePem = props.rootProps.intermediairePem,
         certificatMillegrillePem = props.rootProps.infoClecertMillegrille.certificat
 
@@ -416,7 +416,7 @@ async function configurerNoeudPrive(props, params, callback) {
 
   var paramsInstallation = {
     ...params,
-    idmg: props.rootProps.idmg,
+    idmg: props.idmg,
     securite: '2.prive',
   }
   console.debug("Transmettre parametres installation noeud prive : %O", paramsInstallation)
@@ -442,7 +442,7 @@ async function configurerNoeudPublic(props, params, callback) {
 
   const paramsInstallation = {
     ...params,
-    idmg: props.rootProps.idmg,
+    idmg: props.idmg,
     securite: '1.public',
   }
   console.debug("Transmettre parametres installation noeud public : %O", paramsInstallation)

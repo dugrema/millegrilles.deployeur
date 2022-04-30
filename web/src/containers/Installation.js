@@ -103,12 +103,11 @@ export class Installation extends React.Component {
   }
 
   setTypeNoeud = event => {
-    // const value = event.currentTarget.value
-
-    // // Forcer le mode internet si le noeud public est selectionne
-    // var internetDisponible = this.state.internetDisponible || value === 'public'
-
     this.setState({typeNoeud: event.currentTarget.value})
+  }
+
+  setIdmg = idmg => {
+    this.setState({idmg})
   }
 
   afficherPageTypeInstallation = event => {
@@ -136,6 +135,7 @@ export class Installation extends React.Component {
         <Page rootProps={this.props.rootProps}
               setPage={this.setPage}
               setTypeNoeud={this.setTypeNoeud}
+              setIdmg={this.setIdmg}
               setInternetDisponible={this.setInternetDisponible}
               afficherPageTypeInstallation={this.afficherPageTypeInstallation}
               {...this.state} />

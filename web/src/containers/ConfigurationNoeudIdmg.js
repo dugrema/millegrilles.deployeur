@@ -21,7 +21,7 @@ export class ConfigurerNoeudIdmg extends React.Component {
 
   suivant = event => {
     console.debug("Props - %O", this.props)
-    this.props.rootProps.setIdmg(this.state.idmg)
+    this.props.setIdmg(this.state.idmg)
     this.props.setPage(event)
   }
 
