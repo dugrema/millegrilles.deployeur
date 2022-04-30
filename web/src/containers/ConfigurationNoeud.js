@@ -60,8 +60,8 @@ function ConfigurerNoeudPrive(props) {
 
       <Row>
         <Col className="bouton">
-          <Button onClick={props.precedent} value='false' variant="secondary">Precedent</Button>
           <Button onClick={installer} value="true">Demarrer installation</Button>
+          <Button onClick={props.precedent} value='false' variant="secondary">Precedent</Button>
         </Col>
       </Row>
     </>
@@ -92,8 +92,8 @@ function ConfigurerNoeudPublic(props) {
 
       <Row>
         <Col className="bouton">
-          <Button onClick={props.precedent} value='false' variant="secondary">Precedent</Button>
           <Button onClick={installer} value="true">Demarrer installation</Button>
+          <Button onClick={props.precedent} value='false' variant="secondary">Precedent</Button>
         </Col>
       </Row>
     </>
@@ -125,8 +125,8 @@ function InstallerNoeudProtege(props) {
 
       <Row>
         <Col className="bouton">
-          <Button onClick={props.precedent} value='false' variant="secondary">Precedent</Button>
           <Button onClick={installer} value="true">Demarrer installation</Button>
+          <Button onClick={props.precedent} value='false' variant="secondary">Precedent</Button>
         </Col>
       </Row>
     </Container>
@@ -363,7 +363,7 @@ function AfficherErreurConnexion(props) {
 async function installerNoeudProtege(props, params, callback) {
   console.debug("Pour installation, proppys!\n%O", props)
 
-  const idmg = props.idmg,
+  const idmg = props.idmg || props.rootProps.idmg,
         intermediairePem = props.rootProps.intermediairePem,
         certificatMillegrillePem = props.rootProps.infoClecertMillegrille.certificat
 

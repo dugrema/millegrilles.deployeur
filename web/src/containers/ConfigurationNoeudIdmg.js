@@ -43,8 +43,8 @@ export class ConfigurerNoeudIdmg extends React.Component {
 
         <Row>
           <Col>
-            <Button variant="secondary">Retour</Button>
             <Button onClick={this.suivant} value={pageSuivante}>Suivant</Button>
+            <Button variant="secondary">Retour</Button>
           </Col>
         </Row>
       </>

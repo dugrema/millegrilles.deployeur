@@ -147,8 +147,8 @@ function GenererCle(props) {
 
         <Row>
           <Col className="boutons-installer">
-            <Button onClick={props.setPage} value='' variant="secondary">Retour</Button>
             <Button onClick={props.setPage} value="ChargementClePrivee" disabled={!props.backupComplete}>Suivant</Button>
+            <Button onClick={props.setPage} value='' variant="secondary">Retour</Button>
           </Col>
         </Row>
       </div>
