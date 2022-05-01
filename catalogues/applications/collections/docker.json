@@ -1,6 +1,6 @@
 {
   "nom": "collections",
-  "version": "2022.3.3",
+  "version": "2022.3.4",
   "registries": [
     "docker.maceroc.com"
   ],
