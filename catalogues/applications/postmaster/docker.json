@@ -1,6 +1,6 @@
 {
   "nom": "postmaster",
-  "version": "2022.2.4",
+  "version": "2022.3.0",
   "description": {
     "en": "Postmaster",
     "fr": "Postmaster"
@@ -12,7 +12,7 @@
   "images": {
     "millegrilles_postmaster": {
       "image": "millegrilles_postmaster",
-      "version": "2022.2.0"
+      "version": "2022.3.0"
     }
   },
   "dependances": [
