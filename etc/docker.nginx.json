@@ -45,17 +45,20 @@
       {
         "published_port": 443,
         "target_port": 443,
-        "protocol": "tcp"
+        "protocol": "tcp",
+        "publish_mode": "host"
       },
       {
         "published_port": 444,
         "target_port": 444,
-        "protocol": "tcp"
+        "protocol": "tcp",
+        "publish_mode": "host"
       },
       {
         "published_port": 80,
         "target_port": 80,
-        "protocol": "tcp"
+        "protocol": "tcp",
+        "publish_mode": "host"
       }
     ]
   },
