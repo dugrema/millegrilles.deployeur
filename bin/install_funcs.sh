@@ -40,7 +40,8 @@ installer_docker() {
 
 installer_autres_deps() {
   # Random number gens hardware, pip3, avahi-daemon
-  sudo apt install -y rng-tools avahi-daemon 6tunnel
+  # sudo apt install -y rng-tools avahi-daemon 6tunnel
+  sudo apt install -y rng-tools avahi-daemon
 }
 
 installer_dev() {
@@ -154,10 +155,10 @@ installer_sysctl() {
   #sudo systemctl enable mgacteur
   #sudo systemctl start mgacteur
 
-  # 6tunnel pour IPv6
-  sudo cp bin/6tunnel_https.sh /usr/local/bin
-  sudo systemctl enable 6tunnel_https.service
-  sudo systemctl start 6tunnel_https.service
+  # 6tunnel pour IPv6  # Pas necessaire, nginx en mode host (requis pour client external IP)
+  #sudo cp bin/6tunnel_https.sh /usr/local/bin
+  #sudo systemctl enable 6tunnel_https.service
+  #sudo systemctl start 6tunnel_https.service
 }
 
 # Installer le service ServiceMonitor
