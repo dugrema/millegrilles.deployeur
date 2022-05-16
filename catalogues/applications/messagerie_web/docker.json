@@ -1,6 +1,6 @@
 {
   "nom": "messagerie_web",
-  "version": "2022.3.1",
+  "version": "2022.3.2",
   "description": {
     "en": "Messaging web",
     "fr": "Messagerie web"
@@ -32,7 +32,7 @@
           "PORT=443",
           "MG_REDIS_HOST=redis",
           "MG_REDIS_PORT=6379",
-          "MG_CONSIGNATION_URL=https://${MQ_HOST}:444/fichiers_transfert"
+          "MG_CONSIGNATION_URL=https://fichiers:443/fichiers_transfert"
         ],
         "mounts": [
           "${NGINX_DATA_VOLUME}:/var/opt/millegrilles/nginx/data:rw",
