@@ -1,10 +1,10 @@
 {
   "name": "monitor.web",
-  "version": "2022.2.1",
+  "version": "2022.3.0",
   "private": true,
   "dependencies": {
     "@blackbox-vision/react-qr-reader": "^5.0.0",
-    "@dugrema/millegrilles.reactjs": "git+ssh://git.maceroc.com/git/millegrilles.reactjs#2022.2",
+    "@dugrema/millegrilles.reactjs": "git+ssh://git.maceroc.com/git/millegrilles.reactjs#2022.3",
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
@@ -22,7 +22,7 @@
     "wasm-loader": "^1.3.0"
   },
   "peerDependencies": {
-    "@dugrema/millegrilles.utiljs": "git+ssh://git.maceroc.com/git/millegrilles.utiljs#2022.2",
+    "@dugrema/millegrilles.utiljs": "git+ssh://git.maceroc.com/git/millegrilles.utiljs#2022.3",
     "axios": "^0",
     "bootstrap": "^5.1"
   },
