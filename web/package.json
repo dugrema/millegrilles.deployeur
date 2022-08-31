@@ -11,7 +11,7 @@
     "font-awesome": "^4.7.0",
     "i18next": "^21.6.5",
     "i18next-browser-languagedetector": "^6.1.2",
-    "moment-timezone": "^0.5.34",
+    "moment-timezone": "^0.5.35",
     "qrcode.react": "^1.0.1",
     "react": "^17.0.2",
     "react-bootstrap": "^2.1.0",
